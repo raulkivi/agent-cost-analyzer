@@ -179,9 +179,12 @@ function groupFileRowsByTurn(
   return byTurn;
 }
 
+// `invoked` is the turn's tool_call invocations in log order: span records
+// (step 10.20, D3: outcome, duration and bounded arguments) or name-only
+// records where no span read was made.
 function buildToolCalls(
   filesForTurn: SessionFileRow[],
-  invokedToolNames: string[],
+  invoked: ToolCallRecord[],
 ): ToolCallRecord[] {
   const filesByToolName = new Map<string, string[]>();
   for (const row of filesForTurn) {
@@ -191,39 +194,31 @@ function buildToolCalls(
     filesByToolName.set(name, files);
   }
 
-  const fileBasedCalls: ToolCallRecord[] = Array.from(
-    filesByToolName.entries(),
-  ).map(([name, filesTouched]) => ({
-    name,
-    argsSummary: filesTouched.join(", "),
-    filesTouched,
-    tokenCount: unavailableToolCallTokenCount(),
-  }));
-
   // One record per jsonl tool_call invocation (Phase 9.10 audit: counts must
-  // not be deduped by name). A file-based record already stands for the
-  // first invocation of its tool, so only the remaining invocations are
-  // added; a name with files but no jsonl invocation stays one record, since
-  // SQLite alone can't say how many calls touched those files.
-  const remainingByName = new Map<string, number>();
-  for (const name of invokedToolNames) {
-    remainingByName.set(name, (remainingByName.get(name) ?? 0) + 1);
-  }
-  for (const name of filesByToolName.keys()) {
-    const remaining = remainingByName.get(name);
-    if (remaining !== undefined) {
-      remainingByName.set(name, remaining - 1);
+  // not be deduped by name). The first invocation of a tool that touched
+  // files carries those paths; a name with files but no invocation stays one
+  // file-only record, since SQLite alone can't say how many calls touched
+  // those files.
+  const firstByName = new Map<string, ToolCallRecord>();
+  for (const call of invoked) {
+    if (filesByToolName.has(call.name) && !firstByName.has(call.name)) {
+      firstByName.set(call.name, call);
     }
   }
-  const invokedOnlyCalls: ToolCallRecord[] = [];
-  for (const name of invokedToolNames) {
-    const remaining = remainingByName.get(name) ?? 0;
-    if (remaining <= 0) {
-      continue;
-    }
-    remainingByName.set(name, remaining - 1);
-    invokedOnlyCalls.push({ name, argsSummary: "", tokenCount: unavailableToolCallTokenCount() });
-  }
+  const fileBasedCalls: ToolCallRecord[] = Array.from(filesByToolName.entries()).map(([name, filesTouched]) => {
+    const first = firstByName.get(name);
+    return {
+      ...first,
+      name,
+      argsSummary: first?.argsSummary ? first.argsSummary : filesTouched.join(", "),
+      filesTouched,
+      tokenCount: unavailableToolCallTokenCount(),
+    };
+  });
+  const consumed = new Set<ToolCallRecord>(firstByName.values());
+  const invokedOnlyCalls: ToolCallRecord[] = invoked
+    .filter((call) => !consumed.has(call))
+    .map((call) => ({ ...call, tokenCount: unavailableToolCallTokenCount() }));
 
   // Keep each file-based record next to that tool's extra invocations.
   const ordered: ToolCallRecord[] = [];
@@ -232,6 +227,10 @@ function buildToolCalls(
   }
   const fileNames = new Set(filesByToolName.keys());
   return [...ordered, ...invokedOnlyCalls.filter((call) => !fileNames.has(call.name))];
+}
+
+function nameOnlyCalls(names: string[]): ToolCallRecord[] {
+  return names.map((name) => ({ name, argsSummary: "" }));
 }
 
 // Total fallback for a turn with zero extracted llm_request spans — with no
@@ -265,14 +264,14 @@ function buildTurn(
   fileRowsByTurn: Map<number, SessionFileRow[]>,
   usage: TurnUsage | null | undefined,
   fallbackTokenCount: TokenCount,
-  invokedToolNames: string[],
+  invokedCalls: ToolCallRecord[],
 ): Turn {
   const explanation = usage ? buildAnalyzeExplanation(usage) : STUB_EXPLANATION;
   return {
     index,
     userMessage: row?.user_message ?? "",
     assistantResponse: row?.assistant_response ?? "",
-    toolCalls: buildToolCalls(fileRowsByTurn.get(index) ?? [], invokedToolNames),
+    toolCalls: buildToolCalls(fileRowsByTurn.get(index) ?? [], invokedCalls),
     usage: usage ?? buildUnavailableUsage(fallbackTokenCount),
     ...(row?.timestamp ? { startedAt: row.timestamp } : {}),
     ...(row
@@ -320,6 +319,9 @@ export interface AnalyzeEnrichment extends Partial<AnalyzeModeExtras> {
   mainJsonlAvailability: MainJsonlAvailability;
   // Placed per store turn index, with any subagent runs already merged in.
   turnUsages?: (TurnUsage | null)[];
+  // Step 10.20 (D3): the debug log's tool_call spans as records, per store
+  // turn index. Where a turn has none, invokedToolNamesByTurn's names stand.
+  toolCallsByTurn?: ToolCallRecord[][];
   subagentRuns?: SessionSubagentRuns;
 }
 
@@ -331,6 +333,7 @@ export function buildSession(enrichment: AnalyzeEnrichment): Session {
     mainJsonlAvailability,
     turnUsages = [],
     invokedToolNamesByTurn = [],
+    toolCallsByTurn = [],
     systemPrompt = [],
     toolInventory = [],
     subagentRuns,
@@ -341,7 +344,8 @@ export function buildSession(enrichment: AnalyzeEnrichment): Session {
   );
   const fileRowsByTurn = groupFileRowsByTurn(fileRows);
   const buildAt = (index: number, row: TurnRow | undefined) =>
-    buildTurn(index, row, fileRowsByTurn, turnUsages[index], fallbackTokenCount, invokedToolNamesByTurn[index] ?? []);
+    buildTurn(index, row, fileRowsByTurn, turnUsages[index], fallbackTokenCount,
+      toolCallsByTurn[index] ?? nameOnlyCalls(invokedToolNamesByTurn[index] ?? []));
 
   const storeTurnIndices = turnRows.map((row) => row.turn_index);
   // Stable sort: the store's own rows keep their order.
