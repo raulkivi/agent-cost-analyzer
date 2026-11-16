@@ -416,8 +416,8 @@ model in this repo. Specs and the real-data suite are TDD exceptions as in
 | CS4 | **Done 2026-11-15.** Domain (§5.1): `label`, `attribution`, `parentRunId`, `extendedCacheWrite` on runs and `ownUsage`; tokens and priced cost on the three summaries | Schema tests: valid, hostile label and id rejected, Copilot and Learn fixtures still parse | medium | Sonnet | D13 |
 | CS5 | **Done 2026-11-15 (PR #339).** `subagent-transcript-path.ts` (§5.3) | Tests: symlinked folder and file, directory, other names, cap, missing folder | low | Sonnet | CS3 |
 | CS6 | **Done 2026-11-15 (PR #339).** `subagent-meta.ts` allow-list | Tests: dropped keys, caps, malformed JSON, oversize | low | Sonnet | CS3 |
-| CS7 | `round-usage.ts` extracted; `subagent-run-usage.ts` | Existing usage tests unchanged; run tests: sums, 1-hour split, fork copies skipped, `<synthetic>`, missing field, partial line | medium | Sonnet | CS4, CS6 |
-| CS8 | `subagent-attribution.ts` (§5.4, §6) | Every row of §6 and D1–D8 is a test; none yields a known total that leaves a round out | high | Opus | CS5, CS7 |
+| CS7 | **Done 2026-11-16 (PR #366).** `round-usage.ts` extracted; `subagent-run-usage.ts` | Existing usage tests unchanged; run tests: sums, 1-hour split, fork copies skipped, `<synthetic>`, missing field, partial line | medium | Sonnet | CS4, CS6 |
+| CS8 | **Done 2026-11-16 (PR #373).** `subagent-attribution.ts` (§5.4, §6) | Every row of §6 and D1–D8 is a test; none yields a known total that leaves a round out | high | Opus | CS5, CS7 |
 | CS9 | Merge and cost lines: reuse or generalise `mergeSubagentUsage`; `turnLinesOf` with `extendedCacheWrite`; property test (lines sum to the row, no `requestId` twice) | Tests pass; Copilot golden tests unchanged | high | Opus | CS8 |
 | CS10 | Provider wiring, shared for list and detail; run-summary cache; budget test | Contract test "list equals detail" on a session with runs; budget test with 2.5 × the session bytes in runs | medium | Sonnet | CS9, D16 |
 | CS11 | Session summaries, replay coverage and savings coverage (D10, D13) | `session-cost-builder`, `session-replay-service`, `savings-service` tests | medium | Sonnet | CS10 |
