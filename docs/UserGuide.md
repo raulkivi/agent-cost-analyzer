@@ -378,7 +378,8 @@ AI Credits column stays an em dash.
   runs not analyzed" in its coverage.
 - **Tool calls.** Calls made inside a run appear in the tool audit and the
   security findings, labeled with their run. A run whose calls can't be read
-  shows as unknown, never as 0 calls. MCP output keeps the run's prompt out.
+  shows as unknown, never as 0 calls. A run placed by time shows a
+  "matched by time" mark on its audit row. MCP output keeps the run's prompt out.
 
 The turns-table marker, Explanation block and Priced cost tile follow the
 approved mock-ups in
