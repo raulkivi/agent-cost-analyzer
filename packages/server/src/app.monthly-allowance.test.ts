@@ -22,7 +22,7 @@ function session(id: string, startedAt: string, cost: number | null, extra: Part
   return { id, mode: "analyze", providerId: "vscode", title: HOSTILE, model: "m", turns: [], turnCount: 1, costAiCredits, usageDataAvailable: true, startedAt, ...extra };
 }
 
-function fakeVscode(sessions: Session[], available = true): LogProvider {
+function fakeVscode(sessions: Session[], available = true, calls = { list: 0 }): LogProvider {
   return {
     id: "vscode",
     label: "VS Code",
@@ -30,6 +30,7 @@ function fakeVscode(sessions: Session[], available = true): LogProvider {
       return available ? { available } : { available, unavailableReason: "No logs on this machine." };
     },
     async listSessions() {
+      calls.list += 1;
       return sessions;
     },
     async readSession() {
@@ -57,7 +58,7 @@ describe("monthly allowance API", () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  function buildApp(sessions: Session[] = [], available = true) {
+  function buildApp(sessions: Session[] = [], available = true, calls = { list: 0 }) {
     return createApp({
       sessionStoreDbPath: path.join(dir, "missing.db"),
       debugLogsDirPaths: [],
@@ -69,7 +70,7 @@ describe("monthly allowance API", () => {
       piAgentSessionsDirPath: null,
       systemPromptLogPath: null,
       claudeCodeProjectsDirPath: null,
-      additionalLogProviders: [fakeVscode(sessions, available)],
+      additionalLogProviders: [fakeVscode(sessions, available, calls)],
       now: () => NOW,
       timeZone: "UTC",
     });
@@ -176,6 +177,16 @@ describe("monthly allowance API", () => {
       const response = await put(buildApp(), { ...valid, resetDay: 29 });
       expect(response.body.error).toMatch(/resetDay/);
     });
+  });
+
+  it("MS5: one request lists the sessions once, and none when no allowance is set", async () => {
+    const calls = { list: 0 };
+    const app = buildApp([session("k", "2026-11-03T09:00:00Z", 10, { copilotHarness: "agent-host" }), session("l", "2026-11-04T09:00:00Z", 10)], true, calls);
+    await get(app);
+    expect(calls.list).toBe(0);
+    seed({ monthlyAllowance: { aiCredits: 1000, resetDay: 1, warnAtPercent: 80 } });
+    await get(app);
+    expect(calls.list).toBe(1);
   });
 
   it("the product profile says the standalone app has the gauge", async () => {
