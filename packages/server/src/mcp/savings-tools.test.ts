@@ -414,7 +414,7 @@ describe("get_savings_report hostile names", () => {
   // V26 (savings-increment-3.md §6, D26): per-tool tokens on unused-tools rows.
   describe("per-tool tokens of an unused-tools row", () => {
     const est = (value: number) => ({ known: true as const, value, estimated: true as const });
-    const toolsOf = (count: number) => Array.from({ length: count }, (_, index) => ({ name: `mcp_github_tool_${String(index).padStart(2, "0")}`, tokens: est(600 - index * 10), sessions: 31 - index }));
+    const toolsOf = (count: number) => Array.from({ length: count }, (_, index) => ({ name: `mcp_github_tool_${String(index).padStart(2, "0")}`, tokens: est(600 - index * 10), sessions: 31 }));
     const unused = (tools: Row[], toolsTotal: number, overrides: Partial<SavingsOpportunity> = {}): SavingsOpportunity =>
       opportunity(1, {
         key: "unused-tools:github:USD",
@@ -448,6 +448,15 @@ describe("get_savings_report hostile names", () => {
       // 600+590+580+570+560 = 2,900 of 5,400: 2,500 for the other 18.
       expect(text).toContain("Tools (token estimates per request): mcp_github_tool_00 (about 600), mcp_github_tool_01 (about 590), mcp_github_tool_02 (about 580), mcp_github_tool_03 (about 570), mcp_github_tool_04 (about 560), and 18 more (about 2,500).");
       expect(text).not.toContain("mcp_github_tool_05");
+    });
+
+    // R23, D35: a listed tool loaded in only some of the row's sessions makes the rest's tokens unsayable.
+    it("leaves the rest's tokens out when a listed tool was loaded in only some of the row's sessions", async () => {
+      const tools = toolsOf(20).map((tool, index) => (index === 3 ? { ...tool, sessions: 24 } : tool));
+      const text = textOf(await call(await connect(new FakeSavings(reportOf([unused(tools, 23)])))));
+
+      expect(text).toContain("mcp_github_tool_04 (about 560), and 18 more.");
+      expect(text).not.toContain("and 18 more (about");
     });
 
     it("lists a short list whole, without 'and N more'", async () => {

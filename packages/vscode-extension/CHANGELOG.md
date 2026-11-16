@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Each session in a savings row shows its title first, then its id and date under it, in the Savings tab (the standalone app and the extension). The title is looked up in the browser from the session list the Dashboard loads, shown as text on one line (cut at 120 characters, in full on hover); a session without a title shows the id alone. Titles are not in the report, `get_savings_report`, the chat view or Copy.
 - A session whose model has no known price channel now gets its "Tools loaded but never used" row with "Not priced" and the reason, instead of being left under Not analysed. <!-- codespell:ignore analysed -->
 
+### Changed
+- A tools row's "and N more" shows "(about X)", the rest's tokens, only when every listed tool was loaded in every session of the row; otherwise it shows just "and N more". A tool's figure is its average over the sessions that loaded it, so the difference would misstate the rest.
+- A cache-break row (idle expiry, no idle gap, model switch) now leaves a session with any break that has no price out of its amount and lists it under the row's coverage with the reason, as the failed-calls row does; the session's own saving reads "Not priced". Before, the amount counted such a session's priced breaks only.
+
 ### Fixed
 - Savings action text now agrees with its counts: "1 session", "1 tool", "1 day", "1 break", "1 time", "1 token" and "1 minute" instead of "1 sessions" and so on.
 - The extension now ships third-party license notices (`THIRD-PARTY-NOTICES.md` in the .vsix) for the npm packages it bundles, with their license texts.

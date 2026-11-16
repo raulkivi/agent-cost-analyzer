@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import {
   activeBranchOf,
   bookModelIds,
+  countedBreakCost,
   idleBreaksOf,
   loadBundledTables,
   modelTablesFrom,
@@ -19,6 +20,7 @@ import {
   requestsOf,
   toolSessionFactsOf,
   unusedToolRowOf,
+  type OracleIdleBreak,
   type RawLine,
 } from "./savings-oracle.mjs";
 
@@ -157,6 +159,21 @@ describe("bookModelIds", () => {
     expect(bookModelIds("claude-sonnet-5-5-20261001")).toContain("claude-sonnet-5.5");
     expect(bookModelIds("Claude-Opus-5[1m]")).toContain("claude-opus-5");
     expect(bookModelIds("claude-opus-4-8")).toContain("claude-opus-4.8");
+  });
+});
+
+// D36: a session with any unpriced break is left out of the row's amount.
+describe("countedBreakCost", () => {
+  const priced = (high: number) => ({ cost: { known: true as const, low: 0 as const, high, versionId: "v" } }) as OracleIdleBreak;
+  const unpriced = { cost: { known: false as const, reason: "no price" } } as OracleIdleBreak;
+
+  it("sums a fully priced session's breaks", () => {
+    expect(countedBreakCost([priced(1.5), priced(2)])).toBe(3.5);
+  });
+
+  it("is null for a session with an unpriced break, however many priced ones it has", () => {
+    expect(countedBreakCost([priced(1.5), unpriced])).toBeNull();
+    expect(countedBreakCost([unpriced])).toBeNull();
   });
 });
 

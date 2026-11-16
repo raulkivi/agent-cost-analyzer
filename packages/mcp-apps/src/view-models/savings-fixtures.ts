@@ -50,9 +50,9 @@ export const unusedRow = row({
   tools: [
     ["mcp_github_create_pull_request", 610, 31],
     ["mcp_github_search_code", 540, 31],
-    ["mcp_github_list_issues", 480, 29],
+    ["mcp_github_list_issues", 480, 31],
     ["mcp_github_get_file_contents", 455, 31],
-    ["mcp_github_list_commits", 430, 24],
+    ["mcp_github_list_commits", 430, 31],
     ["mcp_github_get_me", 300, 31],
     ["mcp_github_fork_repository", 200, 12],
   ].map(([name, value, sessions]) => ({ name: name as string, tokens: { known: true as const, value: value as number, estimated: true as const }, sessions: sessions as number })),

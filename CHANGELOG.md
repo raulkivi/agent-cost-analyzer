@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MCP tool `get_monthly_allowance` in the standalone server: the AI Credits used so far this billing period against the monthly allowance set in the app, the same answer as the app's header. Read-only, no arguments; a lower bound says "at least", and unknown is never 0. The extension's MCP server does not have it.
 - Any session whose model has no known price channel, not only pi, now gets its unused-tools row with "Not priced" and the reason, instead of being left under Not analysed. <!-- codespell:ignore analysed -->
 
+### Changed
+- A tools row's "and N more" shows "(about X)", the rest's tokens, only when every listed tool was loaded in every session of the row; otherwise it shows just "and N more". A tool's figure is its average over the sessions that loaded it, so the difference would misstate the rest.
+- A cache-break row (idle expiry, no idle gap, model switch) now leaves a session with any break that has no price out of its amount and lists it under the row's coverage with the reason, as the failed-calls row does; the session's own saving reads "Not priced". Before, the amount counted such a session's priced breaks only.
+
 ### Fixed
 - The chat's savings view names pi "pi" in a currency list's heading and in the list of sessions it could not check, instead of its provider id "pi-agent".
 - `get_savings_report`'s text answer says "1 of 1 session" and "1 session." instead of "1 of 1 sessions" and "1 sessions." in a row's coverage and in the lists of sessions not checked or left out.

@@ -249,6 +249,39 @@ describe("CacheBreakDetector: each session's date and saving", () => {
   });
 });
 
+// R24, D36 (savings-increment-3.md §17): a session with one priced and one
+// unpriced break is left out of the row's amount and listed under coverage with
+// the reason, the way O5 does; its own saving is unknown with that reason.
+describe("CacheBreakDetector: a session with an unpriced break (D36)", () => {
+  const odd = { model: "no-such-model" };
+  const mixed = () => claudeSession("mixed", [cold(0, 10_000), cold(91, 10_000), cold(92, 10_000, odd), cold(200, 10_000, odd)]);
+  const idle = () => claudeSession("idle", [cold(0, 10_000), warm(1, 10_400), cold(91, 10_600)]);
+
+  it("leaves the whole session out of the row's amount, so the amount is the fully priced sessions' sum", () => {
+    const { opportunities } = run(idle(), mixed());
+    const row = opportunities.find((o) => o.kind === "idle-cache-expiry")!;
+
+    expect(high(row.perWindow)).toBeCloseTo(0.03952, 9);
+  });
+
+  it("gives the mixed session an unknown saving with the price reason and lists it under the row's coverage", () => {
+    const { opportunities } = run(idle(), mixed());
+    const row = opportunities.find((o) => o.kind === "idle-cache-expiry")!;
+
+    const ref = row.sessions.find((r) => r.sessionId === "mixed")!;
+    expect(ref.perWindow).toEqual({ known: false, reason: expect.any(String) });
+    expect(row.coverage.sessionsAnalysed).toBe(1);
+    expect(row.coverage.notAnalysed).toEqual([{ reason: expect.any(String), sessions: 1 }]);
+    expect(row.coverage.notAnalysed[0]!.reason).toBe((ref.perWindow as { reason: string }).reason);
+  });
+
+  it("keeps the row's amount unknown when every session has an unpriced break", () => {
+    const { opportunities } = run(mixed());
+
+    expect(opportunities.find((o) => o.kind === "idle-cache-expiry")!.perWindow).toMatchObject({ known: false });
+  });
+});
+
 describe("CacheBreakDetector: golden report", () => {
   it("over a multi-session, multi-provider window with the real vendor profiles (update with `vitest -u` after checking the diff by hand)", async () => {
     const profiles = loadVendorProfiles(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../../fixtures/vendor-profiles"));

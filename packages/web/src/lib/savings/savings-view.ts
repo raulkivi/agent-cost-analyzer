@@ -134,7 +134,7 @@ export function toolListOf(opportunity: Pick<SavingsOpportunity, "tools" | "tool
   if (tools === undefined || tools.length === 0) return null;
   const total = opportunity.toolsTotal ?? tools.length;
   const shown = tools.slice(0, MAX_TOOLS_SHOWN);
-  const rest = unlistedTools(shown, total, evidence.tokens);
+  const rest = unlistedTools(shown, total, evidence.tokens, evidence.sessions);
   const rowTotal = evidence.tokens?.known === true ? `${grouped(evidence.tokens.value)} per-request total` : "per-request total";
   return {
     heading: `${total === 1 ? "The tool" : `The ${grouped(total)} tools`}, never called in ${plural(evidence.sessions, "session")}`,

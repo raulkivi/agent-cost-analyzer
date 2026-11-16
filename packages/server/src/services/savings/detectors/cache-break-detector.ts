@@ -22,9 +22,12 @@ const CAUSE_TEXT: Readonly<Record<PromptChangeKind, string>> = {
   "system-prompt-changed": "System prompt changed, cause not recorded",
 };
 
-// A session's own saving: its priced breaks summed, or why it has none.
+// A session's own saving: its breaks summed, or why it has none. A session with
+// any unpriced break is unknown (D36): an upper bound that leaves a break out is
+// no upper bound, and the row's amount and coverage leave the session out too.
 function sessionAmount(currency: Currency, parts: readonly PricedPart[] | undefined, failure: string | undefined): SavingsAmount {
-  return parts !== undefined && parts.length > 0 ? sumAmount(currency, parts, "upper-bound") : unknownAmount(failure ?? "No break of this session could be priced.");
+  if (failure !== undefined) return unknownAmount(failure);
+  return parts !== undefined && parts.length > 0 ? sumAmount(currency, parts, "upper-bound") : unknownAmount("No break of this session could be priced.");
 }
 
 interface Found {
@@ -102,7 +105,6 @@ export class CacheBreakDetector implements SavingsDetector {
     priceFailures: NotAnalysedLedger,
   ): SavingsOpportunity {
     const { descriptor, currency, found } = group;
-    const parts: PricedPart[] = [];
     const partsOf = new Map<SavingsSessionInput, PricedPart[]>();
     const failureOf = new Map<SavingsSessionInput, string>();
     const failures = new Map<string, Set<SavingsSessionInput>>();
@@ -123,7 +125,6 @@ export class CacheBreakDetector implements SavingsDetector {
         input.pricing,
       );
       if (saving.known) {
-        parts.push(saving);
         partsOf.set(session, [...(partsOf.get(session) ?? []), saving]);
       } else {
         if (!failureOf.has(session)) failureOf.set(session, saving.reason);
@@ -131,7 +132,9 @@ export class CacheBreakDetector implements SavingsDetector {
         priceFailures.add(session, saving.reason);
       }
     }
-    const window: SavingsAmount = parts.length > 0 ? sumAmount(currency, parts, "upper-bound") : unknownAmount([...failures.keys()].sort()[0]!);
+    // Only sessions all of whose breaks were priced count towards the amount (D36).
+    const counted = [...partsOf].filter(([session]) => !failureOf.has(session)).flatMap(([, sessionParts]) => sessionParts);
+    const window: SavingsAmount = counted.length > 0 ? sumAmount(currency, counted, "upper-bound") : unknownAmount([...failures.keys()].sort()[0] ?? "No break could be priced.");
 
     const sessions = [...new Set(found.map((entry) => entry.session))];
     const lostTokens = found.reduce((total, entry) => total + entry.cacheBreak.lostTokens, 0);

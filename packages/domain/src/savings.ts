@@ -90,14 +90,16 @@ export const savingsToolSchema = z.object({
 
 // The tools a list leaves out and what they come to: the row's tokens minus the
 // listed ones. Null tokens when that can't be said honestly (the row's total or
-// a listed tool's count is unknown, or the per-tool averages already pass the
-// total): the caller shows the count only, never a 0.
-export function unlistedTools(listed: readonly SavingsTool[], toolsTotal: number, total: TokenCount | null): { count: number; tokens: number | null } {
+// a listed tool's count is unknown, the per-tool averages already pass the
+// total, or a listed tool was loaded in fewer sessions than the row has: its
+// average is over those sessions only, so the difference would misstate the
+// rest, D35): the caller shows the count only, never a 0.
+export function unlistedTools(listed: readonly SavingsTool[], toolsTotal: number, total: TokenCount | null, rowSessions: number): { count: number; tokens: number | null } {
   const count = Math.max(0, toolsTotal - listed.length);
   if (count === 0 || total === null || !total.known) return { count, tokens: null };
   let sum = 0;
   for (const tool of listed) {
-    if (!tool.tokens.known) return { count, tokens: null };
+    if (!tool.tokens.known || tool.sessions !== rowSessions) return { count, tokens: null };
     sum += tool.tokens.value;
   }
   return { count, tokens: total.value >= sum ? total.value - sum : null };
