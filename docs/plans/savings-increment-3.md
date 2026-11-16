@@ -485,6 +485,37 @@ Added to the existing assertions (savings-report.md §14):
 UI: the Playwright and wdio specs in §10 pass in CI; the G4 rows are
 written and typecheck.
 
+**V29 run (2026-11-16, commit `2e937993`): 13 of 13 tests passed** on the
+owner's logs over the 30-day window. V29 added the (c) and (d) assertions
+and pi's per-tool sum (§17 R20). By assertion group:
+
+- Window: 202 Claude Code sessions in the window. Pass.
+- Copilot parity: 2 VS Code editions; the two products' reports equal
+  (0 and 3 rows). Pass.
+- Labels, coverage and ranking by the high end, in every report. Pass.
+- Idle-expiry row against the oracle (breaks, lost tokens, sessions, extra
+  cost). Pass.
+- Unused-tools row against the oracle, with its per-tool list. Pass.
+- pi rows: 58 branches in the window, all with system messages, none under
+  "no tool inventory"; 10 pi rows. Pass.
+- pi unused-tools row against the pi oracle (sessions, requests, tokens,
+  per-tool tokens, Not priced on both sides). Pass.
+- `get_savings_report` equals the reports row for row (pi, Claude Code at
+  limits 20 and 10, Copilot); no prompt beginning or home path in any
+  answer. Pass.
+- D16 order and each shown session's saving against the oracle. Pass.
+- Per-session figures (c): 1,496 session references in 6 reports, every
+  date equal to its session's start; the known per-session savings of 71
+  priced rows add up to each row's; 12 Not priced rows with no priced
+  session. Pass.
+- Titles (d): 228 title beginnings from the 6 insights datasets, none in 11
+  reports and tool answers. Pass.
+- Nothing written: 1,513 fingerprints unchanged. Pass.
+
+A first run minutes earlier failed only the last group, on `~/.claude.json`,
+which a running Claude Code session rewrites (the app never opens it; as in
+SR22); the rerun passed. **The owner has not yet signed off this output.**
+
 ## 15. Tasks
 
 TDD in every code task: the failing test first, and the PR names the red
