@@ -11,7 +11,7 @@ import path from "node:path";
 import express from "express";
 import { createApp } from "../../../server/src/app.ts";
 import { clockFromEnv } from "../../../server/src/platform/clock/clock-from-env.ts";
-import { createFixtureHome } from "./fixture-home.mts";
+import { createFixtureHome, type FixtureOptions } from "./fixture-home.mts";
 
 const dist = path.resolve(import.meta.dirname, "../../dist");
 if (!existsSync(path.join(dist, "index.html"))) {
@@ -22,7 +22,9 @@ const home = os.homedir();
 if (!home.includes("aca-e2e-")) {
   throw new Error(`Refusing to seed a fixture home in ${home}: the suite sets HOME to a temporary aca-e2e- folder`);
 }
-const fixture = createFixtureHome(home, { projects: process.env.AGENT_COST_E2E_NO_PROJECTS !== "1" });
+// MS8: a test's allowance (a JSON object) goes into the fixture's settings.json.
+const allowance = process.env.AGENT_COST_E2E_ALLOWANCE ? (JSON.parse(process.env.AGENT_COST_E2E_ALLOWANCE) as FixtureOptions["allowance"]) : undefined;
+const fixture = createFixtureHome(home, { projects: process.env.AGENT_COST_E2E_NO_PROJECTS !== "1", allowance, allowanceSessions: process.env.AGENT_COST_E2E_ALLOWANCE_SESSIONS === "1" });
 
 // Step 15.11: statements bill in UTC here, whatever the machine's zone.
 const app = createApp({ appSettingsDir: fixture.appSettingsDir, now: clockFromEnv(), timeZone: "UTC" });

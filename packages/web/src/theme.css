@@ -1346,6 +1346,9 @@ main[data-layout="narrow"] .nav--allowance .nav-field select { max-width: 210px;
 .allowance-field { display: flex; flex-direction: column; gap: 4px; }
 .allowance-field > label { margin-bottom: 0; }
 .allowance-field [aria-invalid="true"] { border-color: var(--color-status-error); }
-.allowance-field-error { font-size: 12px; font-weight: 700; color: var(--color-status-error); }
-.allowance-field-error::before { content: "\2715  "; }
+/* The message is body text (4.5:1 needs --color-text); the cross and the field's
+   border carry the error color, as marks (3:1). */
+.allowance-field-error { font-size: 12px; font-weight: 700; color: var(--color-text); }
+.allowance-field-error::before { content: "\2715  "; color: var(--color-status-error); }
+.allowance-hint-slot { min-height: 3em; font-size: 11px; }
 .allowance-hint { margin: 0; font-size: 11px; color: var(--color-text-muted); }
