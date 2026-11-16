@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import type { ReactNode } from "react";
 import type { LogProviderDescriptor } from "@agent-cost-analyzer/domain";
 import type { Mode } from "../state/session-store.js";
 import type { ColorModePreference } from "../lib/color-mode.js";
@@ -43,6 +44,10 @@ interface AppHeaderProps {
   statusText?: string;
   // Present only where the host offers a colour theme (standalone app).
   colorMode?: { preference: ColorModePreference; onChange: (preference: ColorModePreference) => void };
+  // The monthly allowance gauge (Analyze mode, standalone app): sits after the
+  // provider select. Its presence caps the Source select and lets the server
+  // status text truncate first, so the gauge keeps its room (Header.dc.html).
+  allowance?: ReactNode;
 }
 
 const DEFAULT_DISPLAY_NAME = "Session Analyzer";
@@ -62,9 +67,10 @@ export function AppHeader({
   profilePending = false,
   statusText,
   colorMode,
+  allowance,
 }: AppHeaderProps) {
   return (
-    <header className="nav">
+    <header className={allowance ? "nav nav--allowance" : "nav"}>
       {/* The brand; the VS Code theme hides it, since the editor tab
           already names the panel (step 10.11). */}
       <div className="nav-brand-block">
@@ -97,6 +103,7 @@ export function AppHeader({
           </select>
         </label>
       )}
+      {allowance}
       {minRetainedSessionLogsThreshold !== undefined && onRetentionThresholdChange && (
         <label className="nav-field">
           <span className="text-muted text-2xs">

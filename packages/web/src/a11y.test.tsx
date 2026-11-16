@@ -4,6 +4,10 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConfigStatus, ProductProfile, Session } from "@agent-cost-analyzer/domain";
 import { App } from "./App.js";
+import * as allowanceClient from "./api-client/monthly-allowance.js";
+import { AppHeader } from "./components/AppHeader.js";
+import { MonthlyAllowance } from "./components/allowance/MonthlyAllowance.js";
+import { atLeastNearAnswer, knownAnswer, noSourceAnswer, notSetAnswer, overAnswer, unknownAnswer } from "./test-support/allowance-fixture.js";
 import { resetApiTransport } from "./api-client/current-transport.js";
 import { ReplayStatus } from "./components/replay/ReplayStatus.js";
 import { ReplaySummaryStrip } from "./components/replay/ReplaySummaryStrip.js";
@@ -25,6 +29,13 @@ import { makeSavingsReport, UNPRICED_ROW } from "./test-support/savings-fixture.
 import { makeTurn } from "./test-support/turn-fixture.js";
 import themeCss from "./theme.css?raw";
 import vscodeThemeCss from "./theme-vscode.css?raw";
+
+// MS7: the allowance gauge and its dialogs talk to the server through these.
+vi.mock("./api-client/monthly-allowance.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./api-client/monthly-allowance.js")>()),
+  getMonthlyAllowance: vi.fn(),
+  setMonthlyAllowance: vi.fn(),
+}));
 
 // vscode-extension.md §3.5 Accessibility: axe-core finds no WCAG 2.2 A/AA
 // violation in any view, in VS Code's dark, light and high-contrast themes
@@ -527,6 +538,79 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
     fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Preview" }));
 
     await expectNoViolations();
+  });
+
+  // MS7 (monthly-allowance-standalone.md §4.7, board A11y.dc.html): the
+  // gauge in the header in each state, the details dialog and the settings
+  // dialog, with a server 400 on two fields.
+  describe("monthly allowance", () => {
+    async function headerWithGauge(answer: ReturnType<typeof knownAnswer>) {
+      vi.mocked(allowanceClient.getMonthlyAllowance).mockResolvedValue(answer);
+      render(
+        <AppHeader
+          mode="analyze"
+          onModeChange={vi.fn()}
+          hasConfigWarnings={false}
+          onConfigClick={vi.fn()}
+          providers={[{ id: "vscode", label: "VS Code (local Copilot Chat)", available: true }]}
+          activeProviderId="vscode"
+          onProviderChange={vi.fn()}
+          allowance={<MonthlyAllowance narrow={false} />}
+        />,
+      );
+      return screen.findByRole("button", { name: /AI Credits this month|Near limit|Over the allowance|Set monthly allowance/ });
+    }
+
+    it.each([
+      ["normal", knownAnswer],
+      ["partial near", atLeastNearAnswer],
+      ["over", overAnswer],
+      ["unknown", unknownAnswer],
+      ["no source", noSourceAnswer],
+      ["not set", notSetAnswer],
+    ])("the header gauge: %s", async (_state, answer) => {
+      await headerWithGauge(answer());
+
+      await expectNoViolations();
+    });
+
+    it("the narrow gauge", async () => {
+      vi.mocked(allowanceClient.getMonthlyAllowance).mockResolvedValue(atLeastNearAnswer());
+      render(<MonthlyAllowance narrow />);
+      await screen.findByRole("button", { name: /Near limit/ });
+
+      await expectNoViolations();
+    });
+
+    it.each([
+      ["partial near", atLeastNearAnswer],
+      ["over", overAnswer],
+      ["unknown", unknownAnswer],
+      ["no source", noSourceAnswer],
+    ])("the details dialog: %s", async (_state, answer) => {
+      fireEvent.click(await headerWithGauge(answer()));
+      await screen.findByRole("dialog", { name: "Monthly allowance" });
+
+      await expectNoViolations();
+    });
+
+    it("the settings dialog, and with a server 400 on two fields", async () => {
+      vi.mocked(allowanceClient.setMonthlyAllowance).mockRejectedValue(
+        new allowanceClient.AllowanceSettingsRejected(
+          { aiCredits: "Allowance must be above 0 and at most 1,000,000,000.", resetDay: "Reset day must be a whole number from 1 to 28." },
+          [],
+        ),
+      );
+      fireEvent.click(await headerWithGauge(notSetAnswer()));
+      await screen.findByRole("dialog", { name: "Monthly allowance" });
+      await expectNoViolations();
+
+      fireEvent.change(screen.getByLabelText("Monthly allowance (AI Credits)"), { target: { value: "0" } });
+      fireEvent.click(screen.getByRole("button", { name: "Save" }));
+      await screen.findByText("Nothing was saved. The gauge is unchanged.");
+
+      await expectNoViolations();
+    });
   });
 
   it("ConfigWarningBanner, with the extension's Fix buttons", async () => {

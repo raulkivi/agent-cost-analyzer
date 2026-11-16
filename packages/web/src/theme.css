@@ -1271,3 +1271,81 @@ html[data-color-mode] .dialog-body > p {
 /* Dialog bodies also hold radios, checkboxes and previews, which stay mono;
    only the paragraphs above are prose. */
 html[data-color-mode] .dialog-body { opacity: 1; }
+
+/* — Monthly allowance (standalone app, MS7; boards in
+     docs/plans/mockups/monthly-allowance-standalone) — The gauge in the
+     header, the meter, the details and settings dialogs. Roles only: accent,
+     status-interrupted (near), status-error (over); no new color token. — */
+.allowance-gauge {
+  flex: none; min-height: 26px; font-size: 12px; font-weight: 400;
+  font-variant-numeric: tabular-nums; margin-left: var(--space-2);
+}
+.allowance-gauge b { font-weight: 700; }
+.allowance-gauge-text { overflow: hidden; text-overflow: ellipsis; }
+/* Not set: muted text on its own border, not a disabled control. */
+.allowance-gauge--unset { color: var(--color-text-muted); }
+
+.allowance-meter {
+  --c: var(--color-accent);
+  position: relative; display: inline-block; flex: none; width: 56px; height: 10px;
+  border: 1px solid var(--color-control-border, var(--color-divider)); background: var(--color-surface);
+}
+.allowance-meter--near { --c: var(--color-status-interrupted); }
+.allowance-meter--over { --c: var(--color-status-error); }
+.allowance-meter-fill { position: absolute; left: 0; top: 0; bottom: 0; width: calc(var(--p) * 1%); background: var(--c); }
+.allowance-meter-open {
+  position: absolute; top: 0; bottom: 0; left: calc(var(--p) * 1%); width: 12px; max-width: calc(100% - var(--p) * 1%);
+  background: repeating-linear-gradient(135deg, var(--c) 0 1px, transparent 1px 4px); border-left: 1px dashed var(--c);
+}
+.allowance-meter-tick { position: absolute; top: -3px; bottom: -3px; left: calc(var(--w) * 1%); width: 1px; background: var(--color-text); }
+.allowance-meter-cap { position: absolute; right: -5px; top: -3px; bottom: -3px; width: 3px; background: var(--c); }
+.allowance-meter--large { display: block; width: 100%; height: 12px; }
+.allowance-scale { position: relative; height: 14px; margin-top: 4px; font-size: 10px; color: var(--color-text-muted); }
+.allowance-scale span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.allowance-scale span:first-child { transform: none; }
+.allowance-scale span:last-child { transform: translateX(-100%); }
+
+/* The narrow layout (320 px board): the figure wraps on its own line, the
+   meter and the short level word under it, the gauge across the row. */
+.allowance-gauge--narrow { flex: 1 1 100%; justify-content: flex-start; margin-left: 0; text-align: left; }
+.allowance-gauge--narrow .allowance-gauge-text { white-space: normal; }
+.allowance-gauge--narrow:has(.allowance-gauge-meter-row) { flex-direction: column; align-items: flex-start; gap: 4px; }
+.allowance-gauge-meter-row { display: flex; align-items: center; gap: var(--space-2); }
+
+/* At 1440 px the longest status cannot sit beside the other controls: the
+   Source select is capped and the server status text truncates first
+   (owner decision 2, 2026-11-15). */
+.nav--allowance .nav-field select { max-width: 150px; text-overflow: ellipsis; }
+.nav--allowance .app-status--inline { min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+main[data-layout="narrow"] .nav--allowance .nav-field select { max-width: 210px; }
+
+.allowance-dialog { width: min(460px, 100%); gap: 9px; }
+.allowance-dialog--settings { width: min(360px, 100%); }
+.allowance-dialog .dialog-title { font-size: 18px; letter-spacing: -0.015em; }
+.allowance-lead { margin: 0; font-size: 14px; font-variant-numeric: tabular-nums; }
+.allowance-lead b { font-weight: 700; }
+.allowance-rows { display: flex; flex-direction: column; gap: 3px; margin: 0; font-size: 12px; font-variant-numeric: tabular-nums; }
+.allowance-row { display: grid; grid-template-columns: 8.5em 1fr; gap: 0 14px; }
+.allowance-row dt { color: var(--color-text-muted); }
+.allowance-row dd { margin: 0; overflow-wrap: anywhere; }
+.allowance-subhead { margin: 4px 0 0; font-size: 12px; font-weight: 700; }
+.allowance-table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+.allowance-table th { text-align: left; padding: 3px 4px; font-size: 11px; font-weight: 700; color: var(--color-text-muted); border-bottom: 1px solid var(--color-control-border, var(--color-divider)); }
+.allowance-table td { padding: 3px 4px; border-bottom: 1px solid var(--color-divider); }
+.allowance-table .allowance-num { text-align: right; }
+.allowance-prose { margin: 0; font-family: var(--font-prose); font-size: 14px; line-height: 1.45; }
+.allowance-note { padding: 6px 8px; font-size: 12px; background: var(--color-surface); border: 1px solid var(--color-control-border, var(--color-divider)); }
+.allowance-note p { margin: 0; }
+.allowance-list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--color-text-muted); }
+.allowance-list li::before { content: "\2013  "; }
+.allowance-actions { flex-wrap: wrap; align-items: center; }
+/* Close is first in the DOM (focus order) and last on screen. */
+.allowance-actions .allowance-close { order: 1; }
+.allowance-actions--settings { justify-content: flex-start; }
+.allowance-actions--settings .allowance-cancel { margin-left: auto; }
+.allowance-field { display: flex; flex-direction: column; gap: 4px; }
+.allowance-field > label { margin-bottom: 0; }
+.allowance-field [aria-invalid="true"] { border-color: var(--color-status-error); }
+.allowance-field-error { font-size: 12px; font-weight: 700; color: var(--color-status-error); }
+.allowance-field-error::before { content: "\2715  "; }
+.allowance-hint { margin: 0; font-size: 11px; color: var(--color-text-muted); }
