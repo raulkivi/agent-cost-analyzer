@@ -33,10 +33,14 @@ Both run locally and are read-only. Nothing leaves your machine.
 - Which changes would lower your spend: the Savings report ranks them, each
   with an estimated weekly range or "up to" figure. The standalone app covers
   all its sources; the extension covers GitHub Copilot sessions.
-- How much of a monthly AI Credits allowance you have used (extension only).
-  Set the allowance and the status bar shows the month to date against it,
-  with a warning near the limit. The Sessions view shows the same figures
-  with the days left.
+- How much of a monthly AI Credits allowance you have used, in both
+  products. Set the allowance and the extension's status bar, or the
+  standalone app's header in Analyze mode, shows the month to date against
+  it, with a warning near the limit. The extension's Sessions view shows the
+  same figures with the days left; the app's details dialog also gives the
+  days left and the Copilot Chat and Agent Host split, and an MCP tool answers
+  the same question for an AI chat. It counts GitHub Copilot sessions only, on
+  this machine.
 - How prompt caching, context compaction and model switches change what a
   turn costs. Learn mode explains this with sample sessions, so it is useful
   before you have any data of your own.
