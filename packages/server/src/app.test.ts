@@ -775,8 +775,15 @@ describe("GET /api/sessions/:id", () => {
     ]);
     expect(response.body.turns[0].toolCalls).toEqual([
       {
+        // Step 10.20 (D3): the record now comes from the tool_call span, so it
+        // also carries the span's id, kind, outcome, start and duration.
+        id: "t0",
         name: "read_file",
+        kind: "file-read",
         argsSummary: "",
+        outcome: { status: "success" },
+        startedAt: new Date(3).toISOString(),
+        durationMs: 5,
         tokenCount: {
           known: false,
           reason: TOOL_CALL_TOKEN_COUNT_UNAVAILABLE_REASON,

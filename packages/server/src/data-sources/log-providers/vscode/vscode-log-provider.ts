@@ -7,6 +7,7 @@ import type {
   RequestTrace,
   Session,
   SystemPromptComponent,
+  ToolCallRecord,
   ToolInventoryEntry,
   TurnInspectorDetail,
 } from "@agent-cost-analyzer/domain";
@@ -14,6 +15,7 @@ import { classifyEnvelopesAvailability, readMainJsonlFile } from "../../jsonl/ma
 import { readClassicUsage } from "../../jsonl/classic-usage-reader.js";
 import { resolveMainJsonlPath } from "../../jsonl/session-log-path.js";
 import { collectResponseIds } from "../../jsonl/session-usage-spans.js";
+import { readToolCallRecordsByLogTurn } from "../../jsonl/tool-call-spans.js";
 import { readMainJsonlEnvelopesForTurn } from "../../jsonl/turn-inspector-reader.js";
 import { buildTurnInspectorDetail } from "./turn-inspector-builder.js";
 import { loadAgentTraceUsageForResponseIds } from "../../agent-traces/agent-traces-reader.js";
@@ -206,12 +208,15 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader, R
         agentTracesDbPath: this.options.agentTracesDbPath,
       });
       let invokedToolNamesByTurn: string[][] = [];
+      let toolCallsByTurn: ToolCallRecord[][] = [];
       let systemPrompt: SystemPromptComponent[] = [];
       let toolInventory: ToolInventoryEntry[] = [];
       if (mainJsonlPath && usage.availability === "events-present") {
         const extras = await buildAnalyzeModeExtras(usage.envelopes, mainJsonlPath);
         ({ systemPrompt, toolInventory } = extras);
         invokedToolNamesByTurn = placeByStoreIndex(extras.invokedToolNamesByTurn, usage.alignment);
+        // D3: the detail read streams main.jsonl again with the audit projector.
+        toolCallsByTurn = placeByStoreIndex(await readToolCallRecordsByLogTurn(mainJsonlPath), usage.alignment);
       }
 
       return {
@@ -222,6 +227,7 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader, R
           mainJsonlAvailability: usage.availability,
           turnUsages: usage.turnUsages,
           invokedToolNamesByTurn,
+          toolCallsByTurn,
           systemPrompt,
           toolInventory,
           subagentRuns: usage.attribution,

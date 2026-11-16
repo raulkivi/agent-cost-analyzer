@@ -6,6 +6,7 @@ import {
   type SubagentRunUsage,
   type SystemPromptComponent,
   type TokenCount,
+  type ToolCallRecord,
   type ToolInventoryEntry,
   type TurnUsage,
 } from "@agent-cost-analyzer/domain";
@@ -534,6 +535,80 @@ describe("buildSession", () => {
       ["manage_todo_list", []],
       ["manage_todo_list", []],
     ]);
+  });
+
+  describe("tool calls from debug-log spans (step 10.20, D3)", () => {
+    const spanCalls: ToolCallRecord[] = [
+      { id: "s1", name: "read_file", kind: "file-read", argsSummary: "src/a.ts", outcome: { status: "success" }, durationMs: 12 },
+      { id: "s2", name: "read_file", kind: "file-read", argsSummary: "src/gone.ts", outcome: { status: "canceled" } },
+      { id: "s3", name: "manage_todo_list", kind: "other", argsSummary: "", outcome: { status: "success" } },
+    ];
+    const build = (toolCallsByTurn: ToolCallRecord[][]) =>
+      buildSession({ sessionRow, turnRows, fileRows, mainJsonlAvailability: "missing", toolCallsByTurn });
+
+    it("lists the span records with outcome and duration, one per span, in log order", () => {
+      const calls = build([spanCalls, []]).turns[0].toolCalls;
+
+      expect(calls.map((call) => [call.id, call.outcome?.status])).toEqual([
+        ["s1", "success"],
+        ["s2", "canceled"],
+        ["s3", "success"],
+      ]);
+      expect(calls[0].durationMs).toBe(12);
+    });
+
+    it("puts the session_files paths on the first span of the same tool, keeping the span's own summary", () => {
+      const calls = build([spanCalls, []]).turns[0].toolCalls;
+
+      expect(calls[0].filesTouched).toEqual(["src/a.ts", "src/b.ts"]);
+      expect(calls[0].argsSummary).toBe("src/a.ts");
+      expect(calls[1].filesTouched).toBeUndefined();
+    });
+
+    it("falls back to the file paths as summary for a span with none", () => {
+      const calls = build([[{ name: "read_file", argsSummary: "", outcome: { status: "success" } }], []]).turns[0].toolCalls;
+
+      expect(calls[0].argsSummary).toBe("src/a.ts, src/b.ts");
+    });
+
+    it("keeps a file-only record for a tool that has files but no span", () => {
+      const calls = build([[spanCalls[2]], []]).turns[0].toolCalls;
+
+      expect(calls.map((call) => call.name)).toEqual(["read_file", "manage_todo_list"]);
+      expect(calls[0].outcome).toBeUndefined();
+    });
+
+    it("keeps every record's token count explicitly unavailable", () => {
+      for (const call of build([spanCalls, []]).turns[0].toolCalls) {
+        expect(call.tokenCount).toEqual({ known: false, reason: TOOL_CALL_TOKEN_COUNT_UNAVAILABLE_REASON });
+      }
+    });
+
+    it("never shows fewer calls than the name list: an empty span read leaves the names standing", () => {
+      const session = buildSession({
+        sessionRow,
+        turnRows,
+        fileRows: [],
+        mainJsonlAvailability: "missing",
+        invokedToolNamesByTurn: [["read_file", "manage_todo_list"], []],
+        toolCallsByTurn: [[], []],
+      });
+
+      expect(session.turns[0].toolCalls.map((call) => call.name)).toEqual(["read_file", "manage_todo_list"]);
+    });
+
+    it("prefers spans over the name list for a turn that has both", () => {
+      const session = buildSession({
+        sessionRow,
+        turnRows,
+        fileRows,
+        mainJsonlAvailability: "missing",
+        invokedToolNamesByTurn: [["read_file", "read_file", "read_file"], []],
+        toolCallsByTurn: [[spanCalls[0]], []],
+      });
+
+      expect(session.turns[0].toolCalls).toHaveLength(1);
+    });
   });
 
   it("populates session.systemPrompt and session.toolInventory from the passed-in breakdown/inventory", () => {

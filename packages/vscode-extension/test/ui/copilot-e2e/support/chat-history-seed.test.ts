@@ -171,15 +171,17 @@ describe("seedChatHistory", () => {
     expect(comparison.entries.every((entry) => entry.total.value !== null && entry.total.value > 0)).toBe(true);
   });
 
-  it("gives the audit views tool calls in every session, with outcomes Copilot doesn't record", async () => {
+  it("gives the audit views tool calls in every session, with the outcomes the debug-log spans record", async () => {
     const { userDataDir, copilotHome, history } = seeded({ existingStore: false });
     const mcp = await serverOver(userDataDir, copilotHome);
 
-    const audit = await call<{ totals: { toolCalls: number; unknown: number } }>(mcp, "get_session_audit", { sessionId: history.sessionIds[0] });
+    const audit = await call<{ totals: { toolCalls: number; succeeded: number; unknown: number } }>(mcp, "get_session_audit", { sessionId: history.sessionIds[0] });
     const rollup = await call<{ sessionCount: number; daily: unknown[] }>(mcp, "get_audit_rollup", { since: history.periods.last90Days.since });
 
     expect(audit.totals.toolCalls).toBeGreaterThan(0);
-    expect(audit.totals.unknown).toBe(audit.totals.toolCalls);
+    // Step 10.20 (D3): each span's status gives its outcome.
+    expect(audit.totals.succeeded).toBe(audit.totals.toolCalls);
+    expect(audit.totals.unknown).toBe(0);
     expect(rollup.sessionCount).toBe(history.sessionIds.length);
     expect(rollup.daily.length).toBeGreaterThanOrEqual(4);
   });
