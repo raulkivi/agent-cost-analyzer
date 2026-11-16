@@ -105,6 +105,10 @@ function toRequest(method: ApiMethodName, params: unknown): HttpRequest {
     }
     case "getSavingsReport": // { since?, until?, provider?, pricing?, includeSimulated? }
       return { url: `/api/savings${queryString(p)}` };
+    case "getMonthlyAllowance":
+      return { url: "/api/monthly-allowance" };
+    case "setMonthlyAllowance": // { settings }: the whole settings object
+      return { url: "/api/config/monthly-allowance", put: p.settings };
     case "getStatement": // { projectId, period, provider?, limit? }
       return { url: `/api/statements${queryString(p)}` };
     case "issueStatement": // { projectId, period }: JSON only (threat model)
