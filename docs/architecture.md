@@ -1,6 +1,6 @@
 # Architecture: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 ## 1. Purpose & scope
 
@@ -1255,7 +1255,7 @@ this slice:
 - **Debug-log turns without a store row (fix, 2026-11-05).** The store can
   also lag the log: a turn that was interrupted, or still running when the
   store was read, has a `user_message` and billed `llm_request`s in
-  `main.jsonl` but no `turns` row (seen on real data: 3 requests, 11.22 AI
+  `main.jsonl` but no `turns` row (seen on real data: 3 requests with billed AI
   Credits, no row). Such a turn is part of the session: `buildSession` adds
   it at its aligned index with its usage and tool calls, empty text and
   `textUnavailableReason` (`STORE_TURN_MISSING_REASON`), and

@@ -1,6 +1,6 @@
 # Savings report: ranked, quantified fixes
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 **Status: Increment 2 built 2026-11-14, 23 of 23 tasks (SR18 boards approved, SR19 `get_savings_report` in PR #275, SR20 U18 view in PR #278, SR21 U18 specs in PR #281, SR22 review and docs in PR #285, §17); its exit check (§14) passed on the owner's logs 2026-11-14 and the owner signed it off the same day (exit criterion met); ships in extension 0.14.0 and app 0.15.0. Increment 1 built (SR0-SR17, 2026-11-13); owner decisions D1-D12 accepted 2026-11-12, D13-D15 answered 2026-11-14; Increment 1 exit criterion met 2026-11-14 (owner sign-off on the automated check, §14); the owner approved the docs 2026-11-14; ships in app 0.14.0 and extension 0.12.0; Increment 2 not started.** Phase 16 in
 [implementation-plan.md](../implementation-plan.md) (owner decision D9).
@@ -428,8 +428,8 @@ keeps in its own settings file is navigation state).
 
 **Met for Increment 1, 2026-11-14:** the owner signed off on the automated
 check below, run on their logs (16 October to 14 November): the idle-expiry
-row (35 breaks in 24 sessions, up to $89.89) and the unused-tool row
-(`Workflow`, $3.28 to $65.58) equal the independent oracle within 1e-13,
+row (35 breaks in 24 sessions) and the unused-tool row
+equal the independent oracle within 1e-13,
 the two products' Copilot reports are equal, and 1,420 fingerprints of
 settings, config and session files are unchanged. `get_savings_report`
 (Increment 2) is checked when it exists. The check found and fixed a log

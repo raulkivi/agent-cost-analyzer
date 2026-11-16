@@ -1,6 +1,6 @@
 # Read VS Code Stable and Insiders together (1.0 C16)
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **post-1.0 plan; 1.0 takes VB1 only (owner 2026-11-14), done in PR #302.** Decisions D1–D11 stay open until the post-1.0 work starts. 1.0 criterion C16 (owner, 2026-11-14), found while planning MA13 ([monthly-allowance-standalone.md](monthly-allowance-standalone.md) §3.2, D5). No code before the owner approves this plan.
 
@@ -113,7 +113,7 @@ Read-only Node script with `node:sqlite` in read-only mode, kept outside the rep
 - Shared Copilot home: 101 `~/.copilot/session-state` folders.
 - Id overlaps between variants: 0 classic, 0 debug-log, 0 Agent Host, 0 classic-vs-Agent-Host. Classic ids are all UUIDs.
 - Other forks (`Code - OSS`, `VSCodium`, `Cursor`, `Windsurf`): none present. `code` (Stable CLI) is not on the PATH; `code-insiders` is.
-- Product today (installed MCP server, `get_cost_rollup provider=vscode limit=500`): 178 sessions (115 classic, 63 Agent Host), 785 turns, 14,207.88 billed AI Credits known on 566 of 785 turns. All from Insiders.
+- Product today (installed MCP server, `get_cost_rollup provider=vscode limit=500`): 178 sessions (115 classic, 63 Agent Host), 785 turns, billed AI Credits known on 566 of 785 turns. All from Insiders.
 
 Findings:
 

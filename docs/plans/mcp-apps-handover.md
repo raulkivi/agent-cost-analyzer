@@ -1,6 +1,6 @@
 # Phase 12 (MCP Apps): handover record, 2026-11-10 to 2026-11-12
 
-**Last changed:** 2026-11-12 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Phase 12 is done. The design, the tasks and the exit criteria are in [mcp-apps.md](mcp-apps.md). The schedule and the status are in [implementation-plan-gantt.md](../implementation-plan-gantt.md). This page keeps the Phase 12 record: the PRs, the owner's decisions, the implementation facts and how the work ran. The current state of the repository, the release procedure, open owner decisions and next candidates are in [session-handover.md](../session-handover.md).
 
@@ -9,7 +9,7 @@ Phase 12 is done. The design, the tasks and the exit criteria are in [mcp-apps.m
 - **Phase 12 is complete** (36 of 36 tasks).
 - **MVP released 2026-11-10:** extension 0.4.0 (stable) and app 0.10.0 (#192), after A16's owner checks passed (#191).
 - **Increment 2 released 2026-11-11:** extension 0.6.0 (tag `ext-v0.6.0`, stable, VS Code 1.146 required) and app 0.11.0 (tag `app-v0.11.0`). The extension passed the real-Copilot gate on `964e9a8` (22/22 required tests). A24 is replaced by the automated checks of step 10.17 ([release-ui-gate.md](release-ui-gate.md)). Extension 0.5.0 (pre-release, #197) is superseded.
-- **Increment 3 released 2026-11-12:** extension 0.8.0 (stable; VS Code Marketplace, Open VSX and GitHub, tag `ext-v0.8.0`) and app 0.12.0 (tag `app-v0.12.0`), both on `dacf3ed`. The real-Copilot gate passed 33 of 33 required tests (1.54 AI Credits).
+- **Increment 3 released 2026-11-12:** extension 0.8.0 (stable; VS Code Marketplace, Open VSX and GitHub, tag `ext-v0.8.0`) and app 0.12.0 (tag `app-v0.12.0`), both on `dacf3ed`. The real-Copilot gate passed 33 of 33 required tests.
 - **Step 10.17 done 2026-11-11** (#202–#212): every pre-release UI check is a wdio or Playwright spec; a ruleset on `main` requires 9 CI checks; an extension release needs a passing real-Copilot run recorded as a git note on the tagged commit. Docs-only PRs skip the heavy jobs (#221).
 
 ## 2. PRs in Phase 12

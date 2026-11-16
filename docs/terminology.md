@@ -1,6 +1,6 @@
 # AI-Assisted Coding Terminology
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 A glossary of terms used when working with AI coding assistants (GitHub
 Copilot, Claude Code, Cursor, and similar tools), sorted alphabetically.
@@ -708,7 +708,7 @@ each run's AI Credits into the turn that started it, so the turn and
 session totals include them. Run figures stay on the run's own model.
 
 *Example: a turn that called `runSubagent` on `claude-haiku-4.5` shows the
-run's 42.06 AI Credits inside the turn's total, with the run listed in the
+run's 12.50 AI Credits inside the turn's total, with the run listed in the
 Explanation panel.*
 
 ## Sycophancy

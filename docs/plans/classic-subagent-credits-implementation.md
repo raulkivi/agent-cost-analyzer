@@ -1,6 +1,6 @@
 # AI Credits of classic Copilot Chat subagents: implementation plan (step 10.19)
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **done 2026-11-13 (SA0-SA18; §12 exit criterion met, owner sign-off 2026-11-13); the release open; owner decisions accepted 2026-11-12 (every recommendation)**. Turns the design in [classic-subagent-credits.md](classic-subagent-credits.md) (status "proposed", #124) into a numbered step. The owner decisions in §9 are accepted.
 
@@ -10,7 +10,7 @@ Status: **done 2026-11-13 (SA0-SA18; §12 exit criterion met, owner sign-off 202
 - Each run writes its own debug log next to the parent's `main.jsonl`; its `llm_request`s and their `copilotUsageNanoAiu` are only in that file.
 - `VscodeLogProvider` (`packages/server/src/data-sources/log-providers/vscode/vscode-log-provider.ts`) opens only `<session>/main.jsonl` (`resolveMainJsonlPath` in `session-log-path.ts`), so that spend is in no total.
 - The totals look complete but are not. This breaks constraint 6 (architecture.md §2): a total must never be silently partial.
-- Measured on the owner's machine on 2026-11-05 (design §1.1): 177.64 AI Credits missing over 8 sessions, up to 117 % of a session's counted total; in 8 of 10 affected parent turns the subagent cost more than the turn.
+- Measured on the owner's machine on 2026-11-05 (design §1.1): AI Credits missing over 8 sessions, in the worst one more than half of its true total; in 8 of 10 affected parent turns the subagent cost more than the turn.
 - Those figures are 7 days old and come from logs dated 2026-08-08 to 2026-10-01. Retention may have removed some since (unverified; SA0 re-measures).
 
 ## 2. Goals and non-goals
@@ -182,7 +182,7 @@ A property test asserts: for any row, Σ lines = row on every figure; per-model 
 
 The mock-ups (SA0b) settle the exact layout. Proposed:
 
-- Turns table: a small "subagent" glyph after the AI Credits value; the tooltip and the accessible name say "incl. 42.06 AI Credits from 1 subagent run (Explore)".
+- Turns table: a small "subagent" glyph after the AI Credits value; the tooltip and the accessible name say "incl. 12.50 AI Credits from 1 subagent run (Explore)".
 - Explanation panel: a "Subagents this turn" table with label, agent, model, requests, AI Credits, and "matched by time" when `attribution` is `timestamp`.
 - KPI tile: "incl. 54.65 from 3 subagent runs" under the session's AI Credits.
 - Sessions view tooltip: the same line under the cost.
@@ -327,23 +327,12 @@ Script: `packages/server/scripts/measure-subagent-spend.mts` (pure helpers in `s
 - **Layout:** unchanged from design §2. `runSubagent-<agent>-<id>.jsonl` and `searchSubagent-<id>.jsonl` sit next to `main.jsonl`; `child_session_ref.attrs.childLogFile`; `llm_request` attrs `copilotUsageNanoAiu`, `model`, `inputTokens`, `outputTokens`, `debugName`. §4 needs no change.
 - **Where:** `Code` has no debug logs; all are in `Code - Insiders` (28 `workspaceStorage` roots, 1 `globalStorage` root).
 - **Sessions:** 259 with `main.jsonl`; 13 have subagent files (max 3 per session); 17 files: 12 `runSubagent`, 5 `searchSubagent`; 191 requests, all with numeric AI Credits.
-- **Baseline:** 177.64 AI Credits missing, all from `runSubagent`; `searchSubagent` runs are 0.00 (`copilot-search-a`). Main totals count 6856.53. Per-session figures equal design §1.1.
+- **Baseline:** AI Credits missing, all from `runSubagent`; `searchSubagent` runs are 0. Per-session figures equal design §1.1.
 - **Edge cases seen:** dangling refs 0, orphan files 0, nested refs 0, subagent-named requests inside `main.jsonl` 0.
-- **Models:** `claude-haiku-4.5` 155 requests, `gpt-5.6-luna` 21, `copilot-search-a` 15.
 - **Versions:** every classic session with a subagent tool call has a ref and a file (Aug–Sep 2026, Copilot Chat 0.60–0.69). Sessions 2026-03 to 2026-07 (0.43–0.60) have none. Newest subagent file 2026-09-29; retention removed none since 2026-11-05.
 - **D15:** not triggered; logs with the gap remain.
 
-| Session | Date | Counted | Missing | Runs |
-|---|---|---|---|---|
-| a3aca176 | 2026-09-21 | 46.53 | 54.65 | 3 run |
-| ec9857ae | 2026-09-12 | 99.42 | 42.06 | 2 run |
-| 94dfedf7 | 2026-09-23 | 83.08 | 29.78 | 2 run |
-| 739434f5 | 2026-09-21 | 172.54 | 23.83 | 1 run |
-| f98af48a | 2026-09-29 | 231.22 | 13.59 | 1 run |
-| 69477d27 | 2026-09-21 | 38.58 | 8.33 | 1 run |
-| 466d29f8 | 2026-09-12 | 26.69 | 4.03 | 1 run |
-| 8a80d1cf | 2026-09-12 | 9.05 | 1.38 | 1 run |
-| 19e7f1ab, 4e20fad3, 65c7bd11, 2dc18e24, c921b7b9 | 2026-08-08/09 | 44.99–460.69 | 0.00 | 1 search each |
+Per-session figures are not recorded in this public doc: 8 sessions have a missing amount, 5 `searchSubagent`-only sessions miss 0.
 
 ### SA18 suite (automated real-data check)
 
@@ -353,8 +342,8 @@ Run from the repo root, with the logs on this machine: `npm run test:real-data` 
 - **Actual:** the extension composition (`createExtensionApiService`, `createCopilotMcpServices`) per user-data dir, MCP over an in-memory client.
 - **Asserts, per session with subagent files:** list AI Credits = detail = counted + missing (±0.01); `get_session_cost` total = counted + missing, its `subagents` total = missing and its runs = files; searchSubagent-only sessions miss 0.00 and total = counted; total minus the subagent share = counted; `byModel` sums to the total and credits at least each run model's subagent share.
 - **Aggregate:** the sum of missing over all sessions = SA0's grand total; `get_cost_rollup` for 2026-08-01..2026-10-01 = the sum of the session totals in that range.
-- **Result 2026-11-13 (owner sign-off):** 10 of 10 pass. SA0: 259 sessions, 13 with subagent files, 177.64 AI Credits missing; the server adds exactly 177.64, and every listed session matches within 0.01. `get_cost_rollup` 2026-08-01..2026-10-01: 7803.96 on both sides (120 sessions).
-- **Findings while building it:** the server lists only sessions with a session-store row, so 4e20fad3 (searchSubagent only, missing 0.00) is not listed; the suite requires an unlisted session to miss 0.00. A list summary is unknown when any turn's credits are, while the rollup sums the known turns, so for list-unknown sessions the rollup is compared with `get_session_cost`'s known-turn total.
+- **Result 2026-11-13 (owner sign-off):** 10 of 10 pass. SA0: 259 sessions, 13 with subagent files; the server adds exactly the oracle's missing amount, and every listed session matches within 0.01. `get_cost_rollup` 2026-08-01..2026-10-01: equal on both sides (120 sessions).
+- **Findings while building it:** the server lists only sessions with a session-store row, so one searchSubagent-only session (missing 0) is not listed; the suite requires an unlisted session to miss 0.00. A list summary is unknown when any turn's credits are, while the rollup sums the known turns, so for list-unknown sessions the rollup is compared with `get_session_cost`'s known-turn total.
 
 ## 15. Deviations from the design while building (SA17)
 

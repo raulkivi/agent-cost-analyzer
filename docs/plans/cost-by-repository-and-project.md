@@ -1,6 +1,6 @@
 # Phase 15: Cost by repository and project, price history, billing and estimates
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **In progress**: steps 15.0–15.13 are done (see §14.1). The owner accepted
 every recommended decision on 2026-11-05 ([§13](#13-decisions)). The UI
@@ -2273,28 +2273,23 @@ pending the owner's sign-off.**
 
 - Read: Claude Code 222 sessions and 3,004 turns (1 live file left out); pi 261
   files and 465 turns (no forks); Copilot Chat's classic store 115 sessions and
-  606 turns; the Agent Host 63 sessions and 179 turns, 8,010.44 AI Credits on
-  172 of them; 134 repositories, 1 unattributed turn.
+  606 turns; the Agent Host 63 sessions and 179 turns (172 sessions with a
+  cost); 134 repositories, 1 unattributed turn.
 - Copilot (classic and Agent Host): 23 repositories, 31 repository-months × 4
-  bases, 14,207.88 AI Credits preferred (6,197.44 classic + 8,010.44 Agent
-  Host): 0 differences. Claude Code: 34 repositories, 40 repository-months × 4
-  bases, $1,615.67 priced (API-equivalent): 0 differences. pi: 88
-  repositories, reported cost on 465 turns ($0.00, local models), priced on
-  none: 0 differences.
-- Project A (2 repositories): 2,390 turns in 246 sessions over 4 months,
-  11,701.92 AI Credits + $1,209.12, 2,106 turns known. Project B: 1,009 turns
-  in 86 sessions, 1,212.38 AI Credits + $332.84, 949 known. MCP equal to the
-  Dashboard and the oracle for both, and for every repository.
-- `explain_cost_change` for project A, October to November: USD $991.83 to
-  $217.29, change −$774.55 = usage −$723.00 + price $0.45 + mix −$51.99; AI
-  Credits (priced) 42.17 to 1.36, change −40.81 = usage −30.04 + price 0.00 +
-  mix −10.77; both sums exact to 0.
+  bases, the preferred totals matched the oracle: 0 differences. Claude Code:
+  34 repositories, 40 repository-months × 4 bases, priced (API-equivalent)
+  totals matched: 0 differences. pi: 88 repositories, reported cost on 465
+  turns (local models), priced on none: 0 differences.
+- Project A (2 repositories): 2,390 turns in 246 sessions over 4 months, 2,106
+  turns known. Project B: 1,009 turns in 86 sessions, 949 known. MCP equal to
+  the Dashboard and the oracle for both, and for every repository.
+- `explain_cost_change` for project A, October to November: in both currencies
+  the change equaled usage + price + mix, both sums exact to 0.
 - `get_price_changes`: 8 documented changes, one per price-book version that
   follows an earlier one.
-- Statement for project A, October: 9 lines, 5,244.21 AI Credits + $991.83,
-  coverage 1,169 of 1,264 turns as the oracle (95 turns listed as unknown);
-  after the contract price the issued copy is unchanged and the re-run's diff
-  is $991.83, as the oracle's.
+- Statement for project A, October: 9 lines, coverage 1,169 of 1,264 turns as
+  the oracle (95 turns listed as unknown); after the contract price the issued
+  copy is unchanged and the re-run's diff equals the oracle's.
 - Unknown never 0: 15,654 totals in 41 answers, 0 problems. Privacy: 19 MCP
   answers, 1,974 prompt openings, 0 found outside session titles; 5 of the
   statement's 123 session titles hold a prompt's opening, all Agent Host.
@@ -2332,12 +2327,12 @@ The Copilot Chat reader keeps session-store sessions whose agent name is
 ([agentic-coding-explained.md](../agentic-coding-explained.md) §18.2). On the
 owner's machine 4 sessions carry another agent name:
 
-| Created | Agent name | Store turns | Prompts in log | Requests | AI Credits in log |
-|---|---|---:|---:|---:|---:|
-| 2026-08-01 | panel/editAgent | 1 | 0 | 0 | 0.00 |
-| 2026-08-08 | panel/editAgent | 1 | 2 | 26 | 44.99 |
-| 2026-09-12 | summarizeConversationHistory | 15 | 15 | 107 | 37.01 |
-| 2026-09-29 | summarizeConversationHistory | 4 | 4 | 30 | 753.85 |
+| Created | Agent name | Store turns | Prompts in log | Requests |
+|---|---|---:|---:|---:|
+| 2026-08-01 | panel/editAgent | 1 | 0 | 0 |
+| 2026-08-08 | panel/editAgent | 1 | 2 | 26 |
+| 2026-09-12 | summarizeConversationHistory | 15 | 15 | 107 |
+| 2026-09-29 | summarizeConversationHistory | 4 | 4 | 30 |
 
 **Findings.**
 
@@ -2351,8 +2346,8 @@ owner's machine 4 sessions carry another agent name:
 - No double counting found: no response id appears in another session's log;
   no other request has the same time (±2 s) and token counts; 1 of 21 prompts
   was typed twice, each with its own requests; none is an Agent Host session.
-- Totals: 835.85 AI Credits in the logs against 824.63 on store turns; the
-  2026-08-08 session has 2 log prompts for 1 store turn.
+- The log's AI Credits total is slightly higher than the store turns' total;
+  the 2026-08-08 session has 2 log prompts for 1 store turn.
 
 **Recommendation.** Count them as Copilot Chat spend, selecting store sessions
 by surface (host type `vscode`) instead of by agent name.
