@@ -125,7 +125,7 @@ describe("monthly allowance API", () => {
   });
 
   describe("PUT", () => {
-    const put = (app: ReturnType<typeof buildApp>, body: unknown) => request(app).put("/api/monthly-allowance").send(body as object);
+    const put = (app: ReturnType<typeof buildApp>, body: unknown) => request(app).put("/api/config/monthly-allowance").send(body as object);
     const valid = { aiCredits: 1000, resetDay: 5, warnAtPercent: 90 };
 
     it("writes the settings, keeps other keys and answers the fresh figures", async () => {
@@ -167,7 +167,7 @@ describe("monthly allowance API", () => {
     it("400 and leaves the stored value for a form body", async () => {
       seed({ monthlyAllowance: valid });
       const before = readFileSync(settingsFile(), "utf8");
-      const response = await request(buildApp()).put("/api/monthly-allowance").type("form").send("aiCredits=5&resetDay=1&warnAtPercent=80");
+      const response = await request(buildApp()).put("/api/config/monthly-allowance").type("form").send("aiCredits=5&resetDay=1&warnAtPercent=80");
       expect(response.status).toBe(400);
       expect(readFileSync(settingsFile(), "utf8")).toBe(before);
     });

@@ -79,7 +79,7 @@ export function createApp(options: CreateAppOptions = {}): Express {
     res.json(await api.getMonthlyAllowance());
   }));
 
-  app.put("/api/monthly-allowance", route(async (req, res) => {
+  app.put("/api/config/monthly-allowance", route(async (req, res) => {
     res.json(await api.setMonthlyAllowance(req.body));
   }));
 
