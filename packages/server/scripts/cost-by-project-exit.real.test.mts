@@ -65,6 +65,7 @@ import { FIXTURE_VENDOR_PROFILES_DIR } from "../src/test-support/vendor-profiles
 import {
   BASES,
   addTurn,
+  agentHostCatalogSessions,
   agentHostTurns,
   claudeCodeTurns,
   copilotClassicTurns,
@@ -225,11 +226,10 @@ function copilotTurnsOf(raw: CopilotRaw["sessions"][number]): ReturnType<typeof 
 }
 
 // ---- VS Code's Agent Host, read raw -------------------------------------------
-// The catalog (User/globalStorage/agent-host.db), each session's
+// The catalog (User/globalStorage/agent-host.db; its sessions under either
+// URI scheme, agentHostCatalogSessions), each session's
 // agentSessionData/<id>/session.db and the Copilot CLI's event log, all
 // opened read-only.
-
-const AGENT_HOST_PREFIX = "copilotcli:/";
 
 interface AgentHostRaw {
   sessions: ReturnType<typeof agentHostTurns>[];
@@ -270,9 +270,7 @@ function readAgentHostRaw(userData: string | null, now: number): AgentHostRaw {
     const tombstones = new Set((catalog.prepare("SELECT key FROM metadata WHERE value = 'true'").all() as unknown as { key: string }[]).map((r) => r.key));
     const rows = catalog.prepare("SELECT session_uri, payload, start_time FROM sessions_v2 WHERE provider = 'copilotcli'").all() as unknown as { session_uri: string; payload: string | null; start_time: number }[];
     const chats = catalog.prepare("SELECT owner_session_uri, provider_data FROM chats_v2 ORDER BY chat_order IS NULL, chat_order, rowid").all() as unknown as { owner_session_uri: string; provider_data: unknown }[];
-    for (const row of rows) {
-      const id = row.session_uri.startsWith(AGENT_HOST_PREFIX) ? row.session_uri.slice(AGENT_HOST_PREFIX.length) : "";
-      if (id === "" || !/^[0-9A-Za-z][0-9A-Za-z-]*$/.test(id) || tombstones.has(`sessionTombstone:${row.session_uri}`)) continue;
+    for (const { id, row } of agentHostCatalogSessions(rows, tombstones)) {
       const storePath = path.join(userData!, "agentSessionData", id, "session.db");
       if (!existsSync(storePath)) continue; // no turns to count
       note(storePath);

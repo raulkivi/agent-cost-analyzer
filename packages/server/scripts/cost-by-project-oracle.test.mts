@@ -9,6 +9,8 @@ import path from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import {
   addTurn,
+  agentHostCatalogIdOf,
+  agentHostCatalogSessions,
   agentHostTurns,
   alignLogTurns,
   claudeCodeTurns,
@@ -371,6 +373,46 @@ describe("copilotClassicTurns (store turns, billed from the aligned log turn and
     });
     expect(turns[1]).toMatchObject({ billed: null, parts: [{ requests: 1 }] });
     expect(turns[2]).toMatchObject({ at: "2026-10-01T00:00:00Z", billed: null, parts: [] });
+  });
+});
+
+describe("agentHostCatalogIdOf (a Copilot CLI catalog row's session id)", () => {
+  const ID = "3f2a9c10-1111-4a1b-8c01-aaaaaaaaaaa1";
+
+  it("is the path after copilotcli:/ (the storage uri) or ahp-session:/ (the runtime uri)", () => {
+    expect(agentHostCatalogIdOf(`copilotcli:/${ID}`)).toBe(ID);
+    expect(agentHostCatalogIdOf(`ahp-session:/${ID}`)).toBe(ID);
+  });
+
+  it("is null under another scheme, without the slash, or for an id that is no one safe path segment", () => {
+    for (const uri of [`claude:/${ID}`, `ahp-chat:/${ID}`, `copilotcliX:/${ID}`, `copilotcli:${ID}`, "copilotcli:/", "ahp-session:/", "ahp-session:/a/b", "copilotcli:/../x", "copilotcli:/-a", ID]) {
+      expect(agentHostCatalogIdOf(uri), uri).toBeNull();
+    }
+  });
+});
+
+describe("agentHostCatalogSessions (one session per id, tombstones under either uri)", () => {
+  const row = (session_uri: string, start_time = 1) => ({ session_uri, start_time });
+
+  it("keeps each accepted row with its id, in the rows' order, and drops the rest", () => {
+    const rows = [row("ahp-session:/b", 2), row("copilotcli:/a", 1), row("claude:/c"), row("copilotcli:/")];
+    expect(agentHostCatalogSessions(rows, new Set())).toEqual([
+      { id: "b", row: rows[0] },
+      { id: "a", row: rows[1] },
+    ]);
+  });
+
+  it("reads an id cataloged under both uris once, from its copilotcli:/ row", () => {
+    const runtime = row("ahp-session:/a", 9);
+    const storage = row("copilotcli:/a", 1);
+    expect(agentHostCatalogSessions([runtime, storage], new Set())).toEqual([{ id: "a", row: storage }]);
+    expect(agentHostCatalogSessions([storage, runtime], new Set())).toEqual([{ id: "a", row: storage }]);
+  });
+
+  it("drops a session tombstoned under either of its uris", () => {
+    const rows = [row("copilotcli:/a"), row("ahp-session:/b"), row("copilotcli:/c"), row("ahp-session:/c"), row("copilotcli:/d")];
+    const tombstones = new Set(["sessionTombstone:ahp-session:/a", "sessionTombstone:copilotcli:/b", "sessionTombstone:ahp-session:/c", "sessionTombstone:claude:/d"]);
+    expect(agentHostCatalogSessions(rows, tombstones).map((s) => s.id)).toEqual(["d"]);
   });
 });
 

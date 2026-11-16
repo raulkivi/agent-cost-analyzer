@@ -56,19 +56,36 @@ export function copilotCliFixtureTurnRefs(name: CopilotCliFixtureName): AgentHos
   return turnRowsOf(name).map((row) => ({ turnId: row.id, eventId: row.event_id }));
 }
 
+const storageUriOf = (name: CopilotCliFixtureName) => `copilotcli:/${COPILOT_CLI_FIXTURE_SESSION_IDS[name]}`;
+
+// The catalog uri of each fixture session: its storage uri, copilotcli:/<id>,
+// or for a session in `runtimeKeyed` the Agent Host Protocol runtime uri,
+// ahp-session:/<id>, that some VS Code Insiders builds keyed the session's
+// catalog row and chats by.
+function catalogUris(runtimeKeyed: readonly CopilotCliFixtureName[]): Map<string, string> {
+  return new Map(
+    FIXTURE_NAMES.map((name) => [
+      storageUriOf(name),
+      runtimeKeyed.includes(name) ? `ahp-session:/${COPILOT_CLI_FIXTURE_SESSION_IDS[name]}` : storageUriOf(name),
+    ]),
+  );
+}
+
 // Each fixture session as a catalog row, newest last, cloned from the 10.13
 // catalog fixture's first session. With `now` the sessions start in the
 // minutes just before it (so they fall in the current billing period, step
 // 10.21 MA9); without, at the catalog fixture's fixed start.
-function catalogRows(now?: Date, spacingMs = 60_000): AgentHostTableRows {
+function catalogRows(now: Date | undefined, spacingMs: number, runtimeKeyed: readonly CopilotCliFixtureName[]): AgentHostTableRows {
   const template = readAgentHostFixtureRows("catalog-rows.json").sessions_v2[0]!;
+  const uris = catalogUris(runtimeKeyed);
+  const uriOf = (storageUri: unknown) => uris.get(storageUri as string) ?? storageUri;
   return {
     sessions_v2: FIXTURE_NAMES.map((name, index) => ({
       ...template,
-      session_uri: `copilotcli:/${COPILOT_CLI_FIXTURE_SESSION_IDS[name]}`,
+      session_uri: uriOf(storageUriOf(name)),
       start_time: now ? now.getTime() - (FIXTURE_NAMES.length - index) * spacingMs : (template.start_time as number) + index * 60_000,
     })),
-    chats_v2: copilotCliFixtureRows.chats_v2,
+    chats_v2: copilotCliFixtureRows.chats_v2.map((chat) => ({ ...chat, owner_session_uri: uriOf(chat.owner_session_uri) })),
   };
 }
 
@@ -84,9 +101,15 @@ function sessionRows(name: CopilotCliFixtureName): AgentHostTableRows {
   return { turns, turn_usage: turns.map((turn) => ({ turn_id: turn.id, usage })) };
 }
 
-// `spacingMs` is the gap between the sessions' starts (and `now`) when `now` is given.
-export function writeCopilotCliAgentHostStores(userDataDir: string, now?: Date, spacingMs = 60_000): void {
-  writeAgentHostCatalog(userDataDir, catalogRows(now, spacingMs));
+// `spacingMs` is the gap between the sessions' starts (and `now`) when `now`
+// is given; `runtimeKeyed` names the sessions cataloged under ahp-session:/.
+export function writeCopilotCliAgentHostStores(
+  userDataDir: string,
+  now?: Date,
+  spacingMs = 60_000,
+  runtimeKeyed: readonly CopilotCliFixtureName[] = [],
+): void {
+  writeAgentHostCatalog(userDataDir, catalogRows(now, spacingMs, runtimeKeyed));
   for (const name of FIXTURE_NAMES) {
     writeAgentSessionDb(userDataDir, COPILOT_CLI_FIXTURE_SESSION_IDS[name], sessionRows(name));
   }

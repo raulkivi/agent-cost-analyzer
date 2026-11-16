@@ -670,6 +670,34 @@ export function copilotClassicTurns(input: {
 
 // ------------------------------------------------- VS Code Agent Host reader
 
+// A Copilot CLI session's catalog row (sessions_v2, provider 'copilotcli') is
+// keyed by its storage URI, copilotcli:/<id>, or, in a run of VS Code
+// Insiders builds, by the Agent Host Protocol runtime URI, ahp-session:/<id>
+// (VS Code's sessionStorageIdentity metadata pairs the two). The id is the
+// path after either scheme, when that is one safe path segment.
+const AGENT_HOST_SCHEMES = ["copilotcli", "ahp-session"] as const;
+
+export function agentHostCatalogIdOf(sessionUri: string): string | null {
+  const match = /^(?:copilotcli|ahp-session):\/([0-9A-Za-z][0-9A-Za-z-]*)$/.exec(sessionUri);
+  return match ? match[1]! : null;
+}
+
+// The catalog's sessions, one per id: both URIs name one session, so an id
+// cataloged under both is read from its copilotcli:/ row, and a tombstone
+// (a `sessionTombstone:<uri>` key whose value is 'true') under either URI
+// deletes it. Rows keep their given order.
+export function agentHostCatalogSessions<R extends { session_uri: string }>(rows: readonly R[], tombstoneKeys: ReadonlySet<string>): { id: string; row: R }[] {
+  const chosen = new Map<string, R>();
+  for (const row of rows) {
+    const id = agentHostCatalogIdOf(row.session_uri);
+    if (id === null) continue;
+    const held = chosen.get(id);
+    if (held === undefined || (row.session_uri.startsWith("copilotcli:") && !held.session_uri.startsWith("copilotcli:"))) chosen.set(id, row);
+  }
+  const deleted = (id: string) => AGENT_HOST_SCHEMES.some((scheme) => tombstoneKeys.has(`sessionTombstone:${scheme}:/${id}`));
+  return [...chosen].filter(([id]) => !deleted(id)).map(([id, row]) => ({ id, row }));
+}
+
 export interface AgentHostSession {
   id: string;
   startedAt: string; // the catalog's start_time, ISO

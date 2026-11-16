@@ -114,7 +114,7 @@ async function fromAgentHost(): Promise<
   const row = getAgentHostSessionRow(db, sessionId!);
   if (row === undefined)
     throw new Error(`No local or Agent Host session "${shortId}…" found`);
-  const sdkId = readAgentHostSdkSessionId(db, `copilotcli:/${sessionId}`);
+  const sdkId = readAgentHostSdkSessionId(db, row.sessionUri);
   const logPath =
     sdkId === null
       ? null

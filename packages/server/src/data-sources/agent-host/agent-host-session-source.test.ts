@@ -3,6 +3,7 @@
 import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { sessionSchema, turnInspectorDetailSchema } from "@agent-cost-analyzer/domain";
 import {
@@ -28,7 +29,7 @@ import {
   AGENT_HOST_SESSION_COST_UNAVAILABLE_REASON,
   AGENT_HOST_SESSION_DB_MISSING_REASON,
 } from "../../services/session-enricher/agent-host-session-builder.js";
-import { agentSessionDbPath } from "./agent-host-paths.js";
+import { agentHostDbPath, agentSessionDbPath } from "./agent-host-paths.js";
 import {
   AGENT_HOST_EVENT_LOG_MISSING_REASON,
   AGENT_HOST_EVENT_LOG_NO_HOME_REASON,
@@ -391,6 +392,65 @@ describe("AgentHostSessionSource", () => {
 
         await expect(source({ eventLogs }).readTurnDetail(CLI.normal, 2)).resolves.toBeNull();
         expect(eventLogs.load).not.toHaveBeenCalled();
+      });
+    });
+
+    // Some VS Code Insiders builds keyed a session's catalog row and its chats
+    // by the Agent Host Protocol runtime uri, ahp-session:/<id>, instead of
+    // copilotcli:/<id>; session.db and the event log are found the same way.
+    describe("a session cataloged under its ahp-session:/ uri", () => {
+      const RUNTIME_KEYED = ["normal", "usageRecords", "missingLog"] as const;
+      let runtimeDir: string;
+
+      beforeEach(() => {
+        runtimeDir = mkdtempSync(path.join(tmpdir(), "agent-host-source-ahp-"));
+        writeCopilotCliAgentHostStores(runtimeDir, undefined, undefined, RUNTIME_KEYED);
+      });
+      afterEach(() => {
+        rmSync(runtimeDir, { recursive: true, force: true });
+      });
+
+      const runtimeSource = () => new AgentHostSessionSource({ userDataDir: runtimeDir, copilotHome: COPILOT_CLI_FIXTURE_HOME });
+
+      it("is cataloged under ahp-session:/ in the fixture", () => {
+        const owners = new Set(copilotCliFixtureRows.chats_v2.map((chat) => chat.owner_session_uri));
+        for (const name of RUNTIME_KEYED) expect(owners.has(`copilotcli:/${CLI[name]}`)).toBe(true);
+        const catalog = new DatabaseSync(agentHostDbPath(runtimeDir), { readOnly: true });
+        try {
+          const uris = (catalog.prepare("SELECT session_uri FROM sessions_v2").all() as { session_uri: string }[]).map((row) => row.session_uri);
+          const chatOwners = (catalog.prepare("SELECT owner_session_uri FROM chats_v2").all() as { owner_session_uri: string }[]).map((row) => row.owner_session_uri);
+          for (const name of RUNTIME_KEYED) {
+            expect(uris).toContain(`ahp-session:/${CLI[name]}`);
+            expect(chatOwners).not.toContain(`copilotcli:/${CLI[name]}`);
+          }
+        } finally {
+          catalog.close();
+        }
+      });
+
+      it("lists the same sessions as under copilotcli:/", async () => {
+        const listed = await runtimeSource().listSessions();
+
+        expect(listed.map((session) => session.id)).toContain(CLI.normal);
+        expect(listed).toEqual(await source().listSessions());
+      });
+
+      it.each(RUNTIME_KEYED)("reads the %s session, its turns, request trace and system prompt as under copilotcli:/", async (name) => {
+        const id = CLI[name];
+        const storage = source();
+        const runtime = runtimeSource();
+
+        expect(await runtime.readSession(id)).toEqual(await storage.readSession(id));
+        expect(await runtime.readTurnDetail(id, 0)).toEqual(await storage.readTurnDetail(id, 0));
+        expect(await runtime.readRequestTrace(id)).toEqual(await storage.readRequestTrace(id));
+        expect(await runtime.lookupSystemPromptText(id)).toEqual(await storage.lookupSystemPromptText(id));
+      });
+
+      it("reads the turn text from the Copilot CLI event log its chat names", async () => {
+        const session = (await runtimeSource().readSession(CLI.normal))!;
+
+        expect(session.copilotEventLog).toEqual({ status: "read" });
+        expect(session.turns[0]!.userMessage).toBe("Example prompt one: please list the source files.");
       });
     });
 
