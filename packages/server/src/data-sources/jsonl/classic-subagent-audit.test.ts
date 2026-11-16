@@ -242,6 +242,24 @@ describe("§6 classic rows", () => {
     expect(BEYOND_READ_DEPTH_REASON).toContain("nested subagents beyond the read depth");
   });
 
+  it("a run read in full that made no tool call is listed as read, so the audit shows a known 0", async () => {
+    const dir = copyCase(auditCase("shared-span-id"));
+    const file = path.join(dir, "runSubagent-Explore-call_auditshared1.jsonl");
+    writeFileSync(file, readFileSync(file, "utf8").split("\n").filter((line) => !line.includes('"type":"tool_call"')).join("\n"));
+
+    const audit = await classicSubagentAudit(dir);
+
+    expect(subagentCalls(audit)).toEqual([]);
+    expect(audit.unread).toEqual([]);
+    expect(audit.readRunIdsByLogTurn).toEqual([["call_auditshared1"]]);
+  });
+
+  it("an unread run is never listed as read", async () => {
+    const audit = await classicSubagentAudit(auditCase("missing-log"));
+
+    expect(audit.readRunIdsByLogTurn.flat()).toEqual([]);
+  });
+
   it("row: live run, partial last line: skipped (subagent-tool-calls.test.ts, \"a live run's partial last line\")", async () => {
     const dir = copyCase(auditCase("shared-span-id"));
     const file = path.join(dir, "runSubagent-Explore-call_auditshared1.jsonl");

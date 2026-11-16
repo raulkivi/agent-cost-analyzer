@@ -42,3 +42,35 @@ describe("subagentRunGapSchema", () => {
     expect(turnSchema.parse({ ...turn, subagentRunGaps: [gap] }).subagentRunGaps).toEqual([gap]);
   });
 });
+
+describe("Turn.subagentRunsRead", () => {
+  const base = {
+    index: 0,
+    userMessage: "",
+    assistantResponse: "",
+    toolCalls: [],
+    explanation: "",
+    usage: {
+      uncachedInput: { known: true, value: 1 },
+      cacheWrite: { known: true, value: 0 },
+      cacheRead: { known: true, value: 0 },
+      tool: { known: true, value: 0 },
+      vision: { known: true, value: 0 },
+      reasoning: { known: true, value: 0 },
+      output: { known: true, value: 1 },
+      costAiCredits: { known: true, value: 0 },
+      model: "m",
+    },
+  };
+
+  it("is optional and takes run ids", () => {
+    expect(turnSchema.parse(base).subagentRunsRead).toBeUndefined();
+    expect(turnSchema.parse({ ...base, subagentRunsRead: ["child-1"] }).subagentRunsRead).toEqual(["child-1"]);
+  });
+
+  it("rejects a hostile id and a list over 200", () => {
+    expect(() => turnSchema.parse({ ...base, subagentRunsRead: ["../x"] })).toThrow();
+    expect(() => turnSchema.parse({ ...base, subagentRunsRead: Array.from({ length: 201 }, (_, n) => `r${n}`) })).toThrow();
+  });
+});
+

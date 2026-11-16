@@ -268,6 +268,7 @@ function buildTurn(
   invokedCalls: ToolCallRecord[],
   subagentCalls: readonly ToolCallRecord[] = [],
   subagentRunGaps: readonly SubagentRunGap[] = [],
+  subagentRunsRead: readonly string[] = [],
 ): Turn {
   const explanation = usage ? buildAnalyzeExplanation(usage) : STUB_EXPLANATION;
   return {
@@ -281,6 +282,7 @@ function buildTurn(
       ...subagentCalls.map((call) => ({ ...call, tokenCount: unavailableToolCallTokenCount() })),
     ],
     ...(subagentRunGaps.length > 0 ? { subagentRunGaps: [...subagentRunGaps] } : {}),
+    ...(subagentRunsRead.length > 0 ? { subagentRunsRead: [...subagentRunsRead] } : {}),
     usage: usage ?? buildUnavailableUsage(fallbackTokenCount),
     ...(row?.timestamp ? { startedAt: row.timestamp } : {}),
     ...(row
@@ -335,6 +337,7 @@ export interface AnalyzeEnrichment extends Partial<AnalyzeModeExtras> {
   // its origin, and the runs whose calls are unknown, per store turn index.
   subagentToolCallsByTurn?: ToolCallRecord[][];
   subagentRunGapsByTurn?: SubagentRunGap[][];
+  subagentRunsReadByTurn?: string[][];
   subagentRuns?: SessionSubagentRuns;
 }
 
@@ -349,6 +352,7 @@ export function buildSession(enrichment: AnalyzeEnrichment): Session {
     toolCallsByTurn = [],
     subagentToolCallsByTurn = [],
     subagentRunGapsByTurn = [],
+    subagentRunsReadByTurn = [],
     systemPrompt = [],
     toolInventory = [],
     subagentRuns,
@@ -374,6 +378,7 @@ export function buildSession(enrichment: AnalyzeEnrichment): Session {
       invokedCallsAt(index),
       subagentToolCallsByTurn[index],
       subagentRunGapsByTurn[index],
+      subagentRunsReadByTurn[index],
     );
 
   const storeTurnIndices = turnRows.map((row) => row.turn_index);

@@ -18,6 +18,8 @@ export interface ClassicSubagentAudit {
   // Per log turn, the runs' calls to append after the main agent's.
   callsByLogTurn: ToolCallRecord[][];
   gapsByLogTurn: SubagentRunGap[][];
+  // Per log turn, the runs whose log was read in full (Turn.subagentRunsRead).
+  readRunIdsByLogTurn: string[][];
   // Every run whose calls are unknown, turn or not; a run no turn owns shows
   // only here.
   unread: UnreadRun[];
@@ -43,6 +45,9 @@ export async function readClassicSubagentAudit({
   return {
     callsByLogTurn: Array.from({ length: logTurnCount }, (_, turn) => read.byTurn.get(turn) ?? []),
     gapsByLogTurn: gapsByLogTurn(unread, logTurnCount),
+    readRunIdsByLogTurn: Array.from({ length: logTurnCount }, (_, turn) =>
+      read.read.filter((run) => run.logTurn === turn).map((run) => run.runId),
+    ),
     unread,
   };
 }

@@ -213,6 +213,7 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader, R
       let toolCallsByTurn: ToolCallRecord[][] = [];
       let subagentToolCallsByTurn: ToolCallRecord[][] = [];
       let subagentRunGapsByTurn: SubagentRunGap[][] = [];
+      let subagentRunsReadByTurn: string[][] = [];
       let systemPrompt: SystemPromptComponent[] = [];
       let toolInventory: ToolInventoryEntry[] = [];
       if (mainJsonlPath && usage.availability === "events-present") {
@@ -232,6 +233,7 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader, R
           });
           subagentToolCallsByTurn = placeByStoreIndex(audit.callsByLogTurn, usage.alignment);
           subagentRunGapsByTurn = placeByStoreIndex(audit.gapsByLogTurn, usage.alignment);
+          subagentRunsReadByTurn = placeByStoreIndex(audit.readRunIdsByLogTurn, usage.alignment);
         }
       }
 
@@ -246,6 +248,7 @@ export class VscodeLogProvider implements LogProvider, SystemPromptTextReader, R
           toolCallsByTurn,
           subagentToolCallsByTurn,
           subagentRunGapsByTurn,
+          subagentRunsReadByTurn,
           systemPrompt,
           toolInventory,
           subagentRuns: usage.attribution,

@@ -93,6 +93,17 @@ describe("VscodeLogProvider: classic subagent tool calls", () => {
     ]);
   });
 
+  it("lists the runs it read in full on the turn, and none it could not read", async () => {
+    seedSubagentAuditFixtureSession(dbPath, debugLogsDir, "shared-span-id");
+    seedSubagentAuditFixtureSession(dbPath, debugLogsDir, "missing-log");
+
+    const read = await provider().readSession("shared-span-id");
+    const missing = await provider().readSession("missing-log");
+
+    expect(read!.turns[0].subagentRunsRead).toEqual(["call_auditshared1"]);
+    expect(missing!.turns[0].subagentRunsRead).toBeUndefined();
+  });
+
   it("a session with no run has no gaps and no origin", async () => {
     seedSubagentAuditFixtureSession(dbPath, debugLogsDir, "missing-log");
     const detail = await provider().readSession("missing-log");

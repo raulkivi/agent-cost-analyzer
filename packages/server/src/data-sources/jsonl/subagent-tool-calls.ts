@@ -21,6 +21,9 @@ export interface SubagentToolCalls {
   // calls in file order (D2). The caller appends them after the main agent's.
   byTurn: Map<number, ToolCallRecord[]>;
   unread: UnreadRun[];
+  // Runs whose log was read in full, with or without calls: a read run with no
+  // call is a known 0, which only this list tells apart from an unknown.
+  read: { logTurn: number; runId: string }[];
 }
 
 const MAX_RUN_DEPTH = 8;
@@ -150,16 +153,18 @@ export async function readSubagentToolCalls(
 
   const byTurn = new Map<number, ToolCallRecord[]>();
   const unread: UnreadRun[] = [];
+  const readRuns: SubagentToolCalls["read"] = [];
   for (const entry of entries) {
     const read = reads.get(entry);
     if (read?.status === "unread") {
       unread.push(unreadOf(entry, read.reason));
     } else if (read?.status === "read") {
+      readRuns.push({ logTurn: entry.logTurn, runId: entry.run.runId });
       const calls = kept.get(entry) ?? [];
       if (calls.length > 0) {
         byTurn.set(entry.logTurn, [...(byTurn.get(entry.logTurn) ?? []), ...calls]);
       }
     }
   }
-  return { byTurn, unread };
+  return { byTurn, unread, read: readRuns };
 }

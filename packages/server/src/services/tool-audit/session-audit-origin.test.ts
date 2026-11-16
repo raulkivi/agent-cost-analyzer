@@ -129,6 +129,43 @@ describe("buildSessionAudit: byOrigin", () => {
   });
 });
 
+describe("buildSessionAudit: a run the reader read in full that made no call", () => {
+  const noCalls = (extra: Partial<Turn>) =>
+    buildSessionAudit(session([turn(0, [shell("a", "success")], extra, [runUsage("quiet", "searchSubagent")])])).subagentRuns?.[0];
+
+  it("is known with 0 calls and no failure rate when the turn lists it as read", () => {
+    const row = noCalls({ subagentRunsRead: ["quiet"] });
+
+    expect(row).toMatchObject({ runId: "quiet", failureRate: null });
+    expect(row?.totals).toMatchObject({ toolCalls: 0, succeeded: 0, failed: 0 });
+    expect(row?.unreadReason).toBeUndefined();
+  });
+
+  it("stays unread, never 0, when nothing says it was read", () => {
+    expect(noCalls({})?.totals).toBeNull();
+    expect(noCalls({ subagentRunsRead: ["other"] })?.totals).toBeNull();
+  });
+
+  it("a gap wins over the read marker", () => {
+    const row = noCalls({
+      subagentRunsRead: ["quiet"],
+      subagentRunGaps: [{ runId: "quiet", label: "searchSubagent", depth: 1, reason: "why" }],
+    });
+
+    expect(row?.totals).toBeNull();
+    expect(row?.unreadReason).toBe("why");
+  });
+
+  it("counts toward byOrigin.subagents.runs with no calls added", () => {
+    const audit = buildSessionAudit(
+      session([turn(0, [], { subagentRunsRead: ["quiet"] }, [runUsage("quiet", "searchSubagent")])]),
+    );
+
+    expect(audit.byOrigin?.subagents).toMatchObject({ toolCalls: 0, runs: 1 });
+    expect(() => sessionAuditSchema.parse(audit)).not.toThrow();
+  });
+});
+
 describe("buildSessionAudit: subagentRuns", () => {
   it("lists one row per read run with its own totals, failure rate, turn and nesting", () => {
     const audit = buildSessionAudit(
