@@ -55,6 +55,19 @@ describe("the products' differences in the instructions (step 15.13)", () => {
     expect(STANDALONE_MCP_IDENTITY.instructions).toMatch(/estimate_cost.*range/s);
   });
 
+  it("the standalone server names both products in one subagent paragraph, with Claude Code's tokens and priced cost, the unknown rule and the off-branch rule (CS12)", () => {
+    const text = STANDALONE_MCP_IDENTITY.instructions;
+    expect(text).toContain("VS Code Copilot Chat or Claude Code session");
+    expect(text).toMatch(/tokens and priced cost for Claude Code, which has no AI Credits/);
+    expect(text).toMatch(/unknown, with a reason, never 0/);
+    expect(text).toMatch(/off the active branch.*not counted/s);
+    expect(text.match(/Subagent runs:/g)).toHaveLength(1);
+  });
+
+  it("the extension's subagent paragraph keeps the Copilot wording", () => {
+    expect(COPILOT_MCP_IDENTITY.instructions).toContain("in a VS Code Copilot Chat session, a turn's tokens and AI Credits include the subagent runs it started");
+  });
+
   it("the extension's server names no billing tool and says projects come from the standalone app (D7, D19)", () => {
     expect(COPILOT_MCP_IDENTITY.instructions).not.toMatch(/get_statement|estimate_cost/);
     expect(COPILOT_MCP_IDENTITY.instructions).toMatch(/no projects/i);
