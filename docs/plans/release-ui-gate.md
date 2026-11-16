@@ -1,6 +1,6 @@
 # Automated pre-release UI gate (step 10.17)
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **done 2026-11-11: G0 (#203), G1 (#202), G2 (#207), G3 (#208, #210), G4 (#211), G5 (#205, #206), G6 (#204) and G7 (with the D11 chart fixes) all built; G7's PR is the last to merge.** Owner rule, 2026-11-11: every UI check
 before a release is automated. VS Code and Copilot checks use wdio
@@ -47,7 +47,7 @@ Fixed test-first in `cost-series.ts`.
 | D9 | Any skip of a required test blocks a release (confirms G2's tightened rule). |
 | D10 | The Increment 2 release (extension 0.6.0, app 0.11.0) waits for G4 and the empty-window fix (D7). *Superseded for G7 by D11.* |
 | D11 | The chart findings G7's judge found are fixed, not pinned: G7 merges with no exceptions, and the fixes ship in the Increment 2 release, which therefore also waits for G7 (`npm run test:ui` runs in the required `extension` job and in `release-extension.yml`, so findings would block both). |
-| D12 | Hard cap 3 AI Credits per real-Copilot run (proposed and confirmed by the owner, 2026-11-11). `COPILOT_E2E_MAX_AI_CREDITS` (default 3; `0` sends no chat) is checked before every chat against what the run's chats have cost so far; a refused chat skips with "budget exceeded", and the gate refuses the skip (D9). Checked between chats, so a run can pass the cap by at most one chat: about 0.6 AI Credits on the right model, but 16 on Sonnet 5.5 (VS Code 1.146, R5). |
+| D12 | Hard cap 3 AI Credits per real-Copilot run (proposed and confirmed by the owner, 2026-11-11). `COPILOT_E2E_MAX_AI_CREDITS` (default 3; `0` sends no chat) is checked before every chat against what the run's chats have cost so far; a refused chat skips with "budget exceeded", and the gate refuses the skip (D9). Checked between chats, so a run can pass the cap by at most one chat: a small amount on the right model, but many times more on Sonnet 5.5 (VS Code 1.146, R5). |
 
 ## 2. What gates each release today, and what replaces it
 
@@ -242,12 +242,11 @@ although the test profile is signed in.
 
 - **First green run** (commit `1f2027e`, global auto approve): Copilot ready
   after 1.0 s; 1.4, 2.3 and 2.4 passed in 27.9 s on `claude-haiku-5.5`
-  (observed log id `claude-haiku-5.5`, the picker id); 0.7643 AI Credits;
-  gate `PASS`.
+  (observed log id `claude-haiku-5.5`, the picker id); gate `PASS`.
 - **Run with D5 and D6** (commit `7bc1d36`, clean tree, owner's test profile,
   xvfb): Copilot ready after 0.7 s; 1.4, 2.3 and 2.4 passed in 27.9 s;
   model requested and observed `claude-haiku-5.5` in all three sessions;
-  0.9313 AI Credits (within D8); gate `PASS`. Tools the chat called, from the
+  within D8's budget; gate `PASS`. Tools the chat called, from the
   sessions' Copilot debug logs: `manage_todo_list` and `tool_search`
   (Copilot's to-do list and its loader for deferred tools, which searches
   only the request's available tools), then `mcp_ai_credits_an_list_log_providers`
@@ -385,13 +384,13 @@ Real runs (owner's test profile, xvfb, `claude-haiku-5.5` requested and
 observed every time; each run's note removed from the local
 `refs/notes/release-ui`, never pushed):
 
-| Run | Specs | Result | AI Credits |
-|---|---|---|---|
-| 1 | spike: one `get_repository_cost` | view found, frame path recorded | not measured (one short chat) |
-| 2 | spike: the eight-call prompt | eight views, overlays and wheel scrolling recorded | 0.4723 |
-| 3-6 | views spec while it was built | setup width, then wheel over views, then U11 overflow (the bug) | 0.5732, 0.5748, 0.5785, 0.5798 |
-| 7 | whole suite | 1.4, 2.3, 2.4 and 10 view tests passed; 1.1, 1.3, 1.5 failed: VS Code had deleted the seeded debug logs before the second launch | 0.7357 + 0.5473 = 1.2830 |
-| 8 | whole suite on commit `7ddb37f`, clean tree | **all 16 passed** (3 chat checks in 27.9 s, 13 view tests in 13 min 6 s); one click fell back to the element's own `click()`; gate `PASS` | 0.7722 + 0.4634 = 1.2356 |
+| Run | Specs | Result |
+|---|---|---|
+| 1 | spike: one `get_repository_cost` | view found, frame path recorded |
+| 2 | spike: the eight-call prompt | eight views, overlays and wheel scrolling recorded |
+| 3-6 | views spec while it was built | setup width, then wheel over views, then U11 overflow (the bug) |
+| 7 | whole suite | 1.4, 2.3, 2.4 and 10 view tests passed; 1.1, 1.3, 1.5 failed: VS Code had deleted the seeded debug logs before the second launch |
+| 8 | whole suite on commit `7ddb37f`, clean tree | **all 16 passed** (3 chat checks in 27.9 s, 13 view tests in 13 min 6 s); one click fell back to the element's own `click()`; gate `PASS` |
 
 TDD exceptions: the spec, the page objects in `chat-view.ts`, the wdio config
 and the real runs. Unit-tested first: `chat-history-seed.test.ts` (through the
@@ -443,8 +442,8 @@ same suite, `test/ui/copilot-e2e/specs/copilot-savings-view.e2e.ts` (its own
 spec file, so its own VS Code and chat; one `get_savings_report` call over the
 90-day made-up history). **Written and typechecked, not run:** the owner runs
 the whole suite before tagging, so the expected total is now 37 tests (33 + the
-4 below). The chat adds about 0.5 AI Credits (estimate from the other views
-chats), so a whole run stays near 2, inside the D12 cap of 3. Like its siblings
+4 below). The chat adds a small cost (estimate from the other views
+chats), so a whole run stays inside the D12 cap of 3. Like its siblings
 it sends through `sendToAgent` (stops at the cap, D12) and skips unsent when
 Copilot calls no tool or runs another model, which blocks the release (D9).
 The made-up history holds one saving (SR22): the seed writes the tools
@@ -486,23 +485,22 @@ Real runs (owner's test profile, xvfb, `claude-haiku-5.5` requested and
 observed every time; each run's note removed from the local
 `refs/notes/release-ui`, never pushed):
 
-| Run | Specs | Result | AI Credits |
-|---|---|---|---|
-| 0 | Increment 3 spec, `COPILOT_E2E_MAX_AI_CREDITS=0` | all 11 skipped unsent by the cap (launch and evidence checked) | 0 |
-| 1 | Increment 3 spec | 8 passed; U12.compare (DOM request count), themes (Tab past a view's only button) and U5.analyse (`staged`, not yet an outcome) failed | 0.4409 |
-| 2 | Increment 3 spec | 10 passed, U5.analyse `staged`; themes failed: the fall text and the open diamonds above | 0.4394 |
-| 3 | Increment 3 spec, after the fixes | **11 passed**, U5.analyse `staged` | 0.4473 |
-| 4 | whole suite on commit `5da99bb`, clean tree | **all 33 passed** (1.4, 2.3, 2.4 in 24.3 s; the 11 Increment 3 tests in 11 min 32 s; the 13 Increment 2 view tests in 13 min 0 s; 2.1 and 1.14 in 30.1 s), every session `claude-haiku-5.5`, U5.analyse `staged`, gate **`PASS`** | 0.5004 + 0.4560 + 0.4678 + 0.1300 = **1.5542** |
+| Run | Specs | Result |
+|---|---|---|
+| 0 | Increment 3 spec, `COPILOT_E2E_MAX_AI_CREDITS=0` | all 11 skipped unsent by the cap (launch and evidence checked) |
+| 1 | Increment 3 spec | 8 passed; U12.compare (DOM request count), themes (Tab past a view's only button) and the U5 Analyze check (`staged`, not yet an outcome) failed |
+| 2 | Increment 3 spec | 10 passed, the U5 Analyze check `staged`; themes failed: the fall text and the open diamonds above |
+| 3 | Increment 3 spec, after the fixes | **11 passed**, the U5 Analyze check `staged` |
+| 4 | whole suite on commit `5da99bb`, clean tree | **all 33 passed** (1.4, 2.3, 2.4 in 24.3 s; the 11 Increment 3 tests in 11 min 32 s; the 13 Increment 2 view tests in 13 min 0 s; 2.1 and 1.14 in 30.1 s), every session `claude-haiku-5.5`, the U5 Analyze check `staged`, gate **`PASS`** |
 
-A33 spent 2.8818 AI Credits in all (runs 1-4), within the owner's budget of
-6; the whole suite now costs about 1.55 per run, under D12's cap of 3. The
-owner reruns on the release commit.
+A33's runs 1-4 stayed within the owner's budget; the whole suite now costs
+less per run than D12's cap of 3. The owner reruns on the release commit.
 
 
 **G7 (2026-11-11).** Built on `claude/g7-extension-rows`, not merged; D11 fixes included.
 
 - **1.8 charts.** The judge's chart-mark rule (`scripts/ui-check/chart-marks.mts`, unit-tested in `chart-marks.test.ts`): (1) every data mark (bar, line, marker, legend swatch, hatching that carries meaning) reaches 3:1 against the ground it is painted on (WCAG 1.4.11), translucent paints composited first; (2) each pair of neighbouring series in a chart (order of first appearance) is told apart by ONE of: paints 3:1 apart, a different non-colour cue (stroke dash pattern or a fill pattern), or a direct label on both in the chart. A legend alone does not count (it makes the reader match colours), and neither does "View as table"; the threshold is not relaxed for light grounds. Applied in `layout-theme.e2e.ts` (default suite, CI) in four themes. Findings, all fixed test-first in `packages/web` (D11), nothing pinned: the High Contrast column fill and the sparkline stroke; the light steps of series 2-5 (orange, aqua, yellow, magenta; 1.9-2.9:1 on a light ground, now 3.7-4.3:1); the hard-coded token-type and tool-status palettes (themed `--color-series-*` and new `--color-status-*` tokens, every one 3:1 or more on light, dark and High Contrast grounds); and success against error (1.1:1 apart) and cache read against output (2.1:1 apart), which now also differ by a fill pattern (solid, hatching, dots, cross, lines), in the charts and their legends.
-- **2.1 Configure Tools** and **1.14 on a real git folder:** `copilot-e2e/specs/extension-rows.e2e.ts`, titles `2.1 ...` and `1.14 ...`; both ids are required (`COPILOT_EXTENSION_ROWS` in `REQUIRED_COPILOT_E2E_TESTS`). 2.1 sends no message; 1.14 is one chat in a real `git init` workspace with a made-up remote. First run: 6 passed, 0.1800 AI Credits (D8). A window reload does not end the wdio session in normal mode, so the persistence of the grouping is tested for real.
+- **2.1 Configure Tools** and **1.14 on a real git folder:** `copilot-e2e/specs/extension-rows.e2e.ts`, titles `2.1 ...` and `1.14 ...`; both ids are required (`COPILOT_EXTENSION_ROWS` in `REQUIRED_COPILOT_E2E_TESTS`). 2.1 sends no message; 1.14 is one chat in a real `git init` workspace with a made-up remote. First run: 6 passed, within D8. A window reload does not end the wdio session in normal mode, so the persistence of the grouping is tested for real.
 - **1.1** accepted as automated (D10): `first-run.e2e.ts` and `WalkthroughOffer`'s unit tests; the manual-checks row says so.
 - TDD exceptions: the picker's DOM read, the polling and the real runs. Unit-tested: `chart-marks`, `git-folder`, `repository-status`.
 
@@ -569,9 +567,9 @@ can't express the exceptions.
   `5922f21` (#215 pinned 1.146.0; the same suite passed 22/22 on 1.145.0 at
   `a4e1764`) went wrong twice:
 
-  1. *Wrong model, 16.38 AI Credits.* The three `copilot-agent.e2e.ts` chats
+  1. *Wrong model, a large unplanned spend.* The three `copilot-agent.e2e.ts` chats
      ran on `claude-sonnet-5.5` and `gpt-6-luna`, not the seeded
-     `claude-haiku-5.5` (about 1.3 expected, D8 about 2). The after-chat
+     `claude-haiku-5.5` (a small spend expected, within D8). The after-chat
      model check skipped each test, but only after the chat had been paid
      for. **Root cause** (read from 1.146's bundled workbench, confirmed by
      no-chat probes): two settings changed their default from `false`
@@ -647,7 +645,7 @@ can't express the exceptions.
     `workbench.action.chat.cancel` (checked in 1.146's code), records the
     AI Credits logged so far, and writes a stop marker so every later chat of
     the run skips unsent. Then the test skips. A wrong model costs its first
-    request (a Sonnet-class agent request is 1-5 AI Credits in the repo's
+    request (a Sonnet-class agent request costs several AI Credits in the repo's
     fixture), not the whole chat. Decisions: `in-flight-model.mts`
     (unit-tested).
   - **AI Credits cap (D12, decided):** `credit-budget.mts` (unit-tested)
@@ -674,11 +672,11 @@ can't express the exceptions.
 
   Real runs during the fix (each note removed afterwards, never pushed):
 
-  | Commit | What changed | Result | AI Credits |
-  |---|---|---|---|
-  | `bc9b46f` | picker selection and pre-send picker check only | 1.4's chat ran on `claude-sonnet-5.5` with the picker on Claude Haiku 5.5 (SDK harness); after-chat check skipped it; cap skipped 2.3 and 2.4; a watchdog stopped the run, so the later spec files never started | **16.0553** |
-  | `4c40f0c` | + local-harness settings, + Local/agent pre-send check | every chat refused unsent: the input showed plain Agent (the mode reset above) | 0 |
-  | `807b250` | + `chat.newSession.defaultMode`, + settle wait | **22/22 passed**, every session `claude-haiku-5.5`, each first request logged after 2.8-4.5 s on `claude-haiku-5.5` (`panel/editAgent`), no cancel, no profile-release wait needed (each VS Code quit on its own), gate **`PASS`** | **1.0967** (1.4, 2.3, 2.4: 0.1121 + 0.1863 + 0.2056; views 0.4627; 1.14 0.1300) |
+  | Commit | What changed | Result |
+  |---|---|---|
+  | `bc9b46f` | picker selection and pre-send picker check only | 1.4's chat ran on `claude-sonnet-5.5` with the picker on Claude Haiku 5.5 (SDK harness); after-chat check skipped it; cap skipped 2.3 and 2.4; a watchdog stopped the run, so the later spec files never started |
+  | `4c40f0c` | + local-harness settings, + Local/agent pre-send check | every chat refused unsent: the input showed plain Agent (the mode reset above) |
+  | `807b250` | + `chat.newSession.defaultMode`, + settle wait | **22/22 passed**, every session `claude-haiku-5.5`, each first request logged after 2.8-4.5 s on `claude-haiku-5.5` (`panel/editAgent`), no cancel, no profile-release wait needed (each VS Code quit on its own), gate **`PASS`** |
 
   The in-flight cancel has not fired in a real run: no wrong model got that
   far once the chats were local. Its cost per wrong-model chat is the first

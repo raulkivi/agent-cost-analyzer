@@ -1,6 +1,6 @@
 # Claude Code subagent usage
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **plan approved** (2026-11-14): the owner accepted every recommendation, D1–D16 (§8). A 1.0 criterion, C15 in
 [implementation-plan.md](../implementation-plan.md#100-release) (tasks V32
@@ -113,7 +113,7 @@ file content was printed.
 
 Meta keys (all values are flags, ids, enums or aliases except
 `description` and `worktreePath`): `toolUseId`, `agentType`, `isBuiltIn`
-(true 810), `model` (aliases: `sonnet` 805, `opus` 285, `haiku` 97,
+(true 810), `model` (aliases in 1,187 metas,
 `inherit` 24, absent 23, one full id), `spawnDepth`, `parentAgentId`,
 `isFork` (24), `finished` (true 1,169, absent 67, never false),
 `requestShape`, `requestNonInteractive`, `pickedEffortModel`,
@@ -131,8 +131,8 @@ Meta keys (all values are flags, ids, enums or aliases except
   `cache_read_input_tokens`, `output_tokens` and the lifetime split
   `cache_creation.ephemeral_1h_input_tokens`; 48,927 have
   `output_tokens_details`.
-- Round models: `claude-sonnet-5-5` 32,138, `claude-opus-5-5` 30,878,
-  `claude-haiku-5-5` 3,206, `<synthetic>` 8. The meta's `model` is an alias;
+- Round models: three model ids (32,138, 30,878 and 3,206 rounds) and
+  `<synthetic>` 8. The meta's `model` is an alias;
   the round's `message.model` is the one to price.
 - Token sums, runs vs session files (file-wide, distinct `message.id`):
 

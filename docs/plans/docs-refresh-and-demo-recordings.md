@@ -1,6 +1,6 @@
 # Docs refresh and demo recordings: plan
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: approved 2026-11-13; plan steps 10.22 (Phase 0 and Phase 1) and
 10.23 (Phase 2) in [implementation-plan.md](../implementation-plan.md).
@@ -409,7 +409,7 @@ under budget with one command; the release suite's free run is unchanged.
 | 1.6c | Free scenes E3 and E4 (read a session, replay) | medium | Sonnet | 1.4, 1.6a |
 | 1.6d | Free scenes E5 and E7 (Savings, allowance gauge) | medium | Sonnet | 1.4, 1.6a |
 | 1.6e | Free scenes E6 and E8 (trends, tool audit) | medium | Sonnet | 1.4, 1.6a |
-| 1.7 | Real-Copilot scenes E2, E9 (and E11 if wanted), written by the agent and **run by the owner** (about 1–1.5 AI Credits per take of both; E11 about 0.5 more) | medium | Sonnet + owner | 1.3–1.5, D3 |
+| 1.7 | Real-Copilot scenes E2, E9 (and E11 if wanted), written by the agent and **run by the owner** (a small paid spend per take) | medium | Sonnet + owner | 1.3–1.5, D3 |
 | 1.8 | Stills: `sidebar.png`, `walkthrough.png` and `mcp-agent-mode.png` from the scenes (retires manual-checks §4 items 3, 4 and 7); add `savings.png` and `allowance.png`; add a Savings view shot to `scripts/ui-check/screenshots.mts` and rerun it | low | Sonnet | 1.6a–1.6e, 1.7 |
 | 1.9 | App: add the Savings tab (desktop and 360 px) and the subagent marker to `packages/web/e2e/support/screenshots.mts`; record W1–W3 with Playwright video; refresh the UserGuide screenshots whose screens changed since they were taken | medium | Sonnet | 1.5 |
 | 1.10 | Main session records the final takes of all free scenes in one sequential `demo:record` run; owner runs the 1.7 takes; owner reviews every Phase 1 GIF and still: privacy, legibility, pace. Retakes as needed | — | Main session + owner | 1.6a–1.9 |
@@ -678,8 +678,7 @@ review rejections.
   GIFs, 31 MB; stills in `docs/images/vscode/`); 1.11–1.14 started.
 - 2026-11-14: paid takes run by the main session at the owner's request
   (03:45 local, cap 3, `DEMO_FORBIDDEN` set in the shell only): E2 passed,
-  0.1294 AI Credits, 35.0 s; E9 passed, 0.2829 AI Credits, 43.0 s; 0.41 in
-  all on claude-haiku-5.5. Privacy probe clean; frames checked by the main
+  35.0 s; E9 passed, 43.0 s; both on claude-haiku-5.5. Privacy probe clean; frames checked by the main
   session. Suggested trims: E2 `14,20` (answer → Sessions → tooltips,
   0.59 MB), E9 `21,20` (rollup view → drill-down → Back, 2.02 MB). Stills
   `e2-sidebar.png` and `mcp-agent-mode.png` taken. E9's top session is the

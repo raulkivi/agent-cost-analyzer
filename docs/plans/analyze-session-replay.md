@@ -1,6 +1,6 @@
 # Phase 14: Replay a real Analyze session on another model
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 **Status: built (8 of 9 steps); the owner's review is open.** Steps
 14.0–14.7 are done (2026-11-07) and shipped from extension 0.4.0 and app
@@ -590,7 +590,7 @@ Before the change, Copilot local read 1 of 3 (7 null), 197 of 204 (96.6%).
 
 - Coverage: 30 sessions compared turn by turn, 3 turns left out with
   reasons, request counts equal; Copilot local's 43 helper-agent requests
-  in 8 sessions (284.34 AI Credits, mostly the summariser's) and 3
+  in 8 sessions and 3
   subagent runs in 2 sessions equal the oracle's; 192 measured turn reads
   exact; 167 turn costs and 10 session totals equal to the oracle (largest
   relative difference 5.2e-16).

@@ -1,25 +1,25 @@
 # Session handover
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Where the work stands at the end of the 2026-11-10 to 2026-11-12 sessions, for whoever picks it up next. Status of record stays in [implementation-plan-gantt.md](implementation-plan-gantt.md) and the plans under [plans/](plans/).
 
 ## Where things stand
 
 - `main` at #240 (`1d372f0`), no open PRs.
-- **Phase 12 (MCP Apps) is done.** Increment 2 shipped in extension 0.6.0 and app 0.11.0 (2026-11-11); Increment 3 shipped in extension 0.8.0 (VS Code Marketplace, Open VSX, GitHub) and app 0.12.0 (2026-11-12), tags `ext-v0.8.0` and `app-v0.12.0` on `dacf3ed`. The real-Copilot release gate passed 33 of 33 required tests (1.54 AI Credits). Details: [plans/mcp-apps.md](plans/mcp-apps.md), [plans/mcp-apps-handover.md](plans/mcp-apps-handover.md).
+- **Phase 12 (MCP Apps) is done.** Increment 2 shipped in extension 0.6.0 and app 0.11.0 (2026-11-11); Increment 3 shipped in extension 0.8.0 (VS Code Marketplace, Open VSX, GitHub) and app 0.12.0 (2026-11-12), tags `ext-v0.8.0` and `app-v0.12.0` on `dacf3ed`. The real-Copilot release gate passed 33 of 33 required tests. Details: [plans/mcp-apps.md](plans/mcp-apps.md), [plans/mcp-apps-handover.md](plans/mcp-apps-handover.md).
 - **Step 10.17, the automated pre-release UI gate, is done** ([plans/release-ui-gate.md](plans/release-ui-gate.md)): no hand checklist gates a release. VS Code and Copilot checks are wdio specs, web checks are Playwright specs. Decisions D1–D12 are recorded there.
   - A ruleset on `main` requires 9 CI checks (`extension-ui`, `web-e2e`, `mcp-apps-e2e`, `test`, `extension`, `scan`, both CodeQL Analyze jobs, `CodeQL`); repository admins may bypass.
   - Docs-only PRs skip the heavy UI and integration jobs; `test` always runs.
 - **Step 10.18 is done:** Copilot Chat sessions from a window with no folder open now appear (#209).
 - The root README is user-oriented; the developer documentation index is [README.md](README.md) in this folder.
-- **Extension 0.10.0 and app 0.13.0 released 2026-11-12** (tags `ext-v0.10.0`, `app-v0.13.0` on `1d372f0`): the MCP SDK 2 and ext-apps 2.x migration ([plans/mcp-sdk-2-migration.md](plans/mcp-sdk-2-migration.md)) and the keyboard-focus fix in the MCP App views. Real-Copilot gate 33 of 33, 1.55 AI Credits.
+- **Extension 0.10.0 and app 0.13.0 released 2026-11-12** (tags `ext-v0.10.0`, `app-v0.13.0` on `1d372f0`): the MCP SDK 2 and ext-apps 2.x migration ([plans/mcp-sdk-2-migration.md](plans/mcp-sdk-2-migration.md)) and the keyboard-focus fix in the MCP App views. Real-Copilot gate 33 of 33.
 
 ## Releasing the extension
 
 1. A version-bump PR (even minor for a stable release), merged. For the app it bumps the root `package.json` and `packages/cli/package.json` to the same version (`release-check.mts` and a unit test refuse a mismatch).
 2. On the merged commit, with a clean tree: `npm run build`.
-3. The real-Copilot suite on the owner's machine (signed-in test profile, see [plans/vscode-ui-automation.md](plans/vscode-ui-automation.md) §7): 33 required tests, about 26 minutes, about 1.6 AI Credits, capped at 3 by `COPILOT_E2E_MAX_AI_CREDITS`. It must end with `PASS`.
+3. The real-Copilot suite on the owner's machine (signed-in test profile, see [plans/vscode-ui-automation.md](plans/vscode-ui-automation.md) §7): 33 required tests, about 26 minutes, capped at 3 by `COPILOT_E2E_MAX_AI_CREDITS`. It must end with `PASS`.
 4. `npm run release:evidence --workspace=packages/vscode-extension`, then `git push origin refs/notes/release-ui`.
 5. Tag the same commit `ext-v<version>` (and `app-v<version>` for the app), push the tags, and approve the `release` environment.
 

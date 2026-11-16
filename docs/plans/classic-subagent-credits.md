@@ -1,6 +1,6 @@
 # AI Credits of classic Copilot Chat subagents
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **accepted; built as step 10.19** (SA0-SA17 done 2026-11-13; the owner's real-data check SA18 open) of
 [implementation-plan.md](../implementation-plan.md), planned in
@@ -49,39 +49,19 @@ response text.
 | Subagent files | 17: 12 `runSubagent-*`, 5 `searchSubagent-*` |
 | Subagent `llm_request`s | 191: 176 `runSubagent`, 15 `searchSubagent` |
 | Requests without a numeric `copilotUsageNanoAiu` | 0 |
-| Uncounted AI Credits | **177.64**, all from `runSubagent` |
-| `searchSubagent` AI Credits | 0.00 (all 15 requests report `0` nano-AIU, model `copilot-search-a`) |
+| Uncounted AI Credits | Present, all from `runSubagent` (the amount is not recorded in this public doc) |
+| `searchSubagent` AI Credits | None (all 15 requests report `0` nano-AIU) |
 | Sessions whose total is too low | 8 (the 5 `searchSubagent`-only sessions lose nothing) |
-| Share of the 13 sessions' true total | 10.7 % (1,479.62 counted, 177.65 missing) |
-| Share of all classic spend | 2.5 % (6,856.53 counted in every `main.jsonl`) |
 | Subagent file size | 19.3 MB in total, 2.6 MB max, 0.9 MB median |
 | Date range | 2026-08-08 to 2026-09-29; newest `main.jsonl` 2026-10-01 (newer sessions run in the Agent Host) |
 
-Per `runSubagent` agent (from the file name and `child_session_ref.label`):
-
-| Agent | Files | Requests | AI Credits | Model |
-|---|---|---|---|---|
-| `Explore` | 9 | 155 | 163.90 | `claude-haiku-4.5` |
-| `Plan` | 1 | 14 | 8.33 | `gpt-5.6-luna` |
-| `default` | 1 | 6 | 4.03 | `gpt-5.6-luna` |
-| `Tester` | 1 | 1 | 1.38 | `gpt-5.6-luna` |
-
-Per affected session (anonymised, counted vs. missing):
-
-| Session | Counted today | Subagent | Under-count |
-|---|---|---|---|
-| A | 46.53 | 54.65 (3 runs) | 117 % |
-| B | 99.42 | 42.06 (2) | 42 % |
-| C | 83.08 | 29.78 (2) | 36 % |
-| D | 172.54 | 23.83 (1) | 14 % |
-| E | 231.22 | 13.59 (1) | 6 % |
-| F | 38.58 | 8.33 (1) | 22 % |
-| G | 26.69 | 4.03 (1) | 15 % |
-| H | 9.05 | 1.38 (1) | 15 % |
+In the affected sessions the uncounted share of the true total ranged from
+a few percent to more than the counted total (the worst session was
+under-counted by more than half of its true total).
 
 Per turn the error is larger. In 8 of the 10 parent turns that started a
-paid subagent, the subagent cost more than the turn itself (for example
-3.14 counted vs. 42.06 missing). The turns table, the "most expensive
+paid subagent, the subagent cost more than the turn itself (a turn's counted cost
+can be a small fraction of the missing subagent cost). The turns table, the "most expensive
 turns" ranking and the cost-outlier findings are therefore wrong today,
 not just the session totals.
 
@@ -383,15 +363,15 @@ model (owner, 2026-10-29: Claude subagents only in this repo).
 ## 7. Exit criteria
 
 - On the owner's machine, the Copilot provider's classic sessions total
-  177.64 AI Credits more than before (±0.01), split as in §1.1's per-session
-  table; the 5 `searchSubagent`-only sessions are unchanged.
+  exactly the measured missing amount more than before (±0.01), per
+  session as measured in §1.1; the 5 `searchSubagent`-only sessions are unchanged.
 - For each affected session, the Sessions list, the session detail, the
   status bar, `get_session_cost` and `get_cost_rollup` report the same
   total (the contract test proves list = detail on the fixture).
 - Each parent turn shows its runs (label, model, requests, AI Credits) in
   the UI and in `get_turn`.
 - `byModel` in `get_session_cost` and `get_cost_rollup` credits
-  `claude-haiku-4.5` with the `Explore` runs' 163.90 AI Credits.
+  each run's model with that run's AI Credits.
 - Every row of §4.3 has a test; none yields a known total that leaves a
   billed request out.
 - A `childLogFile` with a path component is never opened (test).

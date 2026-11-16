@@ -1,6 +1,6 @@
 # Subagent tool calls in the tool-call audit (step 10.20)
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **Plan approved 2026-11-14** (D1–D11 accepted). A 1.0 criterion, C10 in
 [implementation-plan.md](../implementation-plan.md#100-release) (tasks V21
@@ -88,11 +88,9 @@ argument, result or error text was printed.
 - **Tool calls per run.** 481 `tool_call` spans in total; per run 0, 6, 10,
   13, 15, 16, 21, 22, 24, 31, 35, 38, 39, 40, 41, 46, 84 (one run made no
   call).
-- **Tools.** `read_file` 238, `grep_search` 107, `file_search` 74,
-  `list_dir` 24, `memory` 14, `semantic_search` 13, `fetch_webpage` 11. No
-  `run_in_terminal`: the runs on this machine were read-only agents
-  (`Explore`, `Plan`, `Tester`, `default`, search). So no shell call, and no
-  security finding, is expected from today's data; fixtures must cover them.
+- **Tools.** 7 distinct tools, all read-only; none is a shell tool: the runs
+  on this machine were read-only agents. So no shell call, and no security
+  finding, is expected from today's data; fixtures must cover them.
 - **Outcome fields in child logs.** Same envelope as `main.jsonl`. Span
   `status`: `ok` 470, `error` 11. `attrs.error` (a string) is present on
   exactly the 11 `error` spans and on no `ok` span. `dur` is numeric on all
@@ -117,11 +115,10 @@ argument, result or error text was printed.
 - 84 event logs; 4 have subagent events; 5 subagent runs (`subagent.started`
   5, each carrying a top-level `agentId`).
 - 139 `tool.execution_start` events with an `agentId`, against 3,696
-  main-agent starts. Tools: `view` 27, `bash` 20, `grep_search` 20,
-  `file_search` 17, `web_fetch` 16, `read_file` 11, `rg` 10, `glob` 5,
-  `web_search` 5, `apply_patch` 3, MCP 4, `list_agents` 1.
+  main-agent starts. Several tools are called, including shell,
+  search, file and web tools and 4 MCP calls.
 - **Link.** All 139 carry `parentToolCallId`, naming a main-agent call:
-  `task` 91, `search_code_subagent` 48. Each `agentId` has exactly one
+  two kinds of subagent-starting calls (91 and 48). Each `agentId` has exactly one
   `parentToolCallId`; `agentId` equals it in 2 of 5 runs, so the starting
   call's id, not `agentId`, is the stable run id. `subagent.started.toolCallId`
   equals that parent call in 5 of 5. Depth 1 only.
@@ -547,8 +544,7 @@ beyond tool-authored prefixes.
   So `explore_subagent` is the parent call of the 5 `searchSubagent` runs,
   not a run without a log; ST0's "searchSubagent runs have no parent
   `tool_call`" is true only by id: the link is by time window.
-- The 5 child logs hold 84 `tool_call` spans: `file_search` 33, `grep_search`
-  22, `read_file` 18, `semantic_search` 11, all read-only. The call's own
+- The 5 child logs hold 84 `tool_call` spans over four tools, all read-only. The call's own
   attrs are `args` (`description`, `details`, `query`), `result` and, on one
   `error` span, `error`.
 - **Effect (changes ST4 and the §6 row, not D5):** the §6 row "subagent-kind
@@ -567,7 +563,7 @@ beyond tool-authored prefixes.
 
 - The run has 26 `tool.execution_start` and 24 `tool.execution_complete`;
   its `subagent.completed.totalToolCalls` is 24. The 2 extra starts are
-  `bash` calls, each with a `permission.requested`; one permission completed
+  shell calls, each with a `permission.requested`; one permission completed
   `approved`, the other `approved` then `cancelled`; the session then logs <!-- codespell:ignore cancelled -->
   `abort` and `session.shutdown`. No completion exists for either call.
 - The other runs: `totalToolCalls` equals both starts and completions
@@ -583,7 +579,7 @@ beyond tool-authored prefixes.
   existing outcome rules ("no completion" is unknown or canceled, as for
   main calls). It dedupes `subagent.completed` by `toolCallId`. ST4's
   "canceled run" fixture has a real shape: 26 starts, 24 completions,
-  2 `bash` calls with a `cancelled` permission and an `abort`. No decision <!-- codespell:ignore cancelled -->
+  2 shell calls with a `cancelled` permission and an `abort`. No decision <!-- codespell:ignore cancelled -->
   changes.
 
 ### 14.3 The server classifier over the 97 classic error texts: 15 of 97
@@ -602,17 +598,17 @@ Unclassified, by tool-authored wording (no content kept):
 
 | Wording | Tool | Count |
 |---|---|---|
-| `cannot open file ... Detail: Unable to read ...` | `read_file` | 52 (45 main, 7 child) |
-| `Regex parse error` | `grep_search` | 7 |
-| `Canceled` (user cancellation recorded as an error) | `run_in_terminal` 3, `semantic_search` 2 | 5 |
-| `File already exists` | `create_file` | 5 |
-| `locator.scrollIntoViewIfNeeded`, `Failed to capture screenshot` | `screenshot_page` | 5 |
-| `Codebase search timed out` (the timeout rule needs `timed out after`) | `semantic_search` | 2 |
-| one each | `memory`, `manage_todo_list`, `apply_patch`, `open_browser_page`, `explore_subagent`, `fetch_webpage` | 6 |
+| `cannot open file ... Detail: Unable to read ...` | a file-read tool | 52 (45 main, 7 child) |
+| `Regex parse error` | a text-search tool | 7 |
+| `Canceled` (user cancellation recorded as an error) | a shell tool 3, a search tool 2 | 5 |
+| `File already exists` | a file-create tool | 5 |
+| `locator.scrollIntoViewIfNeeded`, `Failed to capture screenshot` | a browser tool | 5 |
+| `Codebase search timed out` (the timeout rule needs `timed out after`) | a search tool | 2 |
+| one each | six other tools | 6 |
 
 - 85 % are `unclassified`. That is allowed (constraint 6: never guessed) but
   it makes classic failure categories mostly empty unless rules are added.
-  The 52 `read_file` texts contain none of the not-found tokens
+  The 52 file-read texts contain none of the not-found tokens
   (`ENOENT`, `does not exist`, `File does not exist`); one mentions a
   permission problem that no rule words that way.
 - `Canceled` is a user stop, not a tool fault: status `error` alone would
@@ -621,7 +617,7 @@ Unclassified, by tool-authored wording (no content kept):
 - **Effect (D3 stands):** ST6 maps `error`
   spans to failed calls and must handle the `Canceled` text (recommended:
   outcome canceled/rejected, not failed). Whether to add classic-specific
-  rules (the `read_file` wording, `Regex parse error` as invalid arguments,
+  rules (the file-read wording, `Regex parse error` as invalid arguments,
   `timed out`) or accept `unclassified` for these is an owner call; the
   plan's fixtures (ST4) should hold one text per wording group above
   whichever way it goes, with the expected category stated in the test.
