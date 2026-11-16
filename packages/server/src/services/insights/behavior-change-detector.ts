@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { costLinesOf, type FindingSeverity, type InsightFinding, type InsightSessionRow } from "@agent-cost-analyzer/domain";
+import { costLinesOf, type FindingSeverity, type InsightFinding, type InsightSessionRow, type ToolCallOrigin } from "@agent-cost-analyzer/domain";
 import { UNREAD_RUNS_MODEL } from "../pricing/turn-cost-lines.js";
 import { indexRows, type DetectorInput, type FindingDetector } from "./finding-detector.js";
 
@@ -22,6 +22,7 @@ interface Occurrence {
   turnIndex?: number;
   toolCallKey?: string;
   at?: string;
+  origin?: ToolCallOrigin;
 }
 
 // A tool or program is judged only against sessions with known tool calls.
@@ -29,6 +30,11 @@ function whyFirstUse(dimension: Dimension, earlier: number, earlierWithKnownCall
   return dimension === "model" || earlierWithKnownCalls === earlier
     ? `Not used in any of the ${earlier} earlier sessions (since ${since}).`
     : `Not used in any of the ${earlierWithKnownCalls} earlier sessions with known tool calls (since ${since}).`;
+}
+
+// Step 10.20: a first use by a subagent run says so; the title stays the rule's.
+function whyOf(occurrence: Occurrence, reason: string): string {
+  return occurrence.origin?.kind === "subagent" ? `Used by subagent run ${occurrence.origin.label.replace(/^(?:runSubagent|Agent)-/, "")}. ${reason}` : reason;
 }
 
 export class BehaviorChangeDetector implements FindingDetector {
@@ -53,7 +59,7 @@ export class BehaviorChangeDetector implements FindingDetector {
           occurrences.push({ dimension: "model", value: line.model, turnIndex: turn.turnIndex, at: session.startedAt });
         }
         for (const call of index.callsByTurn.get(turn.key) ?? []) {
-          const where = { turnIndex: turn.turnIndex, toolCallKey: call.key, at: call.startedAt ?? session.startedAt };
+          const where = { turnIndex: turn.turnIndex, toolCallKey: call.key, at: call.startedAt ?? session.startedAt, ...(call.origin ? { origin: call.origin } : {}) };
           occurrences.push({ dimension: "tool", value: call.name, ...where });
           if (call.program) {
             occurrences.push({ dimension: "program", value: call.program, ...where });
@@ -93,7 +99,8 @@ export class BehaviorChangeDetector implements FindingDetector {
           ruleId: `behavior.new-${occurrence.dimension}`,
           title: `First use of ${occurrence.dimension} \`${occurrence.value}\``,
           ...(occurrence.at ? { at: occurrence.at } : {}),
-          why: whyFirstUse(occurrence.dimension, earlier, earlierWithKnownCalls, since),
+          why: whyOf(occurrence, whyFirstUse(occurrence.dimension, earlier, earlierWithKnownCalls, since)),
+          ...(occurrence.origin?.kind === "subagent" ? { origin: occurrence.origin } : {}),
         });
       }
     });

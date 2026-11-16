@@ -148,7 +148,7 @@ describe("buildSessionAudit: subagentRuns", () => {
         label: "runSubagent-Explore",
         depth: 1,
         turnIndex: 1,
-        totals: { toolCalls: 2, succeeded: 1, failed: 1, interrupted: 0, denied: 0, unknown: 0 },
+        totals: { toolCalls: 2, succeeded: 1, failed: 1, interrupted: 0, denied: 0, unknown: 0, canceled: 0 },
         failureRate: 0.5,
       },
       {
@@ -157,7 +157,7 @@ describe("buildSessionAudit: subagentRuns", () => {
         depth: 2,
         parentRunId: "r1",
         turnIndex: 1,
-        totals: { toolCalls: 1, succeeded: 1, failed: 0, interrupted: 0, denied: 0, unknown: 0 },
+        totals: { toolCalls: 1, succeeded: 1, failed: 0, interrupted: 0, denied: 0, unknown: 0, canceled: 0 },
         failureRate: 0,
       },
     ]);

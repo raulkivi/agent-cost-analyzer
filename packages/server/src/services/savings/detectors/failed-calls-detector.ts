@@ -1,11 +1,12 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { type Currency, type SavingsAmount, type SavingsOpportunity, type SavingsSessionRef } from "@agent-cost-analyzer/domain";
-import { isFailedCall } from "../../tool-audit/outcome-tally.js";
+import { isFailedCall, isSubagentCall } from "../../tool-audit/outcome-tally.js";
 import { currencyOf, NotAnalysedLedger, perWeek, sessionRefOf, sumAmount, unknownAmount, type PricedPart } from "../savings-amounts.js";
 import { sessionsByContribution } from "../savings-session-order.js";
 import type { DetectorResult, SavingsDetector, SavingsInput, SavingsSessionInput } from "../savings-detector.js";
 import { savingsName } from "../savings-names.js";
+import { withSubagentCallsNote } from "../subagent-calls-note.js";
 
 // Phase 16 SR7 (docs/plans/savings-report.md §4 O5, §7): tool calls that
 // failed again and again, from each session's tool-call audit, grouped across
@@ -56,7 +57,8 @@ export class FailedCallsDetector implements SavingsDetector {
         const currency = currencyOf(session.channel.channel);
         for (const { turnIndex, call } of session.audit.calls) {
           const category = call.outcome?.failureCategory ?? "unclassified";
-          if (!isFailedCall(call) || NOT_A_MISTAKE.has(category)) continue;
+          // D7: main-agent calls only in 1.0; D14: a canceled call is not a failure (isFailedCall).
+          if (isSubagentCall(call) || !isFailedCall(call) || NOT_A_MISTAKE.has(category)) continue;
           const name = savingsName(call.shell?.program ?? call.name);
           const key = `failed-tool-calls:${name}:${category}:${currency}`;
           const bucket = buckets.get(key) ?? { name, category, currency, occurrences: new Map() };
@@ -115,7 +117,7 @@ export class FailedCallsDetector implements SavingsDetector {
       evidence: { sessions: occurrences.length, requests: null, tokens: null, occurrences: calls },
       perWeek: perWeek(window, input.window),
       perWindow: window,
-      coverage: unusable.coverage(input.sessions.length, failures),
+      coverage: withSubagentCallsNote(unusable.coverage(input.sessions.length, failures), occurrences.map((occurrence) => occurrence.session)),
       actionParams: { name: bucket.name, calls, sessions: occurrences.length, category: bucket.category },
       inferred: false,
     };

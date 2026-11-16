@@ -21,25 +21,22 @@ export function isFailedCall(call: ToolCallRecord): boolean {
 }
 
 export function emptyTotals(): OutcomeTotals {
-  return { toolCalls: 0, succeeded: 0, failed: 0, interrupted: 0, denied: 0, unknown: 0 };
+  return { toolCalls: 0, succeeded: 0, failed: 0, interrupted: 0, denied: 0, unknown: 0, canceled: 0 };
 }
 
-// "canceled" (D14) has no bucket yet: it counts in toolCalls only, so it is
-// neither a failure nor a success. Step ST9 adds its own counter.
-const TOTALS_KEY: Record<Exclude<ToolCallStatus, "canceled">, keyof OutcomeTotals> = {
+const TOTALS_KEY: Record<ToolCallStatus, keyof OutcomeTotals> = {
   success: "succeeded",
   error: "failed",
   interrupted: "interrupted",
   denied: "denied",
   unknown: "unknown",
+  canceled: "canceled",
 };
 
 export function addToTotals(totals: OutcomeTotals, call: ToolCallRecord): void {
   totals.toolCalls += 1;
-  const status = statusOf(call);
-  if (status !== "canceled") {
-    totals[TOTALS_KEY[status]] += 1;
-  }
+  const key = TOTALS_KEY[statusOf(call)];
+  totals[key] = (totals[key] ?? 0) + 1;
 }
 
 // Who issued a call, as a grouping key: "main" or one subagent run. The run
@@ -67,14 +64,15 @@ export function tallyByOrigin(calls: ToolCallRecord[]): { main: OutcomeTotals; s
 
 export function mergeTotals(target: OutcomeTotals, source: OutcomeTotals): void {
   for (const key of Object.keys(target) as (keyof OutcomeTotals)[]) {
-    target[key] += source[key];
+    target[key] = (target[key] ?? 0) + (source[key] ?? 0);
   }
 }
 
-// (failed + interrupted + denied) over calls whose outcome is known; null
-// when none is known so no caller can show a fabricated 0%.
+// (failed + interrupted + denied) over calls with a known outcome, canceled
+// ones left out (D14: a user stop is not a tool result); null when none is
+// known so no caller can show a fabricated 0%.
 export function failureRateOf(totals: OutcomeTotals): number | null {
-  const known = totals.toolCalls - totals.unknown;
+  const known = totals.toolCalls - totals.unknown - (totals.canceled ?? 0);
   return known === 0 ? null : (totals.failed + totals.interrupted + totals.denied) / known;
 }
 

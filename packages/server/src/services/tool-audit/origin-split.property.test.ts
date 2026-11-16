@@ -85,6 +85,7 @@ function sum(a: OutcomeTotals, b: OutcomeTotals): OutcomeTotals {
     interrupted: a.interrupted + b.interrupted,
     denied: a.denied + b.denied,
     unknown: a.unknown + b.unknown,
+    canceled: (a.canceled ?? 0) + (b.canceled ?? 0),
   };
 }
 
@@ -119,6 +120,7 @@ describe("byOrigin properties", () => {
           interrupted: 0,
           denied: 0,
           unknown: 0,
+          canceled: 0,
         });
 
         if (audit.byOrigin) {

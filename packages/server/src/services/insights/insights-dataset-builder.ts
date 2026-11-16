@@ -192,6 +192,7 @@ function toolCallRow(turnKey: string, call: ToolCallRecord, callIndex: number): 
     ...(command ? { command } : {}),
     ...(call.startedAt ? { startedAt: call.startedAt } : {}),
     ...(call.durationMs !== undefined ? { durationMs: call.durationMs } : {}),
+    ...(call.origin ? { origin: call.origin } : {}),
   };
 }
 

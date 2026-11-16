@@ -45,7 +45,7 @@ describe("tool-call audit API (Phase 9.10)", () => {
 
       expect(response.status).toBe(200);
       expect(() => sessionAuditSchema.parse(response.body)).not.toThrow();
-      expect(response.body.totals).toEqual({ toolCalls: 13, succeeded: 2, failed: 10, interrupted: 1, denied: 0, unknown: 0 });
+      expect(response.body.totals).toEqual({ toolCalls: 13, succeeded: 2, failed: 10, interrupted: 1, denied: 0, unknown: 0, canceled: 0 });
     });
 
     it("reads through the active provider when none is named", async () => {

@@ -50,7 +50,7 @@ describe("buildAuditRollup", () => {
     const rollup = buildAuditRollup(audits, { providerId: "claude-code" });
 
     expect(rollup.sessionCount).toBe(2);
-    expect(rollup.totals).toEqual({ toolCalls: 5, succeeded: 1, failed: 3, interrupted: 0, denied: 0, unknown: 1 });
+    expect(rollup.totals).toEqual({ toolCalls: 5, succeeded: 1, failed: 3, interrupted: 0, denied: 0, unknown: 1, canceled: 0 });
     expect(rollup.failureRate).toBeCloseTo(3 / 4);
     expect(rollup.outcomeCoverage).toEqual({ known: 4, unknown: 1, unknownReasons: ["no outcomes"] });
     expect(() => auditRollupSchema.parse(rollup)).not.toThrow();
@@ -66,8 +66,8 @@ describe("buildAuditRollup", () => {
 
   it("buckets calls per day", () => {
     expect(buildAuditRollup(audits, {}).daily).toEqual([
-      { date: "2026-09-26", toolCalls: 2, succeeded: 1, failed: 1, interrupted: 0, denied: 0, unknown: 0 },
-      { date: "2026-09-27", toolCalls: 2, succeeded: 0, failed: 2, interrupted: 0, denied: 0, unknown: 0 },
+      { date: "2026-09-26", toolCalls: 2, succeeded: 1, failed: 1, interrupted: 0, denied: 0, unknown: 0, canceled: 0 },
+      { date: "2026-09-27", toolCalls: 2, succeeded: 0, failed: 2, interrupted: 0, denied: 0, unknown: 0, canceled: 0 },
     ]);
   });
 

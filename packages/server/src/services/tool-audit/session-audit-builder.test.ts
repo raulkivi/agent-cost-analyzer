@@ -71,7 +71,7 @@ describe("buildSessionAudit", () => {
       session([turn(0, [shell("npm test", "success"), shell("foo", "error"), shell("sleep 9", "interrupted")])]),
     );
 
-    expect(audit.totals).toEqual({ toolCalls: 3, succeeded: 1, failed: 1, interrupted: 1, denied: 0, unknown: 0 });
+    expect(audit.totals).toEqual({ toolCalls: 3, succeeded: 1, failed: 1, interrupted: 1, denied: 0, unknown: 0, canceled: 0 });
     expect(audit.failureRate).toBeCloseTo(2 / 3);
     expect(() => sessionAuditSchema.parse(audit)).not.toThrow();
   });
@@ -192,7 +192,7 @@ describe("buildSessionAudit on the real-capture Claude Code fixture", () => {
 
     const audit = buildSessionAudit(fixture!);
 
-    expect(audit.totals).toEqual({ toolCalls: 13, succeeded: 2, failed: 10, interrupted: 1, denied: 0, unknown: 0 });
+    expect(audit.totals).toEqual({ toolCalls: 13, succeeded: 2, failed: 10, interrupted: 1, denied: 0, unknown: 0, canceled: 0 });
     expect(audit.byFailureCategory.find((c) => c.category === "command-not-found")?.count).toBe(2);
     expect(audit.retries).toEqual([
       { command: "definitely-not-installed-tool --version", attempts: 2, eventuallySucceeded: false, turnIndexes: [0, 1] },

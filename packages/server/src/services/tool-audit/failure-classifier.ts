@@ -70,7 +70,7 @@ export const defaultFailureRules: FailureRule[] = [
   // Node/libc error codes are matched case-sensitively as whole words — a
   // case-insensitive "ENOTFOUND" also matches inside "ModuleNotFoundError".
   { ...textRule("network", /\b(?:ECONNREFUSED|ENOTFOUND|EAI_AGAIN|ECONNRESET|EHOSTUNREACH)\b/), id: "text.network-code" },
-  textRule("timeout", /Command timed out|timed out after|\bETIMEDOUT\b|deadline exceeded/i),
+  textRule("timeout", /Command timed out|\btimed out\b|\bETIMEDOUT\b|deadline exceeded/i),
   exitCodeRule(124, "timeout"),
   textRule(
     "command-not-found",
@@ -101,6 +101,12 @@ export const defaultFailureRules: FailureRule[] = [
     /unrecognized option|unknown option|invalid option|illegal option|unrecognized arguments?|unknown (?:flag|shorthand flag|command|argument|subcommand)|unexpected argument|missing (?:required )?(?:argument|operand)|requires an argument|arguments are required|too many arguments|^\s*usage:|Try '.*--help'/im,
   ),
   exitCodeRule(2, "invalid-arguments"),
+  // Step 10.20 D13: wording the classic VS Code Copilot Chat tools author
+  // themselves (docs/plans/subagent-tool-audit.md section 14.3). Each is an
+  // observed text; anything else from those tools stays unclassified.
+  { ...textRule("file-not-found", /cannot open file\b.*Unable to read|Detail: Unable to read/i, ["file-read"]), id: "text.classic-file-unreadable" },
+  { ...textRule("invalid-arguments", /Regex parse error/i, ["search"]), id: "text.classic-regex-parse-error" },
+  { ...textRule("already-exists", /\bFile already exists\b/i, ["file-write"]), id: "text.already-exists" },
   textRule(
     "test-or-build-failure",
     /\b\d+ (?:failed|failing)\b|Tests?:\s+\d+ failed|\bFAIL\b|error TS\d+|BUILD FAILED|compilation failed|AssertionError|npm ERR! Test failed|ELIFECYCLE|error\[E\d+\]|\d+ problems? \(\d+ errors?/,
