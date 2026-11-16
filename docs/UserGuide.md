@@ -353,13 +353,22 @@ AI Credits column stays an em dash.
 - **Why totals rose.** Sessions you saw before can now read higher, or
   unknown with a reason. A run on another model is priced on its own model.
 - **Marker.** The subagent glyph sits in the Turn cell (the AI Credits cell
-  has no figure to attach it to). Its tooltip lists tokens, then priced cost,
-  for example "incl. 2.04M tokens, $0.38 priced, from 2 subagent runs".
-- **Explanation block.** One row per run with model, requests, tokens and
-  priced cost, then the main agent, the runs and the turn totals, under
-  "Priced at Anthropic prices as of" a date.
-- **Session tile.** The AI Credits tile reads n/a; a Priced cost tile carries
-  "incl. $X and N tokens from M subagent runs".
+  has no figure to attach it to). Its tooltip and accessible name list tokens,
+  then priced cost, for example "incl. 2.04M tokens, $0.38 priced, from 2
+  subagent runs" (synthetic example). A run placed by time adds ", matched by
+  time". When a part is unknown, the tooltip names the unknown column and its
+  reason.
+- **Explanation block.** "Subagent runs this turn" with a **Priced** tag: one
+  row per run with model, requests, tokens and priced cost, then **Main
+  agent**, **Subagent runs** and **Turn** figures, a share sentence, and
+  "Priced at Anthropic prices as of" a date, each run on its own model. A run
+  with an unknown part shows an em dash and its reason; the other runs stay
+  listed. The turn inspector and the narrow-screen drawer carry the same line
+  as text.
+- **Session tiles.** **AI Credits** reads n/a ("Claude Code has no AI
+  Credits"). A **Priced cost** tile carries the sub-line "incl. $X and N
+  tokens from M subagent runs" (matched by time stays out of it), or the
+  reason when unknown. The Sessions list shows the runs' tokens only.
 - **Matched by time.** A transcript no `Agent` call names is placed on the
   turn whose prompt window holds its start time and labeled "matched by time".
 - **Nested runs.** A run started by another run is listed as its own run on
@@ -381,10 +390,10 @@ AI Credits column stays an em dash.
   shows as unknown, never as 0 calls. A run placed by time shows a
   "matched by time" mark on its audit row. MCP output keeps the run's prompt out.
 
-The turns-table marker, Explanation block and Priced cost tile follow the
-approved mock-ups in
-[plans/mockups/claude-code-subagents/](plans/mockups/claude-code-subagents/README.md);
-the web and MCP App views are built in plan task CS13.
+In the MCP App's turn detail (U1) a Claude Code turn lists its runs with
+tokens and priced cost, and shows an n/a AI Credits tile and a Priced cost
+tile. A run another session already counts and "continued N times" are not
+shown.
 
 ### The three-tab right panel
 

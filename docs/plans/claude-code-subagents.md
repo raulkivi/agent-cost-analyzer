@@ -449,8 +449,11 @@ CS13 → CS15 → CS16. CS1, CS2 and CS4 run beside CS3–CS7; CS14 after V21.
 
 ## 12a. As built (CS15, 2026-11-16)
 
-Where the code differs from §5, the code is the truth. CS13 (web and MCP App U1)
-is not built yet; the UI rows of the docs follow the CS2 boards until it lands.
+Where the code differs from §5, the code is the truth. CS13 (#389) built the
+web and MCP App U1 views from the CS2 boards, with an optional `pricedCost` on
+`usage`, `ownUsage` and each run (`withPricedCosts`, server side). The board
+rows "continued N times" (D2) and "counted in another session" (D7) are not
+built: CS10 carries no data for them.
 
 - **One fold for list and detail.** `foldClaudeCodeSubagentUsage`
   (`session-subagent-usage.ts`) reads the folder, attributes runs, merges
