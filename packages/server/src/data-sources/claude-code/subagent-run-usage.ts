@@ -42,6 +42,9 @@ function isParentCopy(round: ClaudeCodeRound, parentRequestIds: ReadonlySet<stri
   return parentRequestIds.has(round.messageId) || (requestId !== undefined && parentRequestIds.has(requestId));
 }
 
+/** True for the UTC ISO timestamps a run's `startedAt` accepts. */
+export const isRunTimestamp = (value: string): boolean => ISO_UTC.test(value) && !Number.isNaN(Date.parse(value));
+
 function firstString(entries: ClaudeCodeRawEntry[], key: string, accepts: (value: string) => boolean): string | undefined {
   for (const entry of entries) {
     const value = entry[key];
@@ -81,7 +84,7 @@ export function extractClaudeCodeRunUsage(
       ...sums,
       costAiCredits: unavailableTokenCount(NO_AI_CREDITS_REASON),
       parentRunId: meta.parentAgentId,
-      startedAt: firstString(entries, "timestamp", (value) => ISO_UTC.test(value) && !Number.isNaN(Date.parse(value))),
+      startedAt: firstString(entries, "timestamp", isRunTimestamp),
     },
     requestIds,
   };

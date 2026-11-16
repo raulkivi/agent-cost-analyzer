@@ -20,7 +20,7 @@ function sumParts(parts: readonly TokenCount[]): TokenCount {
   return sumTokenCounts([...parts], firstUnknown?.known === false ? firstUnknown.reason : "");
 }
 
-function ownUsageOf(usage: TurnUsage): OwnTurnUsage {
+export function ownUsageOf(usage: TurnUsage): OwnTurnUsage {
   const { uncachedInput, cacheWrite, cacheRead, tool, vision, reasoning, output, costAiCredits, extendedCacheWrite, model } = usage;
   return {
     uncachedInput,
