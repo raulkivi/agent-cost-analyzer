@@ -26,7 +26,7 @@ Non-goals (checked against vision §6 and the design):
 
 - No subagent sessions in the Sessions list (design option C).
 - No subagent rounds in the turn inspector (as Agent Host; D4).
-- No subagent tool calls in the tool audit or security findings in this step (D3; a follow-up step).
+- No subagent tool calls in the tool audit or security findings in this step (D3). **Done in step 10.20** ([subagent-tool-audit.md](subagent-tool-audit.md)).
 - No replay of subagent chains: replay stays main chain only (analyze-session-replay.md D6).
 - Claude Code subagent transcripts stay out of scope (architecture.md §6.2.6).
 - No per-model split for Agent Host turns (D14).
@@ -255,7 +255,7 @@ The real-Copilot suite gets no new spec: the feature reads files, and a real cla
 | Same | Denial of service by many or large subagent files | Mitigated: read only for folders with a ref or a matching name; streamed line by line; a per-session file cap that makes the total unknown, never partial |
 | Same | Information disclosure: subagent prompts, tool results and hook output | Mitigated: the same attrs allow-list as `main.jsonl`; only ids, labels, counts and model names are kept |
 | `label`, `agentName`, `id` reaching the UI and MCP tools | Hostile text, prompt injection through a crafted label | Mitigated: schema patterns and length caps (§4.1); React text nodes; MCP output is data |
-| Tool audit and security findings | Subagent tool calls are not scanned | Residual (§7 of the threat model) until the follow-up for D3 |
+| Tool audit and security findings | Subagent tool calls are not scanned | Residual here; closed by step 10.20 (threat model §4) |
 
 ## 9. Owner decisions
 

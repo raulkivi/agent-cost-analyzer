@@ -589,6 +589,16 @@ of the real error as evidence.
   exit code, and evidence for each call. **Inspect** opens the turn
   inspector.
 - **Retried commands.** The same command re-run after it failed.
+- **Subagent calls.** When a turn started subagents, the figures include
+  their tool calls ("incl. N calls from M subagent runs"). **Calls by
+  agent** splits main agent and subagents, and the **Agent** filter (All /
+  Main agent / Subagents) and column narrow the tool calls table. The
+  **Subagent runs** table has one row per run. A run whose calls could not
+  be read shows its reason and **Unknown**, never 0 calls; a run linked by
+  time window carries a "matched by time" mark. A canceled call (a stop
+  you made) has its own tile and chip and counts in no failure figure.
+  The filter works on the audit already loaded (no new request); a section
+  that still counts every agent says so.
 
 ![Tool audit for one session](images/audit-session.png)
 
@@ -600,10 +610,11 @@ own audit.
 ![Tool-call audit across sessions](images/audit-all-sessions.png)
 
 Outcome data depends on the log provider. Claude Code CLI sessions record
-it in full. pi records it when its `isError` flag is present. VS Code's
-debug log doesn't record whether a call succeeded, so those calls show as
-**Unknown**, with the reason spelled out, rather than counting as zero
-failures.
+it in full. pi records it when its `isError` flag is present. VS Code
+Copilot Chat's debug log records each tool call's status, so its calls have
+known outcomes, including the calls of subagent runs. A call whose status
+the log doesn't state shows as **Unknown**, with the reason spelled out,
+rather than counting as zero failures.
 
 ### Querying the audit from Claude Code (MCP)
 
@@ -651,9 +662,9 @@ results only.
 | `get_turn` | One turn: prompt and response (secrets redacted, truncated), usage, triggered event and tool calls |
 | `get_session_cost` | One session's tokens and AI Credits with coverage, cache hit ratio, spend per model, the most expensive turns, cost events and context overhead |
 | `get_cost_rollup` | Spend across **every** provider by provider, model and day, plus the most expensive sessions |
-| `get_session_audit` | One session's tool-call audit. Set `includeCalls` to also get every classified call |
-| `list_tool_calls` | One session's calls, filtered by status, failure category, tool kind, tool, program or turn, paged with `offset`/`limit` |
-| `get_audit_rollup` | Cross-session tool-call totals, top failing commands and per-day counts for one provider |
+| `get_session_audit` | One session's tool-call audit, split by main agent and subagent runs. Set `includeCalls` to also get every classified call |
+| `list_tool_calls` | One session's calls, filtered by status, failure category, tool kind, tool, program, turn, `origin` (main or subagent) or `runId`, paged with `offset`/`limit`. A subagent call's prompt is not returned |
+| `get_audit_rollup` | Cross-session tool-call totals split by main agent and subagents, top failing commands and per-day counts for one provider |
 | `list_findings` | Security, anomaly and behavior-change findings across every provider, most severe first, with what, when, why and redacted evidence |
 | `list_repositories` | The repositories your sessions ran in, with sessions, turns, AI Credits and project ids; sessions with no repository are grouped by reason. Local repositories are named by folder, never by path |
 | `list_projects` | Your projects from `projects.json` with their repositories and AI Credits; client names and billing codes only if you start the server with `--project-billing-details` (for example `claude mcp add agent-cost-analyzer -- npx -y --prefer-offline agent-cost-analyzer mcp --project-billing-details`, or `/abs/path/scripts/mcp-server.sh --project-billing-details` from a clone) |
@@ -919,7 +930,13 @@ picker.**
   Recovery cost is in tokens, labeled "tokens, not AI Credits". Sessions
   whose tool calls aren't recorded are named in a **Left out** tile and are
   in no figure. Commands are shown as written. Nothing in the audit opens
-  anything.
+  anything. A subagent run whose tool calls can't be read is counted as an
+  unread run with its reason, and its session stays in every count. A
+  subagent call's prompt shows in the app and the extension but never in
+  MCP output. Two known gaps: the all-sessions unread-runs count misses a
+  classic run that can't be placed in any turn, and some unread reasons
+  (not a regular file, name rejected, unreadable, no parsable lines) mention
+  AI Credits.
 - **The session picker** shows each session's title, short id, start,
   turns, model and repository, and no cost (`list_sessions` returns none).
   No match shows **No sessions match** with what to try.

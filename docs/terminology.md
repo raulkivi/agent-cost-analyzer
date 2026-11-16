@@ -361,6 +361,12 @@ including code — one token at a time based on the input it's given.
 *Example: "Claude Sonnet 5" and "GPT-5" are both LLMs an AI coding
 assistant can be configured to use.*
 
+## Main agent
+
+The agent that talks to you in a session, as distinct from the subagents
+it starts. Its tool calls are the calls without a subagent origin in the
+tool audit. **(this project)**
+
 ## MCP (Model Context Protocol) ⭐
 
 An open protocol for connecting LLM clients to external tool/data
@@ -423,6 +429,16 @@ of content — text, images, audio — in the same request.
 
 *Example: pasting a screenshot of a UI bug into a chat and asking a
 multimodal model to identify the CSS issue.*
+
+## Origin (tool-call origin)
+
+Which agent made a tool call: the main agent, or one subagent run. Each
+call in the tool audit carries it, so the audit can split totals by agent
+and a finding can name the run.
+
+*Example: a failed `bash` call with origin "subagent run Agent-Explore"
+counts in that run's totals and in the session total, not in the main
+agent's. **(this project)***
 
 ## Output tokens
 

@@ -403,7 +403,15 @@ interface ToolCallOutcome {
 // ToolCallOrigin = { kind: "main" } | { kind: "subagent", runId, label, depth: 1-8,
 // parentRunId?, startedByCallId? } (tool-call-origin.ts; run id and label patterns
 // in subagent-run-ids.ts, shared with the cost side). SessionAudit.byOrigin /
-// subagentRuns and AuditRollup.byOrigin split the totals by origin.
+// subagentRuns and AuditRollup.byOrigin split the totals by origin (keys
+// "main" and "run:<runId>"; sessions without runs count as main).
+// Turn carries the readers' per-turn run lists: subagentRunGaps (a run whose
+// calls are unknown or flagged, with the reason), subagentRunsRead (runs read
+// in full, so a run with no calls is a known 0) and subagentRunsByTime (runs
+// placed by time window, shown as "matched by time"). AuditRollup.byOrigin,
+// SessionAudit.outcomeTotals.canceled (optional; absent = none) and
+// sessionsWithUnreadSubagentRuns (sessions with a run whose totals are null)
+// complete the shape.
 // SessionAudit / AuditRollup (packages/domain/src/session-audit.ts) are
 // server-computed aggregates over these records — see §8's audit endpoints.
 // InsightsDataset (packages/domain/src/insights.ts, Phase 9.11) flattens
@@ -1564,6 +1572,50 @@ list, the detail, the status bar and the MCP tools, so they cannot drift.
   - a nested run, or a request with no AI Credits;
   - more than 200 matching files, or a folder that can't be listed.
 
+##### Classic subagent tool calls in the audit (step 10.20)
+
+[plans/subagent-tool-audit.md](plans/subagent-tool-audit.md). The detail read
+of a classic session puts the tool calls of the subagent runs a turn started
+into the same audit as the main agent's calls, each with `origin`. The list
+path (`listSessions`) reads no child file for it.
+
+- **Outcomes.** `audit-attrs-projector.ts` keeps `args` (cut to the 300
+  character summary at parse time) and `error` (2 KB) of a `tool_call` span,
+  never `result`. `tool-call-spans.ts` maps the span status: `ok` to success,
+  `error` to an error classified by the shared tool-audit helpers, "Canceled"
+  text to `canceled` (a user stop, no failure category), any other status to
+  unknown with a reason. So classic outcomes are known, not unknown.
+- **Runs.** `attributed-run-ledger.ts` and `subagent-attribution.ts` return
+  the attributed runs and the unplaced files; `subagent-run-plan.ts` links a
+  run to its parent call (the ref's `parentSpanId`, else the one subagent
+  call whose time window holds the ref) and finds nested runs.
+  `subagent-tool-calls.ts` streams each child file, adds `origin`, dedupes
+  (the parent's record wins, then the first log, then the outer run), orders
+  main calls first and each run's calls after in run order, and guards depth
+  (8) and cycles.
+- **Unread runs.** A run whose calls can't be read becomes a
+  `Turn.subagentRunGaps` entry with its reason; a run read in full is listed
+  in `Turn.subagentRunsRead`, so it has known totals (0 calls is a known 0,
+  failure rate null); a run placed by time is in `Turn.subagentRunsByTime`.
+  `subagent-runs-builder.ts` turns these into `SessionAudit.subagentRuns`
+  rows. An unread run has `totals: null` and a reason, never 0 calls.
+- **Builders.** `byOrigin` and the `subagentRuns` table are in the session
+  audit; the rollup has `byOrigin` and `sessionsWithUnreadSubagentRuns`.
+  Retries group within one origin; failure-recovery cost counts main-agent
+  rounds only; canceled calls are out of the failure rate, categories,
+  retries, security findings and anomaly rates. Savings read main-agent calls
+  only and note how many subagent calls they left out.
+- **Inputs and outputs.** `list_tool_calls` (and its HTTP route) filter by
+  `origin` and `runId`; `list_findings` by `origin`. `publicAuditedCall`
+  (`mcp/audit-call-output.ts`) cuts MCP call rows to the record fields and
+  blanks a subagent-kind call's `argsSummary`, the subagent's prompt;
+  `get_turn` omits that call's `command`. The web UI and extension show it.
+- **Known limitations.** An orphan run that can't be placed has no
+  session-level carrier: it is in the cost side's unknown reasons but not in
+  the rollup's unread-run counter. The reasons for a log that is not a
+  regular file, has a rejected name, is unreadable or has no parsable lines
+  are step 10.19's texts, which mention AI Credits.
+
 #### 6.2.2.1 VS Code Agent Host sessions (step 10.13)
 
 **Why.** VS Code 1.143 made the Copilot harness the default for new
@@ -1750,6 +1802,12 @@ stays unavailable. Not used: `hook.*`, `permission.requested`, `model.*`,
   list means "no calls" only when the log was read.
 - **Subagents.** Events with a top-level `agentId` add their tool calls to the
   turn that started the subagent. Their text and inspector rounds are left out.
+  Step 10.20: `agent-host-tool-call-origin.ts` gives each such call an
+  `origin` (`originOf` walks `parentToolCallId`, depth cap 8, cycle guard) and
+  orders main calls first, then each run's calls in run start order. The label
+  is `search_code_subagent`, else `task-<agentName>` from `subagent.started`,
+  else `task`. A broken chain or a cycle is a depth-1 run flagged in
+  `Turn.subagentRunGaps`.
 - **Cache.** `CopilotEventLogCache` keeps the 4 most recently used parsed logs,
   keyed by path, size and mtime. It parses only the event types the builders
   read, so the audit and insights rollups reuse one parse.
@@ -2814,8 +2872,8 @@ themselves.
 | `GET /api/sessions/:id` | Full enriched `Session` from the active provider (mode=`analyze`), including `usageDataAvailable` |
 | `GET /api/sessions/:id/system-prompt` | Raw `text/plain` of the session's captured base system prompt (Phase 6 addendum); 404 if no system-prompt artifact was captured |
 | `GET /api/sessions/:id/turns/:turnIndex` | `TurnInspectorDetail` — one turn's actual LLM request/response round-trip(s), scoped to only the content that turn added (Phase 9.5, §6.2.4); used for on-demand deep dives, avoiding sending every turn's full detail up front. 404 if the session or turn index doesn't exist; 400 for a non-numeric/negative `turnIndex` |
-| `GET /api/sessions/:id/audit` | `SessionAudit` (Phase 9.10, [plans/tool-call-audit.md](plans/tool-call-audit.md)): per-status totals, failure rate over known outcomes (`null` when none known), by-tool/program/category breakdowns, per-turn outcome counts, every classified call, retry groups, failure-recovery cost, and outcome coverage. Optional `?provider=<id>` audits a provider other than the active one (400 if unknown); 404 for an unknown session |
-| `GET /api/sessions/:id/tool-calls` | `{ total, calls: AuditedToolCall[] }`: one session's classified tool calls, filtered by `status`/`category`/`kind` (comma-separated enum lists), `tool`, `program`, `turn`, paged by `offset`/`limit`, optional `provider`. 400 on an invalid value |
+| `GET /api/sessions/:id/audit` | `SessionAudit` (Phase 9.10, [plans/tool-call-audit.md](plans/tool-call-audit.md)): per-status totals, failure rate over known outcomes (`null` when none known), by-tool/program/category breakdowns, per-turn outcome counts, every classified call (each with `origin`), retry groups, failure-recovery cost, outcome coverage, and, when a subagent run exists, `byOrigin` and the `subagentRuns` table (step 10.20). Optional `?provider=<id>` audits a provider other than the active one (400 if unknown); 404 for an unknown session |
+| `GET /api/sessions/:id/tool-calls` | `{ total, calls: AuditedToolCall[] }`: one session's classified tool calls, filtered by `status`/`category`/`kind` (comma-separated enum lists), `origin` (`main`, `subagent`), `runId`, `tool`, `program`, `turn`, paged by `offset`/`limit`, optional `provider`. 400 on an invalid value |
 | `GET /api/sessions/:id/replay?model&pricing&provider` | `SessionReplay` (Phase 14 step 14.5, §6.5): the session replayed on `model` (a vendor profile's model id, at most 100 characters; log spellings resolve), per turn and in total beside the measured figures, with coverage, the self-check and the assumptions, always `simulated: true`. `pricing` is `session-channel` (default), `copilot` or `api` (D2); optional `provider`. 400 for a bad query or a model no vendor profile lists; 404 for an unknown session or one that can't be replayed, with the reason. Webview RPC `getSessionReplay` in the extension (D5); also MCP `replay_session` |
 | `GET /api/sessions/:id/replay/compare?models&pricing&provider` | `SessionReplayComparison` (Phase 14 step 14.5): the session's simulated total on each of `models` (comma-separated, 1 to 10 with the session's own model, which is added first when a profile lists it) beside its measured total. Errors as for `/replay`; any unknown model refuses the whole comparison. RPC `compareSessionReplay`; also MCP `compare_models_for_session` |
 | `GET /api/savings?since&until&provider&pricing&includeSimulated` | `SavingsReport` (Phase 16 SR12, §6.6): ranked opportunities, the Simulated ones apart, `notAnalysed` and `sessionsLeftOut`. `since` and `until` are `YYYY-MM-DD` (default: the last 30 days); `provider` limits to one log provider; `pricing` is `as-of-use` (default) or `today`; `includeSimulated` (default false) runs the cheaper-model replays. No `limit`: the session cap is the service's. A bad query or window is 400; a product with no price book answers 404; computed on request, aborted when the client closes, never stored. GET only |
@@ -2985,6 +3043,11 @@ on `domain` and on `web`'s presentational exports only, never on `server`
   Files per session are capped at 200, and `label`, `agentName` and `id` are
   pinned by schema patterns and length caps before reaching the UI or MCP.
   Threat model §4.
+- **Subagent tool calls (step 10.20).** The audit's child-file read takes
+  its files only from the same resolver and cap, and `origin.label`,
+  `runId`, `parentRunId` and `startedByCallId` share those patterns. MCP
+  call rows blank a subagent-kind call's `argsSummary` (the subagent's
+  prompt); the local UI shows it. Threat model §4.
 - `sessionId` (and any other path parameter used to build a filesystem path
   under `debug-logs/`) is validated against an allow-list pattern before use,
   to prevent path traversal into arbitrary files on disk.

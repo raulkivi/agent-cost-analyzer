@@ -281,8 +281,8 @@ test.
 6. **pi extractor (F4).** Add `isError` to `PiToolResultMessage`; tests with
    `isError: true`/`false`/missing (missing → `unknown` + reason).
 7. **VS Code (F5).** Carry `status`/`dur`. Status other than `"ok"` stays
-   `unknown` with reason "unverified error status value" until a real
-   failing capture is recorded.
+   `unknown` with reason "unrecognized span status" (a real failing
+   capture showed `error`; step 10.20 ST6).
 8. **F7.** Bound `argsSummary` (test: a 50 KB `Write` input produces a
    summary ≤ 300 chars; the inspector endpoint still returns the full args).
 9. **SessionAuditBuilder** (pure) + `GET /api/sessions/:id/audit` (app tests:
@@ -440,8 +440,10 @@ Known limitations, each deliberately not guessed at:
   may not be.
 - **Retries.** Only an exact, whitespace-normalized re-run counts as a
   retry. A tweaked re-run, such as a corrected flag, is not matched.
-- **VS Code outcomes** stay `unknown` until a real failing `tool_call` span
-  is captured and its status value is confirmed.
+- **VS Code outcomes** are known since step 10.20 ST6: a `tool_call` span's
+  `status` is `ok` (success) or `error` (error), "Canceled" error text is
+  `canceled`, and any other value stays `unknown` with the reason
+  "unrecognized span status" ([subagent-tool-audit.md](subagent-tool-audit.md) §4.1).
 - **mitmproxy** tool calls (F6) are not decoded yet.
 - **Recovery cost** is reported as recovery rounds plus the exact tokens of
   affected turns. Per-round token usage isn't part of the normalized
