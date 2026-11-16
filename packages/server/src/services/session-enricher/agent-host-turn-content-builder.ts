@@ -1,13 +1,13 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { ToolCallOrigin, ToolCallRecord, ToolCallStatus } from "@agent-cost-analyzer/domain";
+import type { SubagentRunGap, ToolCallOrigin, ToolCallRecord, ToolCallStatus } from "@agent-cost-analyzer/domain";
 import type { CopilotEvent } from "../../data-sources/agent-host/copilot-event.js";
 import { MAX_ARGS_SUMMARY_LENGTH, summarizeToolArgs } from "../tool-audit/args-summary.js";
 import { buildToolCallOutcome } from "../tool-audit/outcome-builder.js";
 import { excerptOf } from "../tool-audit/output-redactor.js";
 import { parseShellCommand } from "../tool-audit/shell-command-parser.js";
 import { resolveToolKind } from "../tool-audit/tool-kind-resolver.js";
-import { indexSubagentStarts, orderByOrigin, originOf } from "./agent-host-tool-call-origin.js";
+import { brokenChainGaps, indexSubagentStarts, orderByOrigin, originOf } from "./agent-host-tool-call-origin.js";
 import { isSubagentEvent, type MatchedTurn, type UnmatchedTurn } from "./copilot-turn-segmenter.js";
 
 // Turn text and tool calls with outcomes for an Agent Host turn, from the
@@ -18,6 +18,8 @@ export interface AgentHostTurnContent {
   userMessage: string;
   assistantResponse: string;
   toolCalls: ToolCallRecord[];
+  // Runs whose starting call is not in the log (plan 5.3); absent when none.
+  subagentRunGaps?: SubagentRunGap[];
   // Set only for an unmatched turn: the text and tool calls are unknown,
   // not empty (constraint 6). The Turn shape has no field for it, so the
   // wiring carries these into the session's unavailability markers.
@@ -230,12 +232,15 @@ export function buildAgentHostTurnContent(turn: MatchedTurn, options: BuildTurnC
   const drafts = collectCalls(turn.events);
   const byId = new Map(drafts.map((d) => [d.id, d]));
   const subagentNames = options.subagentNames ?? indexSubagentStarts(turn.events);
+  const toolCalls = orderByOrigin(
+    drafts.map((d) => buildRecord(d, roundOf(d, byId), outcomes, aborted, originOf(d, byId, subagentNames))),
+  );
+  const gaps = brokenChainGaps(toolCalls.map((c) => c.origin));
   return {
     userMessage: str(turn.userMessage.data.content) ?? "",
     assistantResponse: assistantResponseOf(turn.events),
-    toolCalls: orderByOrigin(
-      drafts.map((d) => buildRecord(d, roundOf(d, byId), outcomes, aborted, originOf(d, byId, subagentNames))),
-    ),
+    toolCalls,
+    ...(gaps.length > 0 ? { subagentRunGaps: gaps } : {}),
   };
 }
 

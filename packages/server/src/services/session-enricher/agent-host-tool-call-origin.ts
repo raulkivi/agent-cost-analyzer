@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { subagentLabelSchema, subagentRunIdSchema, type ToolCallOrigin } from "@agent-cost-analyzer/domain";
+import { subagentLabelSchema, subagentRunIdSchema, type SubagentRunGap, type ToolCallOrigin } from "@agent-cost-analyzer/domain";
 import type { CopilotEvent } from "../../data-sources/agent-host/copilot-event.js";
 
 // Which agent issued an Agent Host tool call (step 10.20,
@@ -118,4 +118,18 @@ export function orderByOrigin<T extends { origin?: { kind: string; runId?: strin
     else runs.set(runId, [item]);
   }
   return [...main, ...[...runs.values()].flat()];
+}
+
+export const BROKEN_CHAIN_REASON = "the call that started this subagent run is not in the log";
+
+// One gap per run whose chain never reached a call (plan 5.3, 6, D12): the
+// origin has no startedByCallId. The audit builder keeps the run's totals
+// and flags it with this reason.
+export function brokenChainGaps(origins: readonly (ToolCallOrigin | undefined)[]): SubagentRunGap[] {
+  const gaps = new Map<string, SubagentRunGap>();
+  for (const origin of origins) {
+    if (origin?.kind !== "subagent" || origin.startedByCallId !== undefined || gaps.has(origin.runId)) continue;
+    gaps.set(origin.runId, { runId: origin.runId, label: origin.label, depth: 1, reason: BROKEN_CHAIN_REASON });
+  }
+  return [...gaps.values()];
 }

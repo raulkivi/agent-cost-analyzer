@@ -176,6 +176,7 @@ function buildTurn(row: AgentHostTurnRow, index: number, source: TurnContentSour
     userMessage: content.userMessage,
     assistantResponse: content.assistantResponse,
     toolCalls: content.toolCalls,
+    ...(content.subagentRunGaps ? { subagentRunGaps: content.subagentRunGaps } : {}),
     usage,
     explanation: buildExplanation(row, usage, content.textUnavailableReason),
     ...(content.textUnavailableReason ? { textUnavailableReason: content.textUnavailableReason } : {}),
