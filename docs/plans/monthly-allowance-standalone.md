@@ -1,6 +1,6 @@
 # Monthly AI Credits allowance in the standalone app (MA13)
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **Plan approved 2026-11-14** (D1–D11 accepted). Task MA13 of [monthly-allowance.md](monthly-allowance.md) (step 10.21), 1.0 criterion C9 and build task V20 in [implementation-plan.md](../implementation-plan.md) ("1.0.0 release"). Build next.
 
@@ -294,11 +294,31 @@ With an allowance set in the app's settings dialog, Analyze mode's header shows 
   - 320 px: no horizontal scroll; the figure visible.
   - MCP: `get_monthly_allowance` through `e2e/support/mcp-stdio.ts` equals the header's figures.
 - **`npm run test:real-data:allowance`** on the owner's logs:
-  - The oracle (`allowance-oracle.mts`) reads raw Copilot logs and shares no code with the product: classic `main.jsonl` and subagent logs through the SA18 scanners, Copilot CLI `events.jsonl` through the V3 oracle's reader; it applies the plan's rules (billed only, whole-session known, start-time attribution in the machine's zone, reset day from the settings).
+  - The oracle (`allowance-oracle.mts`) reads raw Copilot logs and shares no code with the product: classic `main.jsonl` and subagent logs through the SA18 scanners, Agent Host bills from each `session.db` through the V4 oracle's reader, cross-checked against the Copilot CLI's `events.jsonl` (parsed as the V3 oracle parses it) where that log records usage; it applies the plan's rules (billed only, whole-session known, start-time attribution in the machine's zone, reset day from the settings). §11.1 has the details.
   - For the current period and the two previous full periods (D11): `used` within 0.01 AI Credits of the oracle's sum of known sessions; `coverage.known` and `coverage.total` exact; the by-harness split equal; `state` `unknown` exactly when the oracle knows no session; never `used: 0` with `known: 0`.
   - `GET /api/monthly-allowance` and `get_monthly_allowance` answer the same.
   - Output carries ids, dates, sums and counts only, never titles, prompts or paths. The owner signs off the output.
 - Docs and threat-model rows updated; the owner approved the mock-ups.
+
+### 11.1 The check (task MS10)
+
+`npm run test:real-data:allowance` (also part of `npm run test:real-data`) runs `packages/server/scripts/allowance-exit.real.test.mts` over the machine's own Copilot logs. It skips unless `REAL_DATA=1` (the npm script sets it), so `npm test` and CI are unaffected. `REAL_DATA_USER_DATA` names another VS Code user-data dir; `COPILOT_HOME` another Copilot CLI home. It prints counts, dates, sums, reset days and short hashes of session ids, never a prompt, title, path or file content.
+
+**Setup.** Both sides read one frozen copy of the data, so a running VS Code can't make them disagree:
+
+- SQLite snapshots (`VACUUM INTO`, read-only on the source) of the session store, the Agent Host catalog and each Agent Host `session.db`, in a temporary user-data folder named as the real one (so the answer's variant label is the real one's);
+- a view of the debug logs: one symlink per stable session folder; a folder with a file written in the last 15 minutes is a live session, left out and counted, so both sides see that session as unknown;
+- a temporary copy of the app's settings folder. The check sets a test allowance and each reset day checked (1, and 15 for periods that cross a month end) through `PUT /api/config/monthly-allowance`; the oracle reads the reset day back from that file. The owner's settings folder is never written.
+
+The products are the HTTP app (`createApp`, called through `GET /api/monthly-allowance`) and the stdio MCP server's composition (`get_monthly_allowance` through an in-memory client), both with the injected clock set inside each period checked: now for the current period, noon UTC two weeks into each of the two previous full periods (D11).
+
+**Oracle.** `scripts/allowance-oracle.mts`, unit-tested in `allowance-oracle.test.mts` over hand-made logs; a test follows its imports and finds only the SA18 scanner (`subagent-spend-lib.mts`), the V4 oracle (`cost-by-project-oracle.mts`) and the shared JSONL parser (`savings-oracle.mts`), none of which imports the product. Its rules:
+
+- **Classic sessions:** the session store's rows in the §18.2 scope (host type `vscode`, or agent name "GitHub Copilot Chat"); start = the row's `created_at`. The bill is `main.jsonl` plus the subagent runs' logs, summed by the SA18 scanner. Known only when every store turn has a logged turn (prompts aligned as the V4 oracle aligns them), every logged turn has a request, every request and every run's request has billed AI Credits, and every run the log names has its file. A debug-log folder with no store row counts in no period (the scope can't be applied without a row); the output counts them.
+- **Agent Host sessions:** every Copilot CLI row of the catalog that isn't deleted, whatever its URI scheme; a chat opened but never sent is no session; start = the catalog's `start_time`. The bill is the sum of `turn_usage`'s `copilotUsage.totalNanoAiu` over the session's turns, unknown when a turn has none or the store is missing. Where the Copilot CLI's `events.jsonl` records usage, the sum of its usage records must equal that bill (older CLI logs record none; the output counts them).
+- **Period and figures:** the calendar day of each start in the machine's zone; the period from the reset day as §4.5; the known sessions' sum, the coverage, "at least", the oldest day counted and the by-harness split as §4.6.
+
+**Assertions,** per reset day and period: the state, the coverage, `used` within 0.01 AI Credits, "at least", the oldest day counted, the by-harness split (same sums within 0.01), the period's days and zone, the settings, the VS Code variant, never `used: 0` with no known session. Then: the HTTP and MCP answers equal in every period; no session id, home path or session title in any answer; the stable logs and the owner's settings folder unchanged (fingerprints before and after).
 
 ## 12. Docs to update
 
