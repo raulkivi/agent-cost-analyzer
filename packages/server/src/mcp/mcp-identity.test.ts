@@ -39,6 +39,10 @@ describe.each([
     expect(text).toMatch(/replay.*main agent/is);
   });
 
+  it("say that the tool-call audit and findings include subagent tool calls, marked by origin (step 10.20)", () => {
+    expect(text).toContain("The tool-call audit and findings include subagent tool calls, each marked with its run (`origin`).");
+  });
+
   it("give the only conversion: 1 AI Credit = $0.01, and no other exchange rate", () => {
     expect(text).toContain("1 AI Credit = $0.01");
     expect(text).toMatch(/no other exchange rate/i);

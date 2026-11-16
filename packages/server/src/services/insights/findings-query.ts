@@ -6,6 +6,7 @@ import type {
   FindingsQueryResult,
   InsightFinding,
   InsightsDataset,
+  ToolCallOrigin,
 } from "@agent-cost-analyzer/domain";
 
 // Phase 9.12 (docs/plans/mcp-tools-v2.md §4): filters and orders the
@@ -13,11 +14,15 @@ import type {
 
 export const DEFAULT_MAX_FINDINGS = 50;
 
+type ToolCallOriginKind = ToolCallOrigin["kind"];
+
 export interface FindingsFilter {
   kind?: FindingKind[];
   minSeverity?: FindingSeverity;
   category?: string;
   sessionId?: string;
+  // Step 10.20: absent = both; a finding without `origin` is the main agent's.
+  origin?: ToolCallOriginKind[];
   maxResults?: number;
 }
 
@@ -38,6 +43,7 @@ export function queryFindings(dataset: InsightsDataset, filter: FindingsFilter):
         (!filter.kind || filter.kind.includes(finding.kind)) &&
         SEVERITY_RANK[finding.severity] >= minRank &&
         (!category || finding.category.toLowerCase() === category) &&
+        (!filter.origin || filter.origin.includes(finding.origin?.kind ?? "main")) &&
         (!filter.sessionId || sessions.get(finding.sessionKey)?.sessionId === filter.sessionId),
     )
     .sort(mostSevereThenMostRecent);

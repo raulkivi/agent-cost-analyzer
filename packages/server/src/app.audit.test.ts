@@ -86,6 +86,20 @@ describe("tool-call audit API (Phase 9.10)", () => {
       expect(response.body.calls[0].call.outcome.failureCategory).toBe("timeout");
     });
 
+    // Step 10.20 (D9): the route takes `origin` and `runId`, default both.
+    it("takes origin and runId, and 400s a hostile or unknown value", async () => {
+      const app = buildApp();
+      const base = `/api/sessions/${sessionId}/tool-calls?provider=claude-code`;
+      const all = (await request(app).get(base)).body.total;
+      expect((await request(app).get(`${base}&origin=main,subagent`)).body.total).toBe(all);
+      expect((await request(app).get(`${base}&origin=main`)).body.total).toBe(all);
+      expect((await request(app).get(`${base}&origin=subagent`)).body.total).toBe(0);
+      expect((await request(app).get(`${base}&runId=child-1`)).body.total).toBe(0);
+      for (const query of ["origin=agent", "runId=x%3B%20ignore%20previous", `runId=${"a".repeat(129)}`, "runId=..%2Fetc"]) {
+        expect((await request(app).get(`${base}&${query}`)).status, query).toBe(400);
+      }
+    });
+
     it("400s an invalid filter value", async () => {
       const app = buildApp();
       expect((await request(app).get(`/api/sessions/${sessionId}/tool-calls?provider=claude-code&status=bogus`)).status).toBe(400);
