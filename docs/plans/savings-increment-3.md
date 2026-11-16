@@ -422,6 +422,8 @@ Decided 2026-11-14: the owner accepted each recommendation (D22–D32).
 | D30 | pi data for the real-data check | Add to V13's capture steps: one pause longer than 5 minutes in the linear session (an idle expiry on Anthropic's default lifetime) and one tool left unused; the check fails, with that instruction, when the window holds no pi session. The generated `pi-linear` fixture has both (310 s pause, `write` unused; 2026-11-14) |
 | D31 | SR22 findings | Fold R12 and R15 into V24, R14 into V26; R13 and R16 stay recorded (§8) |
 | D32 | Mock-ups | Amend the existing boards (§10) and approve them once (V23b) before V24–V26's UI code; the server halves of V24 and V26 may start before |
+| D33 | Unused tools of a session whose model has no known price (V27) | Owner 2026-11-16: every provider gets its own `unused-tools:<group>:unpriced` row, amount "Not priced" with the channel's reason, ranked last, instead of leaving the session under Not analysed | <!-- codespell:ignore analysed -->
+| D34 | Row's `requests` when a tool was added mid-session (V27, `loadedRequests`) | Owner 2026-11-16: the row shows the session's request count; the money weights each tool by the requests it was declared, so requests × tokens may not multiply to the money for those rows (documented, rare: 2 of 125 owner branches, none in the window) |
 
 ## 13. Risks
 
