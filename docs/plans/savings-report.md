@@ -1,8 +1,8 @@
 # Savings report: ranked, quantified fixes
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-**Status: Increment 2 built 2026-11-14, 23 of 23 tasks (SR18 boards approved, SR19 `get_savings_report` in PR #275, SR20 U18 view in PR #278, SR21 U18 specs in PR #281, SR22 review and docs in PR #285, §17); its exit check (§14) passed on the owner's logs 2026-11-14 and the owner signed it off the same day (exit criterion met); ships in extension 0.14.0 and app 0.15.0. Increment 1 built (SR0-SR17, 2026-11-13); owner decisions D1-D12 accepted 2026-11-12, D13-D15 answered 2026-11-14; Increment 1 exit criterion met 2026-11-14 (owner sign-off on the automated check, §14); the owner approved the docs 2026-11-14; ships in app 0.14.0 and extension 0.12.0; Increment 2 not started.** Phase 16 in
+**Status: Increment 3 (G6) built 2026-11-16 except V28 (the pi request trace, after 1.0): V24–V27 and the V29 review ([savings-increment-3.md](savings-increment-3.md) §17); its exit check passed on the owner's logs 2026-11-16 and awaits the owner's sign-off. Increment 2 built 2026-11-14, 23 of 23 tasks (SR18 boards approved, SR19 `get_savings_report` in PR #275, SR20 U18 view in PR #278, SR21 U18 specs in PR #281, SR22 review and docs in PR #285, §17); its exit check (§14) passed on the owner's logs 2026-11-14 and the owner signed it off the same day (exit criterion met); ships in extension 0.14.0 and app 0.15.0. Increment 1 built (SR0-SR17, 2026-11-13); owner decisions D1-D12 accepted 2026-11-12, D13-D15 answered 2026-11-14; Increment 1 exit criterion met 2026-11-14 (owner sign-off on the automated check, §14); the owner approved the docs 2026-11-14; ships in app 0.14.0 and extension 0.12.0; Increment 2 not started.** Phase 16 in
 [implementation-plan.md](../implementation-plan.md) (owner decision D9).
 
 The question this answers: **"What should I change to spend less, and
@@ -64,8 +64,9 @@ and (Increment 2) as an MCP tool with an MCP App view.
   [mcp-apps.md](mcp-apps.md).
 - G6. Increment 3 (1.0): decided scope, owner 2026-11-14 (criterion C11
   in [implementation-plan.md](../implementation-plan.md#100-release)).
-  Tasks are to be planned in `docs/plans/savings-increment-3.md`; no task
-  table yet.
+  Planned and built in [savings-increment-3.md](savings-increment-3.md)
+  (V23–V29; (a) reduced to O1 per tool for pi, V27; O2–O4 for pi, V28, after
+  1.0). Built 2026-11-16 except V28; exit check passed, sign-off pending.
   - (a) pi coverage: O2–O4 cache breaks, which need a pi request trace
     (Phase 14 D1), and O1 unused tools per tool. Both build on Phase 11's
     real pi captures.
@@ -268,8 +269,8 @@ Recommendation (D2): a new `services/savings` module, not a fifth
 
 | Opportunity | VS Code local | Agent Host | Claude Code | pi | mitmproxy |
 |---|---|---|---|---|---|
-| O1 unused tools | Yes, with debug logging (tools file; the list changes mid-session, so use the per-request list) | No: total tokens only (`toolDefinitionsTokens`) | Yes, per tool with server (`api-request-shape` `shape.tools`; deferred tools at name-only cost) | Total only, via the sidecar; per tool unverified | No tool inventory |
-| O2–O4 cache breaks | Yes (trace; writes inferred without `agent-traces.db`) | Yes (trace) | Yes (trace) | No trace yet (Phase 14 D1) | No trace yet |
+| O1 unused tools | Yes, with debug logging (tools file; the list changes mid-session, so use the per-request list) | No: total tokens only (`toolDefinitionsTokens`) | Yes, per tool with server (`api-request-shape` `shape.tools`; deferred tools at name-only cost) | Yes, per tool, from the session file's system messages, weighted by the requests each tool was declared for (Increment 3 V27); a file with none (sidecar only) has no inventory (D29); a local model is "Not priced" (D33) | No tool inventory |
+| O2–O4 cache breaks | Yes (trace; writes inferred without `agent-traces.db`) | Yes (trace) | Yes (trace) | No trace yet (Phase 14 D1; Increment 3 V28, after 1.0) | No trace yet |
 | O5 failed calls | Yes, where outcomes are logged ([tool-call-audit.md](tool-call-audit.md) §5) | No: tool calls unknown | Yes | Per audit §5 | Per audit §5 |
 | O6 cheaper model | Yes | Yes | Yes | No | No |
 
@@ -451,6 +452,13 @@ in order; 1,421 fingerprints unchanged. 8 of 8 tests passed. A first run
 the same evening failed only on `~/.claude.json`, which a running Claude
 Code session rewrites (the app never opens it); the rerun passed. **Met for Increment 2, 2026-11-14:** the owner signed
 off on that output.
+
+**Increment 3 (G6, [savings-increment-3.md](savings-increment-3.md) §14):**
+the same check adds pi (V27: the window holds a pi session; only sessions
+without a system message are "no tool inventory"; the top pi unused-tools row
+against a pi oracle), per-session dates and savings, per-tool tokens, and no
+session title in any report or tool answer (V29). **Run 2026-11-16 on the
+owner's logs: passed (§14 of that plan); the owner's sign-off is pending.**
 
 ### Automated check
 

@@ -812,8 +812,9 @@ text.
   button. The row itself is not a button.
 - **A savings row** (savings view) opens in place: the amount over the
   window, the evidence, **What to change** (a suggestion; nothing is
-  changed) and the largest three of its sessions, each with its date and
-  its saving over the window (ids only, no titles), with the price versions.
+  changed), an unused-tools row's five largest tools, and the largest
+  three of its sessions, each with its date and its saving over the window
+  (ids only, no titles), with the price versions.
   Each session has **Open cost**, which opens its cost view in place, or,
   on a cheaper-model row, **Open replay**, which opens the replay on that
   model. **Back to savings** returns with focus on the session you left.
@@ -1328,7 +1329,7 @@ What each provider gives:
 | VS Code Copilot Chat (local) | Yes, with debug logging | Yes | Yes, where outcomes are logged | Yes |
 | VS Code Agent Host | No: only the total tool-definition tokens | Yes | No: tool calls unknown | Yes |
 | Claude Code | Yes, per tool and MCP server | Yes | Yes | Yes |
-| pi | No | No: no request trace yet | Per the [tool-call audit](#auditing-tool-calls) | No |
+| pi | Yes, per tool, from the session file's system messages (each tool counted for the requests it was declared for); "Not priced" on a local model | No: no request trace yet | Per the [tool-call audit](#auditing-tool-calls) | No |
 | mitmproxy | No | No | Per the tool-call audit | No |
 
 **Reading a row.** Each row has the kind, the subject (a tool, MCP server
@@ -1343,8 +1344,9 @@ sessions; 3 had no request trace").
   definitions, not by the vendor.
 - **inferred**: the grouping is a guess. Copilot names MCP tools
   `mcp_<server>_<tool>`, and a server name can hold `_`.
-- **Not priced**: no price for that model on that date. It has no bar,
-  never counts as 0 and sorts last.
+- **Not priced**: no price for that model on that date, or no known price
+  channel at all (pi on a local model). It has no bar, never counts as 0
+  and sorts last; its tokens and requests are still shown.
 - **under 0.1 AI Credits** (**under $0.01**): a known saving too small to
   show at one decimal (two for dollars); it is not zero and ranks by its
   real size.
@@ -1367,8 +1369,10 @@ whole window, the change to make and the price versions behind it.
   five largest with their definition tokens per request ("about N", an
   estimate, averaged over the sessions that loaded the tool) and "loaded in
   N sessions", then "and N more (about X)", where X is the row's total
-  minus the five. The figures can differ from the row's total by a few
-  tokens. The chat tool gives the model up to 20 tools and its text answer
+  minus the five. When every tool was loaded in every session of the row,
+  the figures differ from the row's total by a few tokens of rounding; a
+  tool loaded in only some sessions counts for more in the list than in the
+  total. The chat tool gives the model up to 20 tools and its text answer
   the first five.
 - **Sessions.** Each listed session shows its title first, then its id and
   its date (in your time zone) under it, and its own saving over the window
@@ -1394,17 +1398,21 @@ same way.
 
 **Not analysed.** What could not be checked is listed with the reason,
 never shown as a saving of 0: a provider with no tool inventory or request
-trace, a session whose log could not be read, or sessions over the
-500-session cap (only the most recent are read). A row's coverage line
-counts them too.
+trace, a pi session whose file holds no system message (the logger's
+record names the tools but not their size), a session whose log could not
+be read, or sessions over the 500-session cap (only the most recent are
+read). A row's coverage line counts them too. A branch of a forked pi file
+counts the requests it shares with an earlier branch of the same file
+once, under that branch.
 
 The report reads `GET /api/savings` (`since`, `until`, `provider`,
 `pricing`, `includeSimulated`).
 
 **In the chat.** The MCP tool `get_savings_report` gives an agent the same
 ranked rows (in VS Code Copilot Chat, Copilot sessions only), cut to the 10
-highest unless it asks for up to 20, with session ids and model ids but no
-session titles or prompts. In a host with MCP Apps it opens the savings view
+highest unless it asks for up to 20, with session ids (each with its date
+and its saving over the window), model ids and up to 20 tools of an
+unused-tools row, but no session titles or prompts. In a host with MCP Apps it opens the savings view
 ([Interactive views in the chat](#interactive-views-in-the-chat)).
 
 ## Charts as tables

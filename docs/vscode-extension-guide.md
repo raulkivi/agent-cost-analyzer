@@ -1,6 +1,6 @@
 # AI Credits Analyzer: extension guide
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 AI Credits Analyzer is a VS Code extension that shows where your GitHub
 Copilot Chat tokens and AI Credits go. It reads the logs Copilot Chat
@@ -286,8 +286,10 @@ What differs in the panel:
   It copies one line of fixed wording, at most 600 characters. The panel
   never changes a setting or a file because of the report.
 - **Tools.** An unused-tools row lists its five largest tools with their
-  tokens per request ("about N", an estimate) and "loaded in N sessions",
-  then "and N more (about X)", where X is the row's total minus the five.
+  tokens per request ("about N", an estimate, averaged over the sessions
+  that loaded it) and "loaded in N sessions", then "and N more (about X)",
+  where X is the row's total minus the five. A tool loaded in only some
+  sessions counts for more in the list than in the row's total.
 - **Sessions.** Each listed session shows its title first, then its id and
   its date under it, and its own saving over the window, with the row's
   label ("up to", a range). The title is the Copilot title the Dashboard
@@ -700,8 +702,9 @@ What you can click:
 - **A model** in the replay comparison replays the session on that model in
   place; **Back to model comparison** returns with focus on that model.
 - **A savings row** opens in place: the amount over the window, the
-  evidence, **What to change** (a suggestion; nothing is changed) and the
-  largest three of its sessions, each with its date and its saving over the
+  evidence, **What to change** (a suggestion; nothing is changed), an
+  unused-tools row's five largest tools, and the largest three of its
+  sessions, each with its date and its saving over the
   window (ids only, no titles), and the price versions. **Open cost** opens
   a session's cost view in place (**Open replay** on a cheaper-model row);
   **Back to savings** returns with focus on that session. The view has no
@@ -801,8 +804,10 @@ context, and so to whichever model the chat uses:
 
 - costs: tokens, AI Credits and cache use per session, turn and day;
 - tool calls and their outcomes;
-- the savings report: kinds, amounts, coverage, session and model ids, and
-  tool or program names (redacted, capped), never titles or prompts;
+- the savings report: kinds, amounts, coverage, session and model ids
+  (each session with its date and its saving over the window), tool or
+  program names (redacted, capped) and up to 20 tools of an unused-tools
+  row with estimated tokens, never titles or prompts;
 - findings: security, anomaly and behaviour-change flags, with excerpts;
 - repositories: their remote names (`github.com/org/repo`), never a
   remote's credentials; a local repository by its folder name only;

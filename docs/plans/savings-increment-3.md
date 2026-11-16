@@ -8,7 +8,10 @@ C11).** Decisions D22–D32 accepted. No UI code before the
 owner approves the boards (V23b). **Scope change 2026-11-14 (owner):** the
 owner runs pi only on a local model (unpriced), so V28 (the pi request trace
 and O2–O4 for pi, §7.2) moves after 1.0; V27 (pi O1 per tool, wasted tokens
-shown, amounts "Not priced" with the reason) stays in 1.0. Scope decided by the owner 2026-11-14 in
+shown, amounts "Not priced" with the reason) stays in 1.0. **V24–V27 done
+2026-11-15/16; V29 (review, docs, exit check) done 2026-11-16 (§17): 6
+findings fixed, 6 recorded; the exit check (§14) passed on the owner's logs,
+and the owner's sign-off of its output is pending.** Scope decided by the owner 2026-11-14 in
 [savings-report.md](savings-report.md) §2, goal G6. Increments 1 and 2, their
 design, honesty rules and owner decisions D1–D21 are in that plan and are not
 repeated here; decisions in this plan continue its numbering from D22.
@@ -31,6 +34,7 @@ repeated here; decisions in this plan continue its numbering from D22.
 14. Exit criterion
 15. Tasks
 16. Docs to update
+17. V29 review
 
 ## 1. Why
 
@@ -342,7 +346,7 @@ capture shows and raises it for Phase 11.
 | R13 | The tool ranks across currencies; U18 numbers each currency from 1 | No change: by design (one list per currency, never converted). V24's text answer says "ranked by the high end; 1 AI Credit = $0.01" once, which it already implies |
 | R14 | Action templates don't pluralise ("1 tools", "1 sessions") | Fold into V26: it changes the unused-tools goldens anyway; fix every template, update the goldens and the specs that quote action text in one PR |
 | R15 | U18's "N had no request trace" form never fires on real reasons | Fold into V24: remove the dead special case, so fixtures and real rows read the same "N not analysed: <reason>"; V24 already edits `view-models/savings.ts` |
-| R16 | Session ids reach the model uncapped | No change: they must round-trip to `get_session_cost`. V28's test checks a pi branch id (`<hash>__branch__<uuid>`) round-trips from `get_savings_report` to `get_session_cost` |
+| R16 | Session ids reach the model uncapped | No change: they must round-trip to `get_session_cost`. V28's test checks a pi branch id (`<hash>__branch__<uuid>`) round-trips from `get_savings_report` to `get_session_cost` (V29 wrote that test, since V27's pi rows are in 1.0 and V28 is not: §17 R22) |
 
 ## 9. What reaches the model
 
@@ -395,7 +399,9 @@ in the row's evidence. No title, no Copy, no new control.
 ## 11. Threat-model rows
 
 Rows to add to or amend in [threat-model.md](../threat-model.md) §4 and
-§6.1 in V29:
+§6.1 in V29. **Done 2026-11-16:** the first three and the last are in
+threat-model.md §4 as verified, citing their tests; the pi request trace row
+waits for V28 (after 1.0).
 
 | Surface | Threat | Planned mitigation |
 |---|---|---|
@@ -435,8 +441,8 @@ Decided 2026-11-14: the owner accepted each recommendation (D22–D32).
 | pi models without a vendor profile (other vendors, local models) | O2–O4 unknown for them | Unknown with the existing reason, in coverage; never 0 |
 | The owner's 30-day window holds little pi use | The pi half of the check has nothing to compare | D30: the V13 capture includes an idle pause and an unused tool |
 | Title lookup misses (dataset capped below the report's 500) | Some sessions show the id only | The id is always shown; a test covers the miss |
-| Per-tool averages don't add up to the row's average | A reader sums the list and gets a slightly different number | "about" in the view; the real-data check allows one token per tool |
-| Larger report payload (an amount per session, up to 500 sessions) | Slower RPC to the webview | Measured in V24's service test; amounts are small objects; the MCP output stays capped at 10 sessions |
+| Per-tool averages don't add up to the row's average | A reader sums the list and gets a slightly different number | "about" in the view; the real-data check allows one token per tool. Only when every tool was in every session (§17 R23) |
+| Larger report payload (an amount per session, up to 500 sessions) | Slower RPC to the webview | Measured in V29 instead of V24's service test (§17: a few hundred kB on the owner's window); amounts are small objects; the MCP output stays capped at 10 sessions |
 | Output-schema change | A client caching the old schema | Fields are additive except R12's `rank` on Simulated rows, which `review_costs` and U18 don't read; snapshots updated on purpose |
 
 ## 14. Exit criterion
@@ -495,7 +501,7 @@ new and needs a row there.
 | V26 (done 2026-11-15) | (b) Per-tool tokens: `tools` and `toolsTotal` on unused-tools rows with refinements; `groupTokens` per tool; D26 name form; tool output (20) and text (5); Evidence block and U18 list; R14 pluralisation in every template; goldens and action-text specs updated; the real-data check's per-tool assertions | Golden per-tool lists over the multi-session fixture and a hostile-name test; specs pass | medium | Sonnet | V23 approved; V23b for the UI half |
 | V27 (done 2026-11-16) | (a) O1 per tool for pi: tests over V14's real fixtures; the read-only tool-list-change count; `loadedRequests` and kept definitions if the count shows changes; D29 | pi unused-tools golden over the real fixtures; pi sessions with system messages no longer under "no tool inventory" | medium | Sonnet | V14, V23 approved |
 | V28 | (a) pi request trace and O2–O4: `buildPiRequestTrace`; `harnessSchema` `pi`; `CacheBreakTraceReader` on the pi provider with prompt-change markers; D27's shared-prefix counts and the unchecked first request after a branch point; caveat if end times only; pi oracle in `savings-oracle.mts` and the real-data check's pi assertions; branch-id round-trip test (R16) | Trace golden equals the turns' usage over both real captures; cache-break goldens (idle, switch, tool change, fork); replay still refuses pi | high | Opus | V14, V23 approved; after V27 (same provider files) |
-| V29 | Review (as SR16, SR22) of V24–V28 against §7 honesty rules, §9 and §11; docs (§16); `npm run test:real-data:savings` on the owner's logs | Findings fixed test-first and recorded in this plan; the owner signs off the check's output | medium | Opus | V24–V28 |
+| V29 (done 2026-11-16, §17) | Review (as SR16, SR22) of V24–V27 (V28 is after 1.0) against §7 honesty rules, §9 and §11; docs (§16); `npm run test:real-data:savings` on the owner's logs | Findings fixed test-first and recorded in this plan (§17: 6 fixed, 6 recorded); the check passed on the owner's logs (§14); **the owner's sign-off of its output is pending** | medium | Opus | V24–V27 |
 
 Suggested order: V23b and the server halves of V24 and V26 in parallel;
 then V24's UI, V25, V26's UI; after V14: V27, then V28; then V29.
@@ -526,3 +532,88 @@ In V29 unless a task changes the doc's subject first:
   table with V23b) and
   [implementation-plan-gantt.md](../implementation-plan-gantt.md): by the
   main session, per task.
+
+**Done in V29 (2026-11-16):** savings-report.md (status, §2 G6, §6, §14),
+architecture.md (§4.1, §4.2, §5, §6.2.5, §6.6, §11.2), threat-model.md (§4,
+§6.1), providers/pi-provider.md (V27's inventory and D27), the User Guide,
+the extension guide and both CHANGELOGs. The pi trace's parts wait for V28.
+
+## 17. V29 review
+
+2026-11-16, by Claude Opus 5.5: Increment 3 as built, the way SR16 and
+SR22 reviewed Increments 1 and 2. Read in the code, not the PR
+descriptions: V24 (#328: `savingsSessionRefSchema`, `sessionRefOf`, the
+four detectors' per-session amounts, `sessionsByContribution`, the tool's
+`sessionOf` and `sessionText`, `SavingsDetail` and U18's session lists),
+V25 (#335: `session-titles.ts`, `use-session-titles.ts`, `SavingsTab`,
+`SavingsDetail`'s `SessionItem`), V26 (#336: `savingsToolSchema` and its
+refinements, `unlistedTools`, `groupTokens` and `toolsOf`, the tool's
+`toolOf` and `toolsLine`, `toolListOf`, both views' tool tables, R14 in
+`savings-actions.ts`) and V27 (#349: `replaySystemMessages`' tool history,
+`shared-prefix.ts`, the pi provider's inventory, `loadedRequests` and the
+unpriced rows in `UnusedToolsDetector`, the pi oracle), against §7 of the
+main plan, §9, §11, §14, D22–D34, the approved boards (the V23b answers in
+`mockups/savings-report/README.md`) and the real-data check.
+
+**Findings.**
+
+| # | Severity | Where | Finding | Status |
+|---|---|---|---|---|
+| R17 | Low | `mcp-apps/src/view-models/savings.ts` `PROVIDER_LABELS` | U18 keyed pi's label as `pi`, but the pi provider's id is `pi-agent`. Since V27 put pi rows into the tool, U18 showed "pi-agent" in a currency list's heading and in its list of sessions not checked | Fixed (b25807b7): keyed by `pi-agent`. View-model test red first |
+| R18 | Low (wording) | `server/src/mcp/savings-tool-output.ts` `rowText`, `savingsReportText` | R14 fixed the action templates; the tool's own text answer still wrote "1 of 1 sessions" in a row's coverage and "1 sessions." in its lists of sessions not checked and left out | Fixed (3b287df7). Test red first |
+| R19 | Low | `server/src/mcp/savings-tools.ts` (description) | The output schema gained each session's start and saving (V24) and the per-tool list (V26), but the description still said "session ids". A model had no hint that a session's saving is over the window (not per week), or that per-tool tokens are estimates | Fixed (6b6323de): two sentences; registration test red first; both tool-list snapshots change on purpose (description only) |
+| R20 | Medium (test gap) | `server/scripts/savings-exit.real.test.mts` | §14 (c) and (d) were not fully in the real-data check. A listed session's date only had to exist, not equal its session's start. Nothing checked that the known per-session savings add up to the row's. V25's task row named a no-title assertion, but none was written. pi's per-tool sum was not checked. V26's PR said its per-tool assertions were not run | Fixed (62b5ef84): dates and sums over every row of every report the check builds; titles from each product's insights dataset (D24's source) searched in every report and tool answer, never printed; pi's per-tool sum. Run on the owner's logs (§14) |
+| R21 | Medium (test gap) | `server/src/mcp/security.test.ts` (V25's title test) | The test searches `get_savings_report` and the tab's report for every session title, but the cost fixture's savings report has no row (checked: 0 opportunities). No session reference could carry a title, so the test could not fail | Fixed (c4bf5132): `composition/savings-no-titles.test.ts` runs the standalone composition over SR13's Claude Code savings session (two rows that list it) and finds its title in neither answer. The `sv1` Playwright spec already checked `/api/savings` over rows |
+| R22 | Low (test gap) | R16, §9 | R16's pi branch-id round trip was V28's test. V28 moved after 1.0, but V27 puts pi rows, and so branch ids, in the 1.0 tool | Fixed (58670243): `composition/pi-savings-branch-ids.test.ts` passes each row's `<hash>__branch__<leaf>` id to `get_session_cost` unchanged. It passed on its first run: a gap closed, not a defect |
+| R23 | Low (design, owner) | `unused-tools-detector.ts` `toolsOf`; `domain/src/savings.ts` `unlistedTools`; `web/src/lib/savings/savings-view.ts` `toolListOf` | A tool's figure is its average over the sessions that loaded it; the row's is over all of its sessions. When a tool was loaded in only some of them, its figure is more than its share of the row's average. Then the list's note ("can differ from the per-request total by a few tokens") is off by more than rounding, and "and N more (about X)", X = the row's total minus the listed tools, understates the rest (`unlistedTools` drops X only when the listed sum passes the total). §6's "at most one token per tool" holds only when every tool was in every session. The owner approved X as drawn (V23b question 6) | Recorded for the owner. Recommendation: show X only when every listed tool was loaded in all of the row's sessions (`tool.sessions` = `evidence.sessions`), else the count alone, and word the note for that case. The User Guide now says when the few-tokens bound holds. On the owner's logs the check's per-tool assertions passed |
+| R24 | Low (design, owner) | `cache-break-detector.ts` `opportunityOf`, `sessionAmount` | A session with one priced and one unpriced break keeps an "up to" of its priced breaks only, while the row's coverage leaves it out with the price reason. The row's own amount has done the same since SR6. O5 instead leaves such a session out of the amount ("an upper bound that leaves a turn out is no upper bound"). V24 makes the partial figure visible per session | Recorded for the owner. Recommendation: make O2–O4 match O5 (such a session's saving is unknown with the reason, and its breaks leave the row's amount), or keep it and label it "priced breaks only". On the owner's logs every idle-expiry break was priced |
+| R25 | Low (performance) | `web/src/lib/savings/use-session-titles.ts` | The first detail opened per window loads the whole insights dataset again for the titles: every provider, up to 200 sessions each, each session parsed and the findings run. The server keeps no copy, so on a large window the titles arrive seconds later (the check's summary times the same load), while the list shows ids | Recorded. Options for the owner after 1.0: reuse the Dashboard's dataset when the windows match, or a titles-only listing (D24 chose the dataset over a new route) |
+| R26 | Info | `savings-tool-output.ts` `sessionText` | The text answer prints a session's date as the UTC day of its start; the views show the viewer's day (D23). Near midnight one session can read a day apart in the chat text and in U18 | Recorded: by design (V23b question 7: ISO dates in the tool's text) |
+| R27 | Info | `unused-tools-detector.ts` `requestsByModel`, `pi-agent/shared-prefix.ts` | D27 counts a shared prefix under the first branch in leaf order. If that branch is not in the report (past the 500-session cap; the window cannot split a file's branches, which share the header's start), the prefix is counted in neither branch | Recorded. No forked pi file on the owner's logs |
+| R28 | Low (wording) | `web/src/lib/savings/savings-view.ts` `coverageText`; `mcp-apps/src/view-models/savings.ts` `gapText` | The views' coverage line still reads "1 of 1 sessions" (R18 fixed the tool's text only) | Recorded for the next UI task: wdio and Playwright specs quote these lines |
+
+**Checked, no finding.**
+
+- §7 honesty. A known per-session saving has the row's basis, label and
+  currency, and an unknown row has no known part (domain refinement, V24).
+  An unpriced session reads "Not priced", with each reason once under the
+  list, never 0; a session with no start reads "date unknown". D33's
+  `unused-tools:<group>:unpriced` rows carry the channel's reason on the row
+  and on every session, rank last, and still count tokens and requests.
+  Per-tool tokens must be `estimated` (refinement) and read "about" with the
+  "estimate" tag. No total anywhere. D34: the row's requests are the
+  session's; the money weights each tool by `loadedRequests` ÷ the session's
+  own requests, capped at 1, after the shared prefix.
+- §9. Titles are looked up in the browser only (`sessionTitleLookup`); no
+  server type has a title field; the tool, both reports and U18 carry none
+  (R20, R21, `mcp/security.test.ts`, the `sv1` specs). Tool names pass
+  `savingsName` in the detector and again in the tool (`toolOf`); unknown
+  reasons on rows, sessions and tools are folded, redacted and capped
+  (`amountOf`, `toolOf`). Caps: 10 sessions and 20 tools in the output
+  schema, 5 tools in the text. Ids round-trip (R22).
+- Accessibility. A title renders as text, folded to one line, at most 120
+  code points, cut with an ellipsis and in full in its tooltip. "Open in
+  Analyze" keeps its visible label first in its name, then the id, then the
+  title. The per-tool tables have column headers with the "estimate" tag.
+  axe is clean in `sv1-savings-report.spec.ts` (titles, tools, 320 px) and
+  `u18-savings.spec.ts` (sessions, tools, light and dark). No new control,
+  so the keyboard paths are SR14's and SR20's. The tooltip is not
+  keyboard-reachable, but the full title is in the button's name.
+- Performance. `groupTokens` is one pass per session and `toolsOf` keeps the
+  top 20. A date and an amount on each session reference grew the report
+  (§13's risk, measured here rather than in V24's service test): on the
+  owner's 30-day window, about 350 kB of JSON for about 1,000 references;
+  the capped tool answer stays under 100 kB.
+- Consistency. Both tabs and U18 use the same `savings-view.ts` helpers
+  (`sessionDateText`, `sessionSavingText`, `notPricedReasons`,
+  `toolListOf`). Sessions: 5 in the tabs, 3 in U18 (D16), 10 in the tool.
+  Tools: 5 in every view, 20 in the structured result. The extension uses
+  the same `SavingsDetail` and `useSessionTitles` over its own Copilot
+  dataset (D25); the check finds both products' Copilot reports equal.
+- R12 (no `rank` on Simulated rows) and R15 (no dead `gapText` case) are
+  in; R13 needs no change (the text says "Ranked by the high end").
+- V27. `loadedRequests` counts the branch's own requests (after the shared
+  prefix); a removed tool keeps its last definition; sidecar-only sessions
+  stay under "no tool inventory" (D29), as the check confirms on real data.
+- Process. Each PR names its red runs. V25's wdio title spec was written
+  and not run in its PR; V26's real-data assertions first ran here.

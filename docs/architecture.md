@@ -1,6 +1,6 @@
 # Architecture: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 ## 1. Purpose & scope
 
@@ -171,7 +171,7 @@ opener around it (§10).
 | `data-sources/log-providers/vscode` | Adapts the existing SQLite and `main.jsonl` readers into the `LogProvider` interface; VS Code-specific paths, settings, and event extraction stay here. Also owns the optional `agent-traces.db` cache-write/reasoning enrichment (Phase 8.5) — folded in here, not a separate provider id or a direct `app.ts` path (decided 2026-08-10, see `implementation-plan.md` Phase 9) — and `turn-inspector-builder.ts` (Phase 9.5), which turns one turn's isolated envelopes into a `TurnInspectorDetail` (§6.2.4) |
 | `data-sources/log-providers/mitmproxy` | Reads local mitmproxy capture files and dispatches each intercepted LLM request/response to the vendor decoder that recognizes its SDK/protocol shape |
 | `data-sources/log-providers/mitmproxy/decoders` | Independent vendor decoders (initially Anthropic and OpenAI) that convert a matched exchange into provider-neutral intermediate records; an unrecognized exchange is reported as unavailable, never guessed |
-| `data-sources/pi-agent` | Reads the [pi coding agent](https://pi.dev)'s own JSONL session format (`~/.pi/agent/sessions/`) directly — no OS-level store dependency. Reconstructs pi's branchable entry tree, groups a branch into turns, and extracts usage already normalized per message by pi itself (no vendor wire-protocol decoding needed, unlike mitmproxy) |
+| `data-sources/pi-agent` | Reads the [pi coding agent](https://pi.dev)'s own JSONL session format (`~/.pi/agent/sessions/`) directly — no OS-level store dependency. Reconstructs pi's branchable entry tree, groups a branch into turns, and extracts usage already normalized per message by pi itself (no vendor wire-protocol decoding needed, unlike mitmproxy). Savings Increment 3 V27: `system-message-replay.ts` keeps each declared tool's last definition and the requests it was declared for (`ToolInventoryEntry.loadedRequests`), and `shared-prefix.ts` counts the leading requests a branch shares with an earlier branch of its file (`Session.sharedPrefixRequests`, D27; §6.2.5) |
 | `data-sources/learn-scenarios` | Loads bundled scenario fixtures (seeded from [agentic-coding-explained.md](agentic-coding-explained.md)) that already conform to the domain model, so Learn mode needs no parsing/enrichment step |
 | `services/session-enricher` | Converts a selected provider's normalized structural/usage records into `Session`/`Turn` values; it does not know whether they originated in VS Code, mitmproxy, Anthropic, or OpenAI |
 | `platform/vscode-paths` | Resolves the active VS Code variant's user-data directory across OSes (Linux/macOS/Windows, Stable/Insiders) so `sqlite`, `jsonl`, and `vscode-settings` all locate the right files without duplicating detection logic |
@@ -193,11 +193,11 @@ opener around it (§10).
 | `services/session-replay/replay-query-params.ts` | Phase 14 step 14.5: the replay options' zod schemas, shared by HTTP, the webview RPC and MCP so all three give the same messages |
 | `composition/create-session-replay.ts` | Phase 14 step 14.5: `createSessionReplay`, the one wiring of `SessionReplayService` used by the standalone app, its MCP server, the extension and its MCP server |
 | `mcp/replay-tools.ts` | Phase 14 step 14.5 (D7): the `replay` tool group, `replay_session` and `compare_models_for_session` (read-only, domain output schemas) |
-| `services/savings/` | Phase 16 ([plans/savings-report.md](plans/savings-report.md) §5.2): the savings report, a service of its own and not a finding kind (D2). `SavingsService.report(filter, options, signal)` loads the window's sessions one at a time (at most `MAX_ROLLUP_SESSION_LIMIT`, 500, newest first) through `SavingsSessionLoader`, runs the registered `SavingsDetector` strategies and ranks the result with the pure `SavingsRanker`. Detectors take plain data and return plain data: `UnusedToolsDetector` (O1), `CacheBreakDetector` (O2–O4, over the pure `cache-break-classifier.ts` and `cache-rules.ts`), `FailedCallsDetector` (O5, over `buildSessionAudit`) and `CheaperModelDetector` (O6, over a `ReplayComparer` port, with `cheaper-model-candidates.ts`). `CounterfactualPricer` prices N tokens as one token type versus another through `CostPricer`. `savings-names.ts` (`savingsName`) folds, redacts and caps every log-derived name; `savings-window.ts` is the window (30 days to today by default); `savings-query-params.ts` is the zod query schema shared by HTTP, RPC and MCP; `savings-session-order.ts` (`sessionsByContribution`, D16) lists each opportunity's sessions largest contribution first, for O1, O2–O4 and O5 |
+| `services/savings/` | Phase 16 ([plans/savings-report.md](plans/savings-report.md) §5.2): the savings report, a service of its own and not a finding kind (D2). `SavingsService.report(filter, options, signal)` loads the window's sessions one at a time (at most `MAX_ROLLUP_SESSION_LIMIT`, 500, newest first) through `SavingsSessionLoader`, runs the registered `SavingsDetector` strategies and ranks the result with the pure `SavingsRanker`. Detectors take plain data and return plain data: `UnusedToolsDetector` (O1), `CacheBreakDetector` (O2–O4, over the pure `cache-break-classifier.ts` and `cache-rules.ts`), `FailedCallsDetector` (O5, over `buildSessionAudit`) and `CheaperModelDetector` (O6, over a `ReplayComparer` port, with `cheaper-model-candidates.ts`). `CounterfactualPricer` prices N tokens as one token type versus another through `CostPricer`. `savings-names.ts` (`savingsName`) folds, redacts and caps every log-derived name; `savings-window.ts` is the window (30 days to today by default); `savings-query-params.ts` is the zod query schema shared by HTTP, RPC and MCP; `savings-session-order.ts` (`sessionsByContribution`, D16) lists each opportunity's sessions largest contribution first, for O1, O2–O4 and O5, by the session's own saving. Increment 3 ([plans/savings-increment-3.md](plans/savings-increment-3.md)): `sessionRefOf` (`savings-amounts.ts`) puts each session's start and its own saving over the window on its reference (V24, every detector); `UnusedToolsDetector` lists a group's tools with their estimated tokens (V26), weights a tool by the requests it was declared for and leaves a forked pi branch's shared requests out (V27, D27, D34), and gives a session with no known price channel its own `unused-tools:<group>:unpriced` row, "Not priced" with the channel's reason (D33) |
 | `composition/create-savings-report.ts` | Phase 16 SR10: `createSavingsReport`, the one wiring of `SavingsService` over the price book, attribution, turn pricer and session replay, used by the standalone app, the extension and both MCP servers (`mcp-services.ts`, Increment 2) |
 | `composition/package-layout.ts`, `composition/bundled-vendor-profiles.ts` | npm package task NP3 ([plans/npm-package.md](plans/npm-package.md) §4.2 "Paths"): `PackageLayout`, where a packaged build keeps the learn scripts, vendor profiles, price book, MCP App views, web app and the `package.json` whose version it reports; `npmPackageLayout(packageRoot)` is the npm tarball's layout. `loadBundledVendorProfiles` prices the profiles from the layout's price book. Without a layout each loader keeps its `import.meta.url` default, so the dev paths are unchanged |
 | `standalone-app.ts`, `mcp/standalone-mcp-server.ts` | The standalone composition roots, each taking an optional `PackageLayout` (the extension passes its paths the same way, G4): `composeStandaloneApp` runs the startup configuration check (§6.3) and returns `createApp`'s app and the version, without listening; `createStandaloneMcpServerFactory` composes the MCP services once and returns the version and a server factory, and `serveStandaloneMcpStdio` serves it over stdio. `server.ts` and `mcp/stdio.ts` are thin dev entries over them; the npm package's CLI is the other caller |
-| `mcp/savings-tools.ts`, `mcp/savings-tool-output.ts` | Phase 16 SR19 (plan §8): the `savings` tool group, `get_savings_report` (read-only, both servers; `limit` 1–20, default 10; `includeSimulated` off by default). `savingsToolOutput` cuts the report to `limit` rows with their rank and at most 10 session ids each (`sessionsTotal` says how many), renders the fixed action text, and folds, redacts and caps every log-derived string (names through `savingsName`; reasons, including an unknown amount's, through `excerptOf` at 600 characters, SR22). `savingsReportText` is the ranked text answer for a host without views. `review_costs` starts from this tool when the group is served |
+| `mcp/savings-tools.ts`, `mcp/savings-tool-output.ts` | Phase 16 SR19 (plan §8): the `savings` tool group, `get_savings_report` (read-only, both servers; `limit` 1–20, default 10; `includeSimulated` off by default). `savingsToolOutput` cuts the report to `limit` rows with their rank (ranked rows only, R12) and at most 10 sessions each, with their start and own saving (`sessionsTotal` says how many), and an unused-tools row to at most 20 tools (`toolsTotal`; the text answer prints 5), renders the fixed action text, and folds, redacts and caps every log-derived string (names through `savingsName`; reasons, including an unknown amount's, through `excerptOf` at 600 characters, SR22). `savingsReportText` is the ranked text answer for a host without views. `review_costs` starts from this tool when the group is served |
 | `mcp/apps/` | Phase 12 ([plans/mcp-apps.md](plans/mcp-apps.md) §4.2): the MCP App views as a tool group. `registerAppViews` registers the one `ui://<server name>/views.html` resource, adds `_meta.ui.resourceUri` to the tools in `APP_VIEW_TOOL_NAMES` that the server actually registered (`captureRegisteredTools` records them, so the other groups don't change) and registers the app-only `get_turn_series`. `ViewSource` is the port for the HTML (`FileViewSource` reads the built file on every call, `InMemoryViewSource` is the test double). `injectBrand` fills the page's `aca-brand` meta with the escaped `ViewBrand` from `toViewBrand(identity, version)`. `resolveAppViews(path, onMissing)` turns a path into the `appViews` option, or into nothing when the file is missing, so both entry points start without the group instead of failing at `resources/read` |
 | `services/cost/turn-series-builder.ts` | Phase 12 A1: `buildTurnSeries` turns a session into the bounded per-turn figures (default 500 turns, at most 2000) that `get_turn_series` returns for the chart. `SessionCost` carries only `topTurns` |
 | `services/config-check` | Runs at server startup and on demand (§6.3): checks `agentDebugLog.fileLogging.enabled` and `maxRetainedSessionLogs` against constraints 8/10, producing actionable `ConfigWarning`s |
@@ -295,7 +295,7 @@ SQLite, `main.jsonl`, or scenario fixtures.
 | `charts/*` | D3-based AI Credits sparkline rendered in the center column's header row |
 | `components/replay/*` | Phase 14 step 14.7 (behind `ProductFeatures.sessionReplay`, both products): `ReplayOnPicker` (Learn's `VendorPicker` with an "Off (measured only)" first choice; disabled with the server's reason for pi and mitmproxy), `ReplaySummaryStrip`, `ReplaySummaryPanel` (a dialog; the assumptions open the first time), `ReplayTurnNote` in the Explanation tab, `ReplayStatus` (loading with Cancel, not replayable, errors), `ReplayPricingNote`, `SimulatedBadge` and `CompareModelsView`. `TurnsTable` gains a dashed "Simulated · <model>" column group. State in `state/use-session-replay.ts`, `use-analyze-replay.ts` and `use-replay-comparison.ts`; the client in `api-client/replay.ts` |
 | `charts/ReplayCompareBars.tsx` | Phase 14 step 14.7: the Compare models bars (one hue, the session's own model hatched and outlined, a measured reference line, an unknown total as "unknown") |
-| `components/savings/*`, `lib/savings/savings-view.ts` | Phase 16 SR14 (behind `ProductFeatures.savingsReport`, both products): `SavingsTab` (the filters, one list per currency, the Simulated and Not analysed sections, cancel and refresh through `useCancellableLoad`), `SavingsRow`, `SavingsDetail` (evidence, replay checks, the fixed action text with Copy, session links, price versions) and `SavingsLabel`. `savings-view.ts` builds every label ("up to", range, "Not priced", "estimate", "inferred") and `copyableText` (one line, capped at 600 characters) from the amount, never in CSS, so tests can assert them. In the standalone app the tab is the Dashboard's `savings` view after Billing; in the extension (`copilotOnly`) it is a view of its own after Dashboard |
+| `components/savings/*`, `lib/savings/savings-view.ts` | Phase 16 SR14 (behind `ProductFeatures.savingsReport`, both products): `SavingsTab` (the filters, one list per currency, the Simulated and Not analysed sections, cancel and refresh through `useCancellableLoad`), `SavingsRow`, `SavingsDetail` (evidence, replay checks, the fixed action text with Copy, session links, price versions) and `SavingsLabel`. `savings-view.ts` builds every label ("up to", range, "Not priced", "estimate", "inferred", "date unknown") and `copyableText` (one line, capped at 600 characters) from the amount, never in CSS, so tests can assert them; it also formats a session's date in the viewer's time zone and saving (V24) and an unused-tools row's tool list (`toolListOf`, V26). `session-titles.ts` (`sessionTitleLookup`, `titleText`: one line, bidi and control characters out, at most 120 code points) and `use-session-titles.ts` look a session's title up in the insights dataset over the report's window, loaded once a detail opens (V25, D24); `SavingsDetail` takes the lookup as its `titleOf` prop and never fetches, and no title goes into the report, Copy or any request. In the standalone app the tab is the Dashboard's `savings` view after Billing; in the extension (`copilotOnly`) it is a view of its own after Dashboard <!-- codespell:ignore analysed --> |
 
 ### 4.3 Shared domain/schema package
 
@@ -816,7 +816,14 @@ template; its parameters are numbers, model ids and names of at most
 is on exactly when the backend can price counterfactuals: always in the
 standalone app, and in the extension when its bundled price book is there.
 `ToolInventoryEntry.definitionTokens` (optional, additive) carries the
-per-tool estimate that O1 needs.
+per-tool estimate that O1 needs. Increment 3: a `SavingsSessionRef`
+(`providerId`, `sessionId`) also has an optional `startedAt` (ISO) and an
+optional `perWindow` amount, the session's own saving over the window; a
+known one has the row's basis, label and currency, and an unknown row has
+no known part (refinement). `ToolInventoryEntry.loadedRequests` (optional;
+pi only) is the requests a tool was declared for, absent meaning every
+request. `Session.sharedPrefixRequests` (optional; pi branches only) is the
+leading requests a branch shares with an earlier branch of its file (D27).
 
 Log-provider selection is a separate app-level contract, not a provider-
 specific API or UI branch:
@@ -2195,6 +2202,21 @@ gate it on a `built-in` component being present), and opening it without a
 match shows a plain-text message pointing at `npm run configure` rather
 than the VS Code-specific hint.
 
+**Tool inventory and forks for the savings report** (savings Increment 3
+V27, [plans/savings-increment-3.md](plans/savings-increment-3.md) §7.1,
+§7.4). `replaySystemMessages` replays a branch's system messages in order
+and keeps, per declared tool, its last definition (so a tool removed
+mid-session still has a definition size) and the assistant requests after
+the first user message it was declared for. The provider fills each
+inventory entry's `definitionTokens` (local estimate) and `loadedRequests`
+from it; a branch whose file has no system message keeps no inventory
+(D29). Every leaf is its own session holding the whole root-to-leaf path, so
+`sharedPrefixRequests` (`shared-prefix.ts`) counts the leading requests a
+branch shares with an earlier branch of the same file, in leaf order; the
+savings detectors count those once, under the earlier branch (D27), and
+`loadedRequests` leaves them out. Numbers only: no entry id or text leaves
+the provider. The request trace for O2–O4 (V28) is after 1.0.
+
 #### 6.2.6 Claude Code CLI provider flow
 
 A fourth `LogProvider`, `ClaudeCodeLogProvider`
@@ -2628,7 +2650,14 @@ view. Nothing is stored and nothing is written.
      sessions of the window and invoked in none. Tokens are
      `estimateTokenCount` over the definition (an estimate, D12). Saving is
      a **range**: tokens × requests × the cache-read price to the uncached
-     price. Each tool's tokens are listed too (V26).
+     price. Each tool's tokens are listed too (V26: at most 20, largest
+     first, averaged over the sessions that loaded the tool). A tool with
+     `loadedRequests` (pi) counts for that share of the session's requests
+     only (D34), and a forked pi branch's shared requests count under the
+     first branch (D27). A session whose model has no known price channel
+     (pi on a local model) gets its own `unused-tools:<group>:unpriced`
+     row: tokens and requests counted, the amount unknown with the
+     channel's reason, ranked last (D33).
    - **O2–O4 cache breaks.** The classifier compares each request's cache
      read with the previous prompt. A break needs lost tokens of at least
      the vendor's `minCacheableTokens` and half the previous prompt (D7).
@@ -2658,11 +2687,16 @@ view. Nothing is stored and nothing is written.
    section. There is no grand total (D4).
 5. **Show.** One list per currency. Labels come from the view model. Copy
    puts the action text on the clipboard folded to one line and capped at
-   600 characters (§11.2).
+   600 characters (§11.2). Each listed session shows its date (the viewer's
+   day), its own saving over the window with the row's label, and, in the
+   tabs, its title: looked up in the browser in the insights dataset over
+   the same window (`use-session-titles.ts`, D24, D25), never sent back;
+   a session the dataset lacks shows its id alone.
 6. **MCP (Increment 2).** `get_savings_report` takes the same query
    (`savings-query-params.ts`) plus `limit` (1–20, default 10) and returns
    the same ranked rows, cut to `limit`, each with its rank, at most 10
-   session ids (largest first, D16) and the fixed action text; names and
+   sessions (largest first, D16, each with its start and own saving, no
+   title), at most 20 tools on an unused-tools row, and the fixed action text; names and
    reasons are folded, redacted and capped (`savings-tool-output.ts`).
    `includeSimulated` is off unless the model asks. U18 renders it in the
    chat (§4.1.1, §4.4); its only drill-downs are U1 and U12, in place.
@@ -2690,8 +2724,8 @@ view. Nothing is stored and nothing is written.
 
 | Opportunity | VS Code local | Agent Host | Claude Code | pi | mitmproxy |
 |---|---|---|---|---|---|
-| O1 unused tools | Yes, with debug logging | No: total tokens only | Yes, per tool with server | No (total only) | No |
-| O2–O4 cache breaks | Yes | Yes | Yes | No trace | No trace |
+| O1 unused tools | Yes, with debug logging | No: total tokens only | Yes, per tool with server | Yes, per tool, from system messages (V27); "Not priced" on a local model (D33) | No |
+| O2–O4 cache breaks | Yes | Yes | Yes | No trace (V28, after 1.0) | No trace |
 | O5 failed calls | Where outcomes are logged | No | Yes | Per audit | Per audit |
 | O6 cheaper model | Yes | Yes | Yes | No | No |
 
@@ -2968,7 +3002,13 @@ on `domain` and on `web`'s presentational exports only, never on `server`
   and the action text is a fixed template whose parameters are numbers,
   model ids and those names, so a hostile name cannot add markup or
   instructions. Copy puts that text on the clipboard folded to one line and
-  capped at 600 characters.
+  capped at 600 characters. Increment 3: session titles reach the Savings
+  tab only through the browser's own lookup in the insights dataset; the
+  report, `GET /api/savings`, RPC `getSavingsReport` and
+  `get_savings_report` carry no title (tests search them for the fixture's
+  titles, and the real-data check for the owner's). A title renders as text,
+  folded, at most 120 code points, and never goes into Copy. Per-tool names
+  pass `savingsName`; at most 20 tools and 10 sessions reach the model.
 - No secrets are logged; any credentials that happen to appear in captured
   terminal-output tool results are treated as opaque strings, never parsed or
   echoed into error messages.
