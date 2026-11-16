@@ -99,7 +99,7 @@ describe("Claude Code subagent tool calls in the detail read", () => {
   it("reads the audit once per detail read and never for the list", async () => {
     const root = tempDir();
     copySubagentFixtureCase("linked-run", root);
-    const subagentAudit = vi.fn(async () => ({ callsByTurn: [], gapsByTurn: [], readRunIdsByTurn: [] }));
+    const subagentAudit = vi.fn(async () => ({ callsByTurn: [], gapsByTurn: [], readRunIdsByTurn: [], byTimeRunIdsByTurn: [] }));
     const provider = new ClaudeCodeLogProvider({ projectsDirPath: root, subagentAudit });
 
     const [summary] = await provider.listSessions();
@@ -303,6 +303,16 @@ describe("Claude Code subagent tool calls in the detail read", () => {
 
       expect(readOf(session)).toEqual(["a711111111111111a"]);
       expect(gapsOf(session)).toEqual([]);
+    });
+
+    it("marks a run matched by time, and the audit row says so; a linked run is not marked", async () => {
+      const byTime = await detailOfCase("unlinked-transcript");
+      const linked = await detailOfCase("linked-run");
+
+      expect(byTime.turns.flatMap((turn) => turn.subagentRunsByTime ?? [])).toEqual(["a711111111111111a"]);
+      expect(buildSessionAudit(byTime).subagentRuns?.[0]?.matchedByTime).toBe(true);
+      expect(linked.turns.flatMap((turn) => turn.subagentRunsByTime ?? [])).toEqual([]);
+      expect(buildSessionAudit(linked).subagentRuns?.[0]?.matchedByTime).toBeUndefined();
     });
   });
 

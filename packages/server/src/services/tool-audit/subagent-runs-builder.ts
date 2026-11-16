@@ -13,6 +13,8 @@ interface RunDraft {
   reason?: string;
   // The reader read the run's log in full (Turn.subagentRunsRead).
   read?: boolean;
+  // The reader placed the run by time, not by a link (Turn.subagentRunsByTime).
+  byTime?: boolean;
 }
 
 function defaultUnreadReason(label: string): string {
@@ -57,12 +59,25 @@ function draftsOf(turn: Turn): RunDraft[] {
       entry.read = true;
     }
   }
+  for (const runId of turn.subagentRunsByTime ?? []) {
+    const entry = drafts.get(runId);
+    if (entry) {
+      entry.byTime = true;
+    }
+  }
   return [...drafts.values()];
 }
 
 function rowOf(entry: RunDraft): AuditedRun {
   const { runId, label, depth, parentRunId, turnIndex } = entry;
-  const head = { runId, label, depth, ...(parentRunId ? { parentRunId } : {}), turnIndex };
+  const head = {
+    runId,
+    label,
+    depth,
+    ...(parentRunId ? { parentRunId } : {}),
+    turnIndex,
+    ...(entry.byTime ? { matchedByTime: true } : {}),
+  };
   if (entry.calls.length === 0 && entry.read && entry.reason === undefined) {
     // Read in full and made no call: a known 0, not a missing signal.
     return { ...head, totals: emptyTotals(), failureRate: null };

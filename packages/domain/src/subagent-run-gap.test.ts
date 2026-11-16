@@ -74,3 +74,34 @@ describe("Turn.subagentRunsRead", () => {
   });
 });
 
+
+describe("Turn.subagentRunsByTime", () => {
+  const base = {
+    index: 0,
+    userMessage: "",
+    assistantResponse: "",
+    toolCalls: [],
+    explanation: "",
+    usage: {
+      uncachedInput: { known: true, value: 1 },
+      cacheWrite: { known: true, value: 0 },
+      cacheRead: { known: true, value: 0 },
+      tool: { known: true, value: 0 },
+      vision: { known: true, value: 0 },
+      reasoning: { known: true, value: 0 },
+      output: { known: true, value: 1 },
+      costAiCredits: { known: true, value: 0 },
+      model: "m",
+    },
+  };
+
+  it("is optional and takes run ids", () => {
+    expect(turnSchema.parse(base).subagentRunsByTime).toBeUndefined();
+    expect(turnSchema.parse({ ...base, subagentRunsByTime: ["child-1"] }).subagentRunsByTime).toEqual(["child-1"]);
+  });
+
+  it("rejects a hostile id and a list over 200", () => {
+    expect(() => turnSchema.parse({ ...base, subagentRunsByTime: ["../x"] })).toThrow();
+    expect(() => turnSchema.parse({ ...base, subagentRunsByTime: Array.from({ length: 201 }, (_, n) => `r${n}`) })).toThrow();
+  });
+});

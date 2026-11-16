@@ -34,6 +34,8 @@ export interface ClaudeCodeSubagentAudit {
   gapsByTurn: SubagentRunGap[][];
   /** Per turn, the runs read in full (Turn.subagentRunsRead). */
   readRunIdsByTurn: string[][];
+  /** Per turn, the runs CS8 placed by time (Turn.subagentRunsByTime). */
+  byTimeRunIdsByTurn: string[][];
 }
 
 export type ClaudeCodeSubagentAuditReader = (input: ClaudeCodeSubagentAuditInput) => Promise<ClaudeCodeSubagentAudit>;
@@ -91,6 +93,7 @@ export const readClaudeCodeSubagentAudit: ClaudeCodeSubagentAuditReader = async 
   const size = Math.max(turnCount, ...plan.reads.map((run) => run.turn + 1), ...unread.map((run) => (run.logTurn ?? -1) + 1));
   const callsByTurn: ToolCallRecord[][] = Array.from({ length: size }, () => []);
   const readRunIdsByTurn: string[][] = Array.from({ length: size }, () => []);
+  const byTimeRunIdsByTurn: string[][] = Array.from({ length: size }, () => []);
   // Turn order, then start order within a turn, as the attribution gave it.
   for (const run of plan.reads) {
     const calls = callsOf.get(run.runId);
@@ -98,5 +101,9 @@ export const readClaudeCodeSubagentAudit: ClaudeCodeSubagentAuditReader = async 
     callsByTurn[run.turn]!.push(...calls);
     readRunIdsByTurn[run.turn]!.push(run.runId);
   }
-  return { callsByTurn, gapsByTurn: gapsByLogTurn(unread, size), readRunIdsByTurn };
+  // An unread run is marked too: the audit row says both.
+  for (const run of [...plan.reads, ...plan.unread]) {
+    if (run.matchedByTime) byTimeRunIdsByTurn[run.turn]!.push(run.runId);
+  }
+  return { callsByTurn, gapsByTurn: gapsByLogTurn(unread, size), readRunIdsByTurn, byTimeRunIdsByTurn };
 };

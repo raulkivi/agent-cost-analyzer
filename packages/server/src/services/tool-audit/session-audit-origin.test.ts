@@ -166,6 +166,31 @@ describe("buildSessionAudit: a run the reader read in full that made no call", (
   });
 });
 
+describe("buildSessionAudit: a run placed by time", () => {
+  const rows = (extra: Partial<Turn>) =>
+    buildSessionAudit(
+      session([turn(0, [shell("a", "success")], extra, [runUsage("quiet", "searchSubagent"), runUsage("linked", "searchSubagent")])]),
+    ).subagentRuns ?? [];
+
+  it("marks only the runs the turn lists as matched by time", () => {
+    const [quiet, linked] = rows({ subagentRunsByTime: ["quiet"] });
+
+    expect(quiet).toMatchObject({ runId: "quiet", matchedByTime: true });
+    expect(linked?.matchedByTime).toBeUndefined();
+  });
+
+  it("marks nothing when the turn lists none", () => {
+    expect(rows({}).every((row) => row.matchedByTime === undefined)).toBe(true);
+  });
+
+  it("keeps an unread run marked, so the row says both", () => {
+    const [quiet] = rows({ subagentRunsByTime: ["quiet"] });
+
+    expect(quiet?.totals).toBeNull();
+    expect(quiet?.matchedByTime).toBe(true);
+  });
+});
+
 describe("buildSessionAudit: subagentRuns", () => {
   it("lists one row per read run with its own totals, failure rate, turn and nesting", () => {
     const audit = buildSessionAudit(

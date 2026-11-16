@@ -41,6 +41,10 @@ export const turnSchema = z.object({
   // no tool call is known to have made none only when listed here; one with
   // no signal at all stays unknown, never 0 (constraint 6).
   subagentRunsRead: z.array(subagentRunIdSchema).max(200).optional(),
+  // Step 10.20: ids of the runs the reader placed on this turn by time (an
+  // orphan, or a run linked to its call by the call's time window), not by a
+  // link; the audit shows them as "matched by time" (§6).
+  subagentRunsByTime: z.array(subagentRunIdSchema).max(200).optional(),
   simulation: turnSimulationSchema.optional(),
   // Analyze mode only (Phase 15 step 15.1): when the turn started, as the
   // log records it (ISO 8601), so it can be priced at the price in force then.

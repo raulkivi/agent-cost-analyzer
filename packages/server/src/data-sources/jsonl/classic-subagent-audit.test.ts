@@ -173,6 +173,13 @@ describe("§6 classic rows", () => {
       depth: 1,
     });
     expect(audit.unread).toEqual([]);
+    expect(audit.byTimeRunIdsByLogTurn[1]).toEqual(["call_fixtureorphan1"]);
+  });
+
+  it("row: a run linked by its own ref is not marked as placed by time", async () => {
+    const audit = await classicSubagentAudit(auditCase("error-categories"));
+
+    expect(audit.byTimeRunIdsByLogTurn.flat()).toEqual([]);
   });
 
   it("row: orphan that can't be placed: no turn, calls not listed, an unread run of the session", async () => {

@@ -269,9 +269,11 @@ export class ClaudeCodeLogProvider implements LogProvider, RequestTraceReader, C
       const gaps = audit.gapsByTurn[index] ?? [];
       // Turn.subagentRunsRead holds at most 200 ids; a run left out reads as unknown, never 0.
       const read = (audit.readRunIdsByTurn[index] ?? []).slice(0, 200);
+      const byTime = (audit.byTimeRunIdsByTurn[index] ?? []).slice(0, 200);
       return {
         ...turn,
         toolCalls: [...turn.toolCalls, ...calls],
+        ...(byTime.length > 0 ? { subagentRunsByTime: byTime } : {}),
         ...(gaps.length > 0 ? { subagentRunGaps: gaps } : {}),
         ...(read.length > 0 ? { subagentRunsRead: read } : {}),
       };

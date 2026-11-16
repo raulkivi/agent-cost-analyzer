@@ -96,6 +96,19 @@ describe("toSessionAuditViewModel with subagent runs", () => {
     expect(flagged.reason).toBe("The call that started this run is missing from the log.");
   });
 
+  it("says a run was placed by time, and leaves the others unmarked", () => {
+    const runs = toSessionAuditViewModel(subagentAudit({ byTime: true })).subagents!.runs;
+    expect(runs.map((run) => run.matchedByTime)).toEqual([undefined, undefined, true]);
+    expect(toSessionAuditViewModel(subagentAudit()).subagents!.runs.every((run) => run.matchedByTime === undefined)).toBe(true);
+  });
+
+  it("marks an unread run placed by time too", () => {
+    const audit = subagentAudit({ unread: true });
+    audit.subagentRuns = audit.subagentRuns!.map((run) => (run.runId === "run-review" ? { ...run, matchedByTime: true } : run));
+    const unread = toSessionAuditViewModel(audit).subagents!.runs.find((run) => run.kind === "unread" && run.label === "runSubagent-Review")!;
+    expect(unread.matchedByTime).toBe(true);
+  });
+
   it("states canceled calls apart from failures (D14)", () => {
     const audit = subagentAudit();
     audit.totals = { ...audit.totals, canceled: 3 };

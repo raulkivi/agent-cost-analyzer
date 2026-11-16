@@ -67,6 +67,9 @@ export const auditedRunSchema = z
     totals: outcomeTotalsSchema.nullable(),
     failureRate: failureRateSchema,
     unreadReason: z.string().optional(),
+    // 10.19 D5: the reader placed the run by time, not by a link to its start
+    // call. Absent when it was linked.
+    matchedByTime: z.boolean().optional(),
   })
   .superRefine((run, ctx) => {
     if (run.totals === null && !run.unreadReason) {

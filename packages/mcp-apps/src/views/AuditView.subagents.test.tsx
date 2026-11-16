@@ -90,6 +90,15 @@ describe("U4 session audit with subagent runs", () => {
     expect(flagged).toHaveTextContent("The call that started this run is missing from the log.");
   });
 
+  it("says 'matched by time' as text on a run the reader placed by time, and on no other", () => {
+    render(<AuditView brand={brand} result={ok(subagentAudit({ byTime: true }))} />);
+    const items = within(screen.getByRole("list", { name: "Subagent runs" })).getAllByRole("listitem");
+    expect(items[2]).toHaveTextContent("matched by time");
+    expect(within(items[2]!).getByText("matched by time")).toBeInTheDocument();
+    expect(items[0]).not.toHaveTextContent("matched by time");
+    expect(screen.getAllByText("matched by time")).toHaveLength(1);
+  });
+
   it("marks a nested run with its depth", () => {
     render(<AuditView brand={brand} result={ok(subagentAudit({ nested: true }))} />);
     expect(screen.getByText("depth 2 · in task-Planner")).toBeInTheDocument();
@@ -125,6 +134,7 @@ describe("U4 subagent parts: axe, keyboard, hostile text", () => {
     ["known", subagentAudit()],
     ["unread", subagentAudit({ unread: true })],
     ["flagged and nested", subagentAudit({ flagged: true, nested: true })],
+    ["matched by time", subagentAudit({ byTime: true, unread: true })],
   ] as const;
 
   for (const [name, audit] of states) {
@@ -151,7 +161,7 @@ describe("U4 subagent parts: axe, keyboard, hostile text", () => {
   });
 
   it("shows labels, depth and reasons as text and the filter sends nothing", async () => {
-    const audit = subagentAudit({ unread: true });
+    const audit = subagentAudit({ unread: true, byTime: true });
     audit.subagentRuns = audit.subagentRuns!.map((run, index) => (index === 3 ? { ...run, unreadReason: HOSTILE } : run));
     const { container } = render(<AuditView brand={brand} result={ok(audit)} />);
     expect(screen.getByText(HOSTILE)).toBeInTheDocument();

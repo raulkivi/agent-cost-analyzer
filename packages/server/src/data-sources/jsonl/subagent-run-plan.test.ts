@@ -69,6 +69,33 @@ describe("planSubagentRuns", () => {
     expect(plan.unread).toEqual([]);
   });
 
+  it("marks a run placed by time: an orphan, or a ref linked by a call's time window", () => {
+    const plan = planSubagentRuns(
+      {
+        runs: [
+          run({ runId: "call_orphan", attribution: "timestamp", refTs: null, parentSpanId: null }),
+          run({ runId: "call_window", parentSpanId: null, refTs: T0 + 2 }),
+        ],
+        unplaced: [],
+      },
+      [[call("span-explore-1", "explore_subagent", 0, 6000)]],
+    );
+
+    expect(plan.runsByTurn.get(0)?.map((planned) => [planned.runId, planned.matchedByTime])).toEqual([
+      ["call_orphan", true],
+      ["call_window", true],
+    ]);
+  });
+
+  it("does not mark a run linked by its own span, or one no window holds", () => {
+    const plan = planSubagentRuns(
+      { runs: [run(), run({ runId: "call_far", parentSpanId: null, refTs: T0 + 9000 })], unplaced: [] },
+      [[call("span-explore-1", "explore_subagent", 0, 6000)]],
+    );
+
+    expect(plan.runsByTurn.get(0)?.map((planned) => planned.matchedByTime)).toEqual([undefined, undefined]);
+  });
+
   it("a ref outside every window, or inside two windows, names no call", () => {
     const outside = planSubagentRuns(
       { runs: [run({ parentSpanId: null, refTs: T0 + 9000 })], unplaced: [] },

@@ -56,6 +56,17 @@ function define(): void {
     expect(toolCallsIn(host.calls)).toEqual([]);
   });
 
+  test("U4: a run placed by time says so as text, and the others do not; axe clean", async ({ host }) => {
+    const view = await host.showResult("get_session_audit", subagentAudit({ unread: true, byTime: true }), { args: ARGS });
+    const u4 = view.audit;
+
+    await expect(u4.runs()).toHaveCount(5);
+    await expect(u4.runs().filter({ hasText: "matched by time" })).toHaveCount(1);
+    await expect(u4.runs().filter({ hasText: "matched by time" })).toContainText("turn 9");
+    await expect(u4.runs().filter({ hasText: "runSubagent-Review" })).not.toContainText("matched by time");
+    expect(await view.axeViolations()).toEqual([]);
+  });
+
   test("U4 at 640 and 320 px: nothing scrolls sideways; the runs, the filter and the reason stay readable; axe clean", async ({ host }) => {
     for (const width of [640, 320]) {
       const view = await host.showResult("get_session_audit", subagentAudit({ unread: true, nested: true }), { args: ARGS, width });

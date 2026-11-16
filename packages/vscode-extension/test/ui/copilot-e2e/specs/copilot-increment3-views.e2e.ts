@@ -270,32 +270,34 @@ suite("Increment 3 MCP App views in a real Copilot Chat (A33; opt-in)", function
     await expectNoNewChatRequest();
   });
 
-  test(copilotTestTitle("A33 U4.session", "U4 session audit: Tool-call audit kicker, the session's title, tiles with the failure rate Unknown (never 0 %) because Copilot records no outcomes, recovery cost in tokens, not AI Credits, calls by tool"), async () => {
+  test(copilotTestTitle("A33 U4.session", "U4 session audit: Tool-call audit kicker, the session's title, tiles with the failure rate a percentage, or Unknown when the session's outcomes are unknown (never an invented 0 %), recovery cost in tokens, not AI Credits, calls by tool"), async () => {
     const audit = keep("u4-session", await views.inside(VIEW.audit, (view) => view.snapshot()));
 
     expect(audit.kicker).toBe(`${KICKER}Tool-call audit`);
     expect(audit.title).toMatch(/^Placeholder portal-web session/);
     for (const tile of ["Tool calls", "Failed", "Failure rate", "Outcome unknown"]) expect(groupNames(audit)).toContain(tile);
-    expect(group(audit, "Failure rate")).toMatch(/Unknown/);
-    expect(group(audit, "Failure rate")).not.toMatch(/\b0 ?%/);
+    // Since ST6 (PR #367) classic outcomes are known from the debug-log spans,
+    // so a real session shows a percentage; Unknown stays valid when none is.
+    expect(group(audit, "Failure rate")).toMatch(/Unknown|\d+(\.\d+)? ?%/);
     expect(audit.text).toContain("tokens, not AI Credits");
     expect(audit.tables).toContain("Tool calls by tool");
   });
 
-  test(copilotTestTitle("A33 U4.rollup", "U4 rollup: Tool-call failures, tiles with the failure rate Unknown, failed calls per day as Unknown days with View as table, the display-only sessions table; no tool call or chat request"), async () => {
+  test(copilotTestTitle("A33 U4.rollup", "U4 rollup: Tool-call failures, tiles with the failure rate a percentage or Unknown, failed calls per day with View as table, the display-only sessions table; no tool call or chat request"), async () => {
     await views.inside(VIEW.rollup, async (view) => {
       const rollup = keep("u4-rollup", await view.snapshot());
       expect(rollup.kicker).toBe(`${KICKER}Tool-call audit`);
       expect(rollup.title).toBe("Tool-call failures");
       for (const tile of ["Tool calls", "Failed", "Failure rate"]) expect(groupNames(rollup)).toContain(tile);
-      expect(group(rollup, "Failure rate")).toMatch(/Unknown/);
+      expect(group(rollup, "Failure rate")).toMatch(/Unknown|\d+(\.\d+)? ?%/);
       expect(rollup.images.some((name) => /^Failed calls per day/.test(name))).toBe(true);
       expect(rollup.tables).toContain("Most failures by session");
       // The only control: the chart's text form, which calls nothing.
       expect(rollup.buttons).toEqual(["View as table"]);
       await view.click("View as table");
       await browser.waitUntil(async () => (await view.snapshot()).tables.includes("Failed calls per day"), { timeout: 15_000, timeoutMsg: "View as table showed no table" });
-      expect((await view.snapshot()).text).toMatch(/Unknown/);
+      // Days show a count when their outcomes are known, Unknown when not.
+      expect((await view.snapshot()).text).toMatch(/Unknown|\d/);
       await view.click("Hide table");
     });
     await expectNoNewChatRequest();

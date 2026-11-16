@@ -27,6 +27,8 @@ export interface PlannedRun {
   depth: number;
   parentRunId?: string;
   startedByCallId?: string;
+  // Placed by time, not by a link: an orphan, or a ref whose call its time window named.
+  matchedByTime?: true;
   log: { status: "read"; childLogFile: string } | { status: "unread"; reason: string };
 }
 
@@ -57,9 +59,9 @@ function windowOf(call: ToolCallRecord): { from: number; to: number } | null {
 // one subagent-kind call, on the same turn, whose time window holds the ref
 // (explore_subagent, plan §14.1). Two candidates name no call rather than a
 // guess.
-function startedByCallOf(run: AttributedRun, mainCalls: MainCalls): string | undefined {
+function startedByCallOf(run: AttributedRun, mainCalls: MainCalls): { id: string; byWindow: boolean } | undefined {
   if (run.parentSpanId !== null) {
-    return CALL_ID.test(run.parentSpanId) ? run.parentSpanId : undefined;
+    return CALL_ID.test(run.parentSpanId) ? { id: run.parentSpanId, byWindow: false } : undefined;
   }
   if (run.refTs === null) {
     return undefined;
@@ -69,7 +71,7 @@ function startedByCallOf(run: AttributedRun, mainCalls: MainCalls): string | und
     return call.kind === "subagent" && call.id !== undefined && window !== null && window.from <= run.refTs! && run.refTs! <= window.to;
   });
   const only = candidates.length === 1 ? candidates[0].id : undefined;
-  return only !== undefined && CALL_ID.test(only) ? only : undefined;
+  return only !== undefined && CALL_ID.test(only) ? { id: only, byWindow: true } : undefined;
 }
 
 // 10.19's reasons talk about AI Credits; for the two causes the audit words
@@ -153,15 +155,18 @@ export function planSubagentRuns(
   const runsByTurn = new Map<number, PlannedRun[]>();
   const claimed = new Set<string>();
   for (const run of runs) {
-    const startedByCallId = startedByCallOf(run, mainCalls);
+    const started = startedByCallOf(run, mainCalls);
+    const startedByCallId = started?.id;
     if (startedByCallId !== undefined) {
       claimed.add(startedByCallId);
     }
+    const byTime = run.attribution === "timestamp" || started?.byWindow === true;
     const planned: PlannedRun = {
       runId: run.runId,
       label: run.label,
       depth: 1,
       ...(startedByCallId === undefined ? {} : { startedByCallId }),
+      ...(byTime ? { matchedByTime: true as const } : {}),
       log: logOf(run),
     };
     runsByTurn.set(run.logTurn, [...(runsByTurn.get(run.logTurn) ?? []), planned]);

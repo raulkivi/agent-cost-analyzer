@@ -152,7 +152,9 @@ functions except the file reads.
 ### 5.1 The shared shape (`packages/domain`)
 
 All optional and additive. A record without `origin` is the main agent's,
-so Learn fixtures, pi, mitmproxy and old clients stay valid.
+so Learn fixtures, pi, mitmproxy and old clients stay valid. A run the reader
+placed by time (§6) is listed in `Turn.subagentRunsByTime` and the audit row
+carries `AuditedRun.matchedByTime`.
 
 ```ts
 // tool-call-origin.ts (new)

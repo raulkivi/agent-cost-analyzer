@@ -52,6 +52,18 @@ describe("planClaudeCodeAudit", () => {
     expect(plan.reads).toEqual([{ turn: 2, runId: "a1", label: "Agent-general-purpose", depth: 1, startedByCallId: "toolu_x" }]);
   });
 
+  it("marks a run CS8 placed by time, and no other", () => {
+    const plan = planClaudeCodeAudit(
+      attributionOf([0, [run("a1", { attribution: "timestamp" }), run("b1")]]),
+      new Map(),
+    );
+
+    expect(plan.reads.map((read) => [read.runId, read.matchedByTime])).toEqual([
+      ["a1", true],
+      ["b1", undefined],
+    ]);
+  });
+
   it("gives a nested run its chain depth and parent, and an outer run no parent", () => {
     const plan = planClaudeCodeAudit(
       attributionOf([0, [run("a1"), run("b1", { parentRunId: "a1" }), run("c1", { parentRunId: "b1" })]]),
