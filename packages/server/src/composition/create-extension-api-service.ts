@@ -57,6 +57,8 @@ export function extensionProductProfile(version: string, { sessionReplay, saving
       sessionReplay,
       // Phase 16 SR12: on with the bundled price book, like the replay.
       savingsReport,
+      // Its gauge is the status bar's (step 10.21); no allowance routes here.
+      monthlyAllowance: false,
     },
   };
 }

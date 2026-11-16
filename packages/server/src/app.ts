@@ -71,6 +71,18 @@ export function createApp(options: CreateAppOptions = {}): Express {
     res.json(await api.setRetentionThreshold(value));
   }));
 
+  // MS4: month-to-date billed AI Credits against the user's allowance. The
+  // PUT takes JSON only: express.json() reads nothing else, so a form post
+  // reaches the strict schema with no body and gets 400, and a cross-origin
+  // JSON PUT needs a preflight the server never answers.
+  app.get("/api/monthly-allowance", route(async (_req, res) => {
+    res.json(await api.getMonthlyAllowance());
+  }));
+
+  app.put("/api/config/monthly-allowance", route(async (req, res) => {
+    res.json(await api.setMonthlyAllowance(req.body));
+  }));
+
   // Phase 15 step 15.3. PUT is the only route that writes the projects
   // file; its body is the whole file, validated before anything is written.
   app.get("/api/projects", route(async (_req, res) => {

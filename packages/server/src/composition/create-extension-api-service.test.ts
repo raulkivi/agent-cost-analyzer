@@ -6,7 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { productProfileSchema, savingsReportSchema, sessionReplayComparisonSchema, sessionReplaySchema } from "@agent-cost-analyzer/domain";
-import { BadRequestError } from "../services/api/api-errors.js";
+import { BadRequestError, NotFoundError } from "../services/api/api-errors.js";
 import { InMemoryAppSettingsStore } from "../test-support/in-memory-app-settings-store.js";
 import type { SettingsSource } from "../services/config-check/settings-source.js";
 import { COPILOT_CLI_FIXTURE_HOME, COPILOT_CLI_FIXTURE_SESSION_IDS, writeCopilotCliAgentHostStores } from "../test-support/copilot-cli-fixtures.js";
@@ -53,6 +53,7 @@ describe("createExtensionApiService (extension composition, vscode-extension.md 
         sessionReplay: true,
         // Phase 16 SR12: the same bundled price book prices the counterfactuals.
         savingsReport: true,
+        monthlyAllowance: false,
       },
     });
     expect(await service.getHealth()).toEqual({ status: "ok", version: "0.1.0-test" });
@@ -99,6 +100,10 @@ describe("createExtensionApiService (extension composition, vscode-extension.md 
     await expect(service.getCostEstimate({ projectId: "portal", activeDays: "5" })).rejects.toThrow();
     await expect(service.getProjects()).rejects.toThrow();
     await expect(service.getRepositoryList()).rejects.toThrow();
+    // MS4: its allowance is VS Code settings and the status bar; no routes here.
+    await expect(service.getMonthlyAllowance()).rejects.toBeInstanceOf(NotFoundError);
+    await expect(service.setMonthlyAllowance({ aiCredits: 5, resetDay: 1, warnAtPercent: 80 })).rejects.toBeInstanceOf(NotFoundError);
+    expect((await service.getProductProfile()).features.monthlyAllowance).toBe(false);
   });
 
   it("lists only the VS Code provider", async () => {

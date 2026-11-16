@@ -20,6 +20,7 @@ describe("productProfileSchema", () => {
       projectsAndBilling: true,
       sessionReplay: true,
       savingsReport: true,
+      monthlyAllowance: true,
     },
   };
 
@@ -43,6 +44,7 @@ describe("productProfileSchema", () => {
         projectsAndBilling: false,
         sessionReplay: true,
         savingsReport: true,
+        monthlyAllowance: false,
       },
     };
 
