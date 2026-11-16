@@ -152,7 +152,7 @@ const extensionProfile: ProductProfile = {
   productId: "vscode-extension",
   displayName: "AI Credits Analyzer",
   version: "0.1.0",
-  features: { providerSelect: false, crossProviderInsights: false, settingFixes: true, openInEditor: true, sessionSidebar: false, vendorSimulation: false, costAnalysis: false, projectsAndBilling: false, sessionReplay: false, savingsReport: false },
+  features: { providerSelect: false, crossProviderInsights: false, settingFixes: true, openInEditor: true, sessionSidebar: false, vendorSimulation: false, costAnalysis: false, projectsAndBilling: false, sessionReplay: false, savingsReport: false, monthlyAllowance: false },
 };
 
 interface Backend {
@@ -335,7 +335,7 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
       productId: "standalone",
       displayName: "Agent Cost Analyzer",
       version: "0.9.0",
-      features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: true, projectsAndBilling: true, sessionReplay: false, savingsReport: false },
+      features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: true, projectsAndBilling: true, sessionReplay: false, savingsReport: false, monthlyAllowance: false },
     };
 
     async function openCostTab(name: "Cost over time" | "Compare") {
@@ -390,6 +390,7 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
         projectsAndBilling: !extension,
         sessionReplay: false,
         savingsReport: true,
+        monthlyAllowance: false,
       },
     });
 
@@ -573,7 +574,7 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
         productId: "standalone",
         displayName: "Agent Cost Analyzer",
         version: "0.9.0",
-        features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: true, costAnalysis: false, projectsAndBilling: false, sessionReplay: true, savingsReport: true },
+        features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: true, costAnalysis: false, projectsAndBilling: false, sessionReplay: true, savingsReport: true, monthlyAllowance: false },
       };
       await openAnalyzeSession();
       const picker = await screen.findByLabelText("Replay on");
@@ -711,7 +712,7 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
         productId: "standalone",
         displayName: "Agent Cost Analyzer",
         version: "0.9.0",
-        features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: true, projectsAndBilling: true, sessionReplay: false, savingsReport: false },
+        features: { providerSelect: true, crossProviderInsights: true, settingFixes: false, openInEditor: false, sessionSidebar: false, vendorSimulation: false, costAnalysis: true, projectsAndBilling: true, sessionReplay: false, savingsReport: false, monthlyAllowance: false },
       };
       await openAnalyzeSession();
       fireEvent.change(screen.getByRole("combobox", { name: /^view$/i }), { target: { value: "dashboard" } });

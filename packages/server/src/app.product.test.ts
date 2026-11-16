@@ -45,6 +45,7 @@ describe("GET /api/product", () => {
         projectsAndBilling: true,
         sessionReplay: true,
         savingsReport: true,
+        monthlyAllowance: true,
       },
     });
   });

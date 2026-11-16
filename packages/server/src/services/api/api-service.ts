@@ -26,7 +26,9 @@ import type {
   VendorComparison,
   VendorProfileSummary,
 } from "@agent-cost-analyzer/domain";
+import { allowanceSettingsWriteSchema, type MonthlyAllowanceAnswer } from "@agent-cost-analyzer/domain";
 import { z } from "zod";
+import type { MonthlyAllowanceQueries } from "../monthly-allowance/monthly-allowance-service.js";
 import type { AppSettingsStore } from "../../data-sources/log-providers/app-settings.js";
 import { ProjectsFileRejectedError, type ProjectCatalog } from "../cost-attribution/project-catalog.js";
 import { buildProjectsFileWarning } from "../cost-attribution/projects-file-warning.js";
@@ -118,6 +120,10 @@ const priceBookQuerySchema = z.object({
 // book: the extension has none yet and answers 404.
 export const COST_ANALYSIS_UNAVAILABLE_MESSAGE = "Cost analyses are not available in this product.";
 export const ESTIMATES_UNAVAILABLE_MESSAGE = "Estimates are not available in this product.";
+// MS4 (monthly-allowance-standalone.md §4.3): the allowance lives in the
+// standalone app's settings.json; the extension keeps its own in VS Code
+// settings and answers 404.
+export const MONTHLY_ALLOWANCE_UNAVAILABLE_MESSAGE = "The monthly allowance is not available in this product.";
 export const STATEMENTS_UNAVAILABLE_MESSAGE = "Billing statements are not available in this product.";
 // Phase 14 step 14.5: session replay. Optional like the price book: a
 // product without a price book can't price a replay and answers 404.
@@ -135,6 +141,7 @@ export interface ApiServiceDeps {
   // Phase 15 step 15.11: billing statements (the standalone app; the
   // extension gets them with step 15.14).
   statements?: StatementQueries;
+  monthlyAllowance?: MonthlyAllowanceQueries;
   // Phase 15 step 15.12: estimates (the standalone app; the extension with 15.14).
   estimates?: EstimateQueries;
   // Phase 14 step 14.5: a session replayed on another model (both products, D5).
@@ -480,6 +487,25 @@ export class ApiService {
 
   // Step 15.11 (plan §8.5): a project's statement for a period, the draft or
   // the frozen copy with the re-run's diff.
+  async getMonthlyAllowance(): Promise<MonthlyAllowanceAnswer> {
+    return this.requireMonthlyAllowance().get();
+  }
+
+  // Strict: the whole object or a 400 naming the fields; nothing is written.
+  async setMonthlyAllowance(body: unknown): Promise<MonthlyAllowanceAnswer> {
+    const allowance = this.requireMonthlyAllowance();
+    const parsed = allowanceSettingsWriteSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestError(parsed.error.issues.map((issue) => `${issue.path.join(".") || "body"}: ${issue.message}`).join("; "));
+    }
+    return allowance.save(parsed.data);
+  }
+
+  private requireMonthlyAllowance(): MonthlyAllowanceQueries {
+    if (!this.deps.monthlyAllowance) throw new NotFoundError(MONTHLY_ALLOWANCE_UNAVAILABLE_MESSAGE);
+    return this.deps.monthlyAllowance;
+  }
+
   async getStatement(query: ApiQuery = {}): Promise<StatementAnswer> {
     const statements = this.statementQueries();
     const request = statementRequestOf(query);

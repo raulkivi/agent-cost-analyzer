@@ -36,6 +36,10 @@ export const productFeaturesSchema = z.object({
   // price counterfactuals (the standalone app always; the extension when its
   // bundled price book is there).
   savingsReport: z.boolean(),
+  // The header's monthly AI Credits gauge over GET /api/monthly-allowance
+  // (MA13): the standalone app only; the extension has its own in the status
+  // bar and Sessions view (step 10.21) and its ApiService answers 404.
+  monthlyAllowance: z.boolean(),
 });
 
 export type ProductFeatures = z.infer<typeof productFeaturesSchema>;
