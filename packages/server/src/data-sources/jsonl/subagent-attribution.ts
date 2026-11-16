@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: MIT
 import type { SubagentRunUsage } from "@agent-cost-analyzer/domain";
 import type { AgentTraceUsage } from "../agent-traces/agent-traces-reader.js";
-import type { ChildSessionRef } from "./child-session-refs.js";
+import { AttributedRunLedger, type AttributedRun, type UnplacedRunFile } from "./attributed-run-ledger.js";
+import { collectChildSessionRefs, type ChildSessionRef } from "./child-session-refs.js";
 import type { JsonlEnvelope, MainJsonlReadResult } from "./main-jsonl-reader.js";
 import {
   MAX_SUBAGENT_FILES_PER_SESSION,
@@ -55,6 +56,10 @@ export interface SubagentAttributionInput {
 }
 
 export interface SubagentAttribution {
+  // Step 10.20: every run in read order (refs, then orphans by start time), and
+  // the files that no turn could own.
+  runs: AttributedRun[];
+  unplaced: UnplacedRunFile[];
   // Runs read and placed, per 0-based log turn: ref order, then orphans
   // matched by time in start order. A run may carry unknown figures (nested,
   // a request without AI Credits); merging makes its turn unknown.
@@ -103,7 +108,7 @@ export function logTurnAt(logTurnStarts: readonly (number | null)[], at: number)
 }
 
 type RunReadOutcome =
-  | { status: "read"; run: SubagentRunUsage; parentSessionId: string | null }
+  | { status: "read"; run: SubagentRunUsage; parentSessionId: string | null; nestedRefs: ChildSessionRef[] }
   | { status: "unreadable"; reason: string };
 
 function parentSessionIdOf(envelopes: readonly JsonlEnvelope[]): string | null {
@@ -132,7 +137,9 @@ async function readRun(
 
   const traces = agentTraceUsage?.(collectResponseIds(content.envelopes));
   const read = extractSubagentRunUsage(content.envelopes, content.rawLineCount, identity, attribution, traces);
-  return read.status === "read" ? { ...read, parentSessionId: parentSessionIdOf(content.envelopes) } : read;
+  return read.status === "read"
+    ? { ...read, parentSessionId: parentSessionIdOf(content.envelopes), nestedRefs: collectChildSessionRefs(content.envelopes) }
+    : read;
 }
 
 // Collects the result; every unknown is also a session reason, so no caller
@@ -141,6 +148,7 @@ class AttributionBuilder {
   private readonly byLogTurn = new Map<number, SubagentRunUsage[]>();
   private readonly unreadByLogTurn = new Map<number, string>();
   private readonly reasons = new Set<string>();
+  readonly ledger = new AttributedRunLedger();
 
   place(logTurn: number, run: SubagentRunUsage): void {
     this.byLogTurn.set(logTurn, [...(this.byLogTurn.get(logTurn) ?? []), run]);
@@ -161,7 +169,13 @@ class AttributionBuilder {
   }
 
   build(): SubagentAttribution {
-    return { byLogTurn: this.byLogTurn, unreadByLogTurn: this.unreadByLogTurn, sessionUnknownReasons: [...this.reasons] };
+    return {
+      runs: this.ledger.runs,
+      unplaced: this.ledger.unplaced,
+      byLogTurn: this.byLogTurn,
+      unreadByLogTurn: this.unreadByLogTurn,
+      sessionUnknownReasons: [...this.reasons],
+    };
   }
 }
 
@@ -182,14 +196,17 @@ async function attributeRefs(
 
     if (ref.logTurnIndex === null) {
       builder.sessionUnknown(SUBAGENT_REF_BEFORE_FIRST_TURN_REASON);
+      builder.ledger.recordUnplaced(ref.childLogFile, SUBAGENT_REF_BEFORE_FIRST_TURN_REASON);
       continue;
     }
     if (ref.childLogFile === null) {
       builder.unread(ref.logTurnIndex, SUBAGENT_LOG_NAME_REJECTED_REASON);
+      builder.ledger.recordRef(ref.logTurnIndex, ref, { status: "unreadable", reason: SUBAGENT_LOG_NAME_REJECTED_REASON });
       continue;
     }
 
     const outcome = await readRun(source, ref.childLogFile, ref, "child-session-ref", agentTraceUsage);
+    builder.ledger.recordRef(ref.logTurnIndex, ref, outcome);
     if (outcome.status === "read") {
       builder.place(ref.logTurnIndex, outcome.run);
     } else {
@@ -210,24 +227,27 @@ async function attributeOrphans(
   { folderId, logTurnStarts, source, agentTraceUsage }: SubagentAttributionInput,
   builder: AttributionBuilder,
 ): Promise<void> {
-  const placed: { logTurn: number; run: SubagentRunUsage }[] = [];
+  const placed: { logTurn: number; run: SubagentRunUsage; fileName: string; nestedRefs: ChildSessionRef[] }[] = [];
   for (const fileName of fileNames) {
     const outcome = await readRun(source, fileName, { childSessionId: null, label: null }, "timestamp", agentTraceUsage);
     if (outcome.status === "unreadable") {
       builder.sessionUnknown(outcome.reason);
+      builder.ledger.recordUnplaced(fileName, outcome.reason);
       continue;
     }
     const logTurn = outcome.parentSessionId === folderId ? logTurnAt(logTurnStarts, startedAtMs(outcome.run)) : null;
     if (logTurn === null) {
       builder.sessionUnknown(SUBAGENT_RUN_UNPLACEABLE_REASON);
+      builder.ledger.recordUnplaced(fileName, SUBAGENT_RUN_UNPLACEABLE_REASON);
     } else {
-      placed.push({ logTurn, run: outcome.run });
+      placed.push({ logTurn, run: outcome.run, fileName, nestedRefs: outcome.nestedRefs });
     }
   }
 
   placed.sort((a, b) => startedAtMs(a.run) - startedAtMs(b.run));
-  for (const { logTurn, run } of placed) {
+  for (const { logTurn, run, fileName, nestedRefs } of placed) {
     builder.place(logTurn, run);
+    builder.ledger.recordOrphan(logTurn, run, fileName, nestedRefs);
   }
 }
 
@@ -241,9 +261,16 @@ export async function attributeSubagentRuns(input: SubagentAttributionInput): Pr
   if (listing.tooMany) {
     // Nothing is read (a denial-of-service bound); the refs' turns can't be
     // known either.
+    const seen = new Set<string>();
     for (const ref of input.refs) {
       if (ref.logTurnIndex !== null) {
         builder.unread(ref.logTurnIndex, SUBAGENT_LOGS_TOO_MANY_REASON);
+        if (ref.childLogFile === null || !seen.has(ref.childLogFile)) {
+          builder.ledger.recordRef(ref.logTurnIndex, ref, { status: "unreadable", reason: SUBAGENT_LOGS_TOO_MANY_REASON });
+        }
+        if (ref.childLogFile !== null) {
+          seen.add(ref.childLogFile);
+        }
       }
     }
     builder.sessionUnknown(SUBAGENT_LOGS_TOO_MANY_REASON);

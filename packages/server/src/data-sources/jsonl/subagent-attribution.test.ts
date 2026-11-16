@@ -321,7 +321,7 @@ describe("attributeSubagentRuns: refs (design §4.3, plan §4.4)", () => {
     const { result, reads } = await attribute({}, []);
 
     expect(reads).toEqual([]);
-    expect(result).toEqual({ byLogTurn: new Map(), unreadByLogTurn: new Map(), sessionUnknownReasons: [] });
+    expect(result).toEqual({ runs: [], unplaced: [], byLogTurn: new Map(), unreadByLogTurn: new Map(), sessionUnknownReasons: [] });
   });
 
   it("keeps several runs of one turn in ref order", async () => {

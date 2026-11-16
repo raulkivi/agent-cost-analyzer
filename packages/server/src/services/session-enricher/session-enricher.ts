@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type {
   Session,
+  SubagentRunGap,
   SubagentRunUsage,
   SubagentSpend,
   TokenCount,
@@ -265,13 +266,21 @@ function buildTurn(
   usage: TurnUsage | null | undefined,
   fallbackTokenCount: TokenCount,
   invokedCalls: ToolCallRecord[],
+  subagentCalls: readonly ToolCallRecord[] = [],
+  subagentRunGaps: readonly SubagentRunGap[] = [],
 ): Turn {
   const explanation = usage ? buildAnalyzeExplanation(usage) : STUB_EXPLANATION;
   return {
     index,
     userMessage: row?.user_message ?? "",
     assistantResponse: row?.assistant_response ?? "",
-    toolCalls: buildToolCalls(fileRowsByTurn.get(index) ?? [], invokedCalls),
+    // D2: the main agent's calls first; the runs' calls after, so a run's
+    // read_file never takes the main agent's session_files paths.
+    toolCalls: [
+      ...buildToolCalls(fileRowsByTurn.get(index) ?? [], invokedCalls),
+      ...subagentCalls.map((call) => ({ ...call, tokenCount: unavailableToolCallTokenCount() })),
+    ],
+    ...(subagentRunGaps.length > 0 ? { subagentRunGaps: [...subagentRunGaps] } : {}),
     usage: usage ?? buildUnavailableUsage(fallbackTokenCount),
     ...(row?.timestamp ? { startedAt: row.timestamp } : {}),
     ...(row
@@ -322,6 +331,10 @@ export interface AnalyzeEnrichment extends Partial<AnalyzeModeExtras> {
   // Step 10.20 (D3): the debug log's tool_call spans as records, per store
   // turn index. Where a turn has none, invokedToolNamesByTurn's names stand.
   toolCallsByTurn?: ToolCallRecord[][];
+  // Step 10.20 (§5.2): the calls of the subagent runs a turn started, each with
+  // its origin, and the runs whose calls are unknown, per store turn index.
+  subagentToolCallsByTurn?: ToolCallRecord[][];
+  subagentRunGapsByTurn?: SubagentRunGap[][];
   subagentRuns?: SessionSubagentRuns;
 }
 
@@ -334,6 +347,8 @@ export function buildSession(enrichment: AnalyzeEnrichment): Session {
     turnUsages = [],
     invokedToolNamesByTurn = [],
     toolCallsByTurn = [],
+    subagentToolCallsByTurn = [],
+    subagentRunGapsByTurn = [],
     systemPrompt = [],
     toolInventory = [],
     subagentRuns,
@@ -350,7 +365,16 @@ export function buildSession(enrichment: AnalyzeEnrichment): Session {
     return spans !== undefined && spans.length > 0 ? spans : nameOnlyCalls(invokedToolNamesByTurn[index] ?? []);
   };
   const buildAt = (index: number, row: TurnRow | undefined) =>
-    buildTurn(index, row, fileRowsByTurn, turnUsages[index], fallbackTokenCount, invokedCallsAt(index));
+    buildTurn(
+      index,
+      row,
+      fileRowsByTurn,
+      turnUsages[index],
+      fallbackTokenCount,
+      invokedCallsAt(index),
+      subagentToolCallsByTurn[index],
+      subagentRunGapsByTurn[index],
+    );
 
   const storeTurnIndices = turnRows.map((row) => row.turn_index);
   // Stable sort: the store's own rows keep their order.
