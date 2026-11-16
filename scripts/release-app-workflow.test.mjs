@@ -112,24 +112,31 @@ test("no npm token or secret anywhere", () => {
   assert.doesNotMatch(text, /NODE_AUTH_TOKEN|NPM_TOKEN|secrets\./);
 });
 
-test("npm is pinned exactly at 11.5.1 or later", () => {
-  const install = runs(publish).find((run) => /npm install -g npm@/.test(run));
-  assert.ok(install, "publish installs npm");
-  const [, version] = /npm install -g npm@(\S+)/.exec(install);
+// Scorecard's Pinned-Dependencies check flags any `npm install` in a
+// workflow, as a version is not a hash. npm comes bundled with an exact Node.
+test("no release step installs npm or any other package globally", () => {
+  for (const job of [build, publish]) {
+    for (const run of runs(job)) assert.doesNotMatch(run, /npm (install|i) -g/);
+  }
+});
+
+// Trusted publishing needs npm 11.5.1+; Node 24.5.0 is the first 24.x to
+// bundle it (nodejs.org/dist/index.json).
+test("Node is pinned exactly to a release that bundles npm 11.5.1 or later", () => {
+  const version = String(usesStep(publish, "actions/setup-node@").with["node-version"]);
   const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
   assert.ok(match, `exact version, got ${version}`);
-  const [major, minor, patch] = match.slice(1).map(Number);
-  assert.ok(major > 11 || (major === 11 && (minor > 5 || (minor === 5 && patch >= 1))));
+  const [major, minor] = match.slice(1).map(Number);
+  assert.ok(major > 24 || (major === 24 && minor >= 5), `Node ${version} bundles npm older than 11.5.1`);
 });
 
-test("the dry run and the publish use the same npm", () => {
-  const pin = (job) => runs(job).map((r) => /npm install -g npm@(\S+)/.exec(r)?.[1]).find(Boolean);
-  assert.equal(pin(build), pin(publish));
+test("the dry run and the publish use the same Node, so the same npm", () => {
+  const node = (job) => usesStep(job, "actions/setup-node@").with["node-version"];
+  assert.equal(node(build), node(publish));
 });
 
-test("publish uses Node 22 and the npm registry", () => {
+test("publish uses the npm registry", () => {
   const node = usesStep(publish, "actions/setup-node@");
-  assert.equal(node.with["node-version"], 22);
   assert.equal(node.with["registry-url"], "https://registry.npmjs.org");
 });
 

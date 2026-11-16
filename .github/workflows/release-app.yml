@@ -44,9 +44,10 @@ jobs:
         with:
           persist-credentials: false
 
+      # The publish job's exact Node, so the dry run uses its bundled npm.
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 22
+          node-version: 24.22.3
 
       - run: npm ci
 
@@ -154,9 +155,7 @@ jobs:
           if-no-files-found: error
 
       # The same npm the publish job runs, so a refusal shows here first. It
-      # runs after the upload and only reads the tarball, so a global npm
-      # install can't touch the uploaded artifact.
-      - run: npm install -g npm@11.21.1
+      # runs after the upload and only reads the tarball.
       - name: Publish dry run
         env:
           TARBALL: ${{ steps.pack.outputs.tarball }}
@@ -192,12 +191,13 @@ jobs:
       - name: Verify the tarball is the one the build tested
         run: node scripts/verify-sha256.mjs npm-release/SHA256SUMS
 
-      # Trusted publishing needs npm 11.5.1+ and Node 22.14+.
+      # Trusted publishing needs npm 11.5.1+. Node 24.22.3 bundles npm
+      # 11.19.1; using the bundled npm avoids an `npm install -g`, which
+      # Scorecard flags as not pinned by hash (Pinned-Dependencies).
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 22
+          node-version: 24.22.3
           registry-url: https://registry.npmjs.org
-      - run: npm install -g npm@11.21.1
 
       # The package exists as the owner's placeholder, so this check always
       # applies: refuse to publish to a package anyone else maintains.

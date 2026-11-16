@@ -1,6 +1,6 @@
 # npm package for the standalone app (1.0 criterion C8)
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **Done 2026-11-15.** App 0.16.0 is the first version on npm (`npx agent-cost-analyzer`), published by `release-app.yml` through npm trusted publishing with SLSA v1 provenance (Sigstore log index 3911991934; release run 43768131439). Exit criterion (§8) met: the `npm-package` job passes on Linux, macOS and Windows and `npm-package-result` is a required check; the publish came from CI with no npm token anywhere; `npx agent-cost-analyzer@0.16.0` started the app from a clean folder. The placeholders `0.0.0` and `0.0.0-stage` are deprecated.
 [1.0.0 release](../implementation-plan.md#100-release). It splits V16
@@ -314,10 +314,10 @@ workflow, does:
   runs in full and the publish job is skipped.
 - **publish** (`needs: build`, `environment: release`, permissions
   `contents: write` and `id-token: write`): downloads the artifact,
-  verifies the SHA-256, sets up Node 22 with
-  `registry-url: https://registry.npmjs.org`, installs an exact npm
-  version of 11.5.1 or later (trusted publishing needs npm 11.5.1+ and
-  Node 22.14+), checks that the package's only maintainer is the owner
+  verifies the SHA-256, sets up an exact Node release whose bundled npm
+  is 11.5.1 or later (trusted publishing needs npm 11.5.1+; 24.22.3 bundles
+  11.19.1) with `registry-url: https://registry.npmjs.org`, checks that
+  the package's only maintainer is the owner
   (`npm view agent-cost-analyzer maintainers`; skipped before the first
   publish), runs `npm publish <tarball> --access public`, then creates the
   GitHub Release with the tarball attached. The tarball published is the
@@ -412,7 +412,7 @@ Decided 2026-11-14: the owner accepted each recommendation.
 | Bundled dependencies are invisible to users' `npm audit` | A known advisory ships unnoticed | The release gate's audit; Dependabot; patch releases (§5) |
 | Stale `npx` cache | Users run an old version | `@latest` in the docs; `--version`; the version on `/api/health` |
 | Licence notices for bundled packages missing | Licence breach | Generated notices with an allow-list test (§4.9) |
-| The runner's npm is older than 11.5.1 | OIDC publish fails | The publish job installs an exact npm version |
+| The runner's npm is older than 11.5.1 | OIDC publish fails | Both jobs set up an exact Node release that bundles npm 11.5.1+ (amended 2026-11-16: was an `npm install -g` of an exact npm, which Scorecard flags as not pinned by hash) |
 | Package size grows (tokenizer data, views) | Slow first `npx` | The size budget test |
 
 ## 8. Exit criterion
