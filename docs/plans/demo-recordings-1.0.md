@@ -1,9 +1,13 @@
-# Demo recordings for the 1.0 features: proposal
+# Demo recordings for the 1.0 features
 
 **Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **proposal, waiting for the owner's review** (owner request
-2026-11-16). No recording work starts before the owner answers §7.
+Status: **approved, not started** (owner interview 2026-11-16: D29–D43, all
+recommended options accepted). Tracked as step 10.24 in
+[implementation-plan.md](../implementation-plan.md) and in the
+[Gantt](../implementation-plan-gantt.md). **Start condition:** recording
+work starts after C9 (the monthly allowance in the standalone app, MA13)
+closes; wave 1 waits for it, waves 2 to 4 wait for their own features (§6).
 
 This plan reviews what shipped or is being built since the demo recordings
 of steps 10.22 and 10.23, and proposes for each feature: extend an existing
@@ -258,7 +262,7 @@ reviews every GIF.
 
 | ID | Task | Complexity | Model | Depends on | Owner step |
 |---|---|---|---|---|---|
-| **Wave 1: shipped features, start on approval** | | | | | |
+| **Wave 1: shipped features, start after C9 (MA13) closes** | | | | | |
 | DR1 | Fixture additions (§4) for E5, W3, F4, M8; demo variant with realistic names | medium | Sonnet | D36 | — |
 | DR2 | E5 scene, new beat list | low | Sonnet | DR1, D37 | — |
 | DR3 | W3 scene, new beat list | low | Sonnet | DR1, D37 | — |
@@ -287,22 +291,25 @@ files but add about 15 MB to history (D42).
 
 ## 7. Owner decisions
 
-The recommended option comes first in each row.
+Interview 2026-11-16: the owner accepted the recommended option in every
+row (D29–D43). The recommended option is in bold; the alternatives the owner
+did not choose follow it. D30's owner step: the owner installs `xterm` with
+apt. The last column names the tasks (§6) each answer feeds.
 
-| # | Question | Options | Needed by |
+| # | Question | Answer (options as proposed) | Task |
 |---|---|---|---|
-| D29 | Which build does N1 run? | **Recommended: the tarball of the 1.0.0 bump** (`npm pack` of `packages/cli`) installed in an empty demo folder. `npx agent-cost-analyzer` then runs it without the registry and the start line reads 1.0.0; a draft take on today's version comes first. Alternatives: the published 1.0.0 after release, which shows npx's install prompt but reaches the npm page only with the next publish; or today's version, left as is | DR4, DR13 |
-| D30 | Which terminal? | **Recommended: `xterm`**, which the owner installs with apt (no terminal emulator is installed); large mono font, no title bar under Xvfb. Alternatives: VS Code's integrated terminal through wdio (VS Code on screen in a story about not needing it); a browser terminal (xterm.js and a pty, more code) | DR4 |
-| D31 | How does the browser open in N1? | **Recommended: the CLI opens it**, through an `xdg-open` wrapper first on the demo `PATH` that starts a throwaway Playwright Chromium. Alternative: `--no-open` with the driver opening Chromium, which shows the flag but hides the automatic open | DR4 |
-| D32 | README GIFs | **Recommended: N1 replaces W1** under "Get started: standalone app"; W1 stays in the User Guide's "Learn mode", and the README keeps four GIFs. Alternative: N1 beside W1 (five GIFs) | DR8 |
-| D33 | Media on the npm page (`packages/cli/README.md`) | **Recommended: N1 under "Run it" and M1 under "Ask your AI chat"**, absolute raw URLs to `main` (as D4 for the Marketplace), so retakes update the page without a publish. Alternatives: N1 only; text only | DR8 |
-| D34 | The savings view in a chat (U18) | **Recommended: M8 in Claude Desktop plus F4 in the fake host** (free; the extension guide's GIF and the fallback). Alternatives: F4 only; also a real-Copilot take, which costs AI Credits while the G4 suite already checks U18 (not recommended) | DR5, DR6 |
-| D35 | M4 shows the old button label | **Recommended: retake M4 in the M8 session.** Alternative: keep it and note the label in the caption | DR6 |
-| D36 | Model names in the web, terminal and fake-host demos | **Recommended: D21's realistic names** through a demo variant, so no frame reads "fixture-…" (W3 does today). Alternative: keep the shared fixture's names | DR1 |
-| D37 | E5 and W3 get longer | **Recommended: drop beats** (E5: the 7-day step and Copy text; W3: the 7-day step) to keep one GIF each. Alternative: two GIFs each (rows, then a row's sessions and tools) | DR2, DR3 |
-| D38 | `get_monthly_allowance` | **Recommended: no recording**: no view and a one-line answer; the User Guide's MCP table covers it. Alternative: an M9 text answer in Desktop | — |
-| D39 | 10.20 recordings | **Recommended: extend E8, retake E3, new W5** for the User Guide. Alternative: E8 only, with a still in the User Guide | DR10, DR11 |
-| D40 | C15 recordings | **Recommended: extend W2** (its story is a Claude Code session) and retake M1 or F1 only if U1 changed. Alternative: a separate W6 for subagents, with W2 retaken unchanged | DR12 |
-| D41 | A sweep on the 1.0 build | **Recommended: yes.** Re-record every free scene in one run (free, about an hour), so look and header version match; paid scenes only where stale. Alternative: retake only the scenes named in §3.3 | DR13 |
-| D42 | Media budget | **Recommended: accept about 60 MB** in `docs/images/demo/` and about 15 MB more history from retakes (as D28). Alternative: hold today's size by dropping the unembedded F1–F3 and publishing the largest scenes as MP4 only | DR8 |
-| D43 | Tracking | **Recommended: a numbered plan step** ("Demo recordings for 1.0") with a Gantt bar, linked by the coordinator (as D7). Alternative: untracked docs work | DR1 |
+| D29 | Which build does N1 run? | Accepted (owner, 2026-11-16): **the tarball of the 1.0.0 bump** (`npm pack` of `packages/cli`) installed in an empty demo folder. `npx agent-cost-analyzer` then runs it without the registry and the start line reads 1.0.0; a draft take on today's version comes first. Alternatives: the published 1.0.0 after release, which shows npx's install prompt but reaches the npm page only with the next publish; or today's version, left as is | DR4, DR13 |
+| D30 | Which terminal? | Accepted (owner, 2026-11-16): **`xterm`**, which the owner installs with apt (no terminal emulator is installed); large mono font, no title bar under Xvfb. Alternatives: VS Code's integrated terminal through wdio (VS Code on screen in a story about not needing it); a browser terminal (xterm.js and a pty, more code) | DR4 |
+| D31 | How does the browser open in N1? | Accepted (owner, 2026-11-16): **the CLI opens it**, through an `xdg-open` wrapper first on the demo `PATH` that starts a throwaway Playwright Chromium. Alternative: `--no-open` with the driver opening Chromium, which shows the flag but hides the automatic open | DR4 |
+| D32 | README GIFs | Accepted (owner, 2026-11-16): **N1 replaces W1** under "Get started: standalone app"; W1 stays in the User Guide's "Learn mode", and the README keeps four GIFs. Alternative: N1 beside W1 (five GIFs) | DR8 |
+| D33 | Media on the npm page (`packages/cli/README.md`) | Accepted (owner, 2026-11-16): **N1 under "Run it" and M1 under "Ask your AI chat"**, absolute raw URLs to `main` (as D4 for the Marketplace), so retakes update the page without a publish. Alternatives: N1 only; text only | DR8 |
+| D34 | The savings view in a chat (U18) | Accepted (owner, 2026-11-16): **M8 in Claude Desktop plus F4 in the fake host** (free; the extension guide's GIF and the fallback). Alternatives: F4 only; also a real-Copilot take, which costs AI Credits while the G4 suite already checks U18 (not recommended) | DR5, DR6 |
+| D35 | M4 shows the old button label | Accepted (owner, 2026-11-16): **retake M4 in the M8 session.** Alternative: keep it and note the label in the caption | DR6 |
+| D36 | Model names in the web, terminal and fake-host demos | Accepted (owner, 2026-11-16): **D21's realistic names** through a demo variant, so no frame reads "fixture-…" (W3 does today). Alternative: keep the shared fixture's names | DR1 |
+| D37 | E5 and W3 get longer | Accepted (owner, 2026-11-16): **drop beats** (E5: the 7-day step and Copy text; W3: the 7-day step) to keep one GIF each. Alternative: two GIFs each (rows, then a row's sessions and tools) | DR2, DR3 |
+| D38 | `get_monthly_allowance` | Accepted (owner, 2026-11-16): **no recording**: no view and a one-line answer; the User Guide's MCP table covers it. Alternative: an M9 text answer in Desktop | — |
+| D39 | 10.20 recordings | Accepted (owner, 2026-11-16): **extend E8, retake E3, new W5** for the User Guide. Alternative: E8 only, with a still in the User Guide | DR10, DR11 |
+| D40 | C15 recordings | Accepted (owner, 2026-11-16): **extend W2** (its story is a Claude Code session) and retake M1 or F1 only if U1 changed. Alternative: a separate W6 for subagents, with W2 retaken unchanged | DR12 |
+| D41 | A sweep on the 1.0 build | Accepted (owner, 2026-11-16): **yes.** Re-record every free scene in one run (free, about an hour), so look and header version match; paid scenes only where stale. Alternative: retake only the scenes named in §3.3 | DR13 |
+| D42 | Media budget | Accepted (owner, 2026-11-16): **accept about 60 MB** in `docs/images/demo/` and about 15 MB more history from retakes (as D28). Alternative: hold today's size by dropping the unembedded F1–F3 and publishing the largest scenes as MP4 only | DR8 |
+| D43 | Tracking | Accepted (owner, 2026-11-16): **a numbered plan step** ("Demo recordings for 1.0") with a Gantt bar, linked by the coordinator (as D7). Alternative: untracked docs work | DR1 |
