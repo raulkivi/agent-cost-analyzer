@@ -25,6 +25,16 @@ describe("toolCallOriginSchema", () => {
     }
   });
 
+  it("accepts the Agent Host labels", () => {
+    for (const label of ["task", "task-general-purpose", "search_code_subagent"]) {
+      expect(toolCallOriginSchema.parse({ ...subagent, label }).kind).toBe("subagent");
+    }
+  });
+
+  it.each(["task-<img>", "task-../x", "search_code_subagent-x"])("rejects the Agent Host label %s", (label) => {
+    expect(() => toolCallOriginSchema.parse({ ...subagent, label })).toThrow();
+  });
+
   it.each([0, 9, 1.5, -1])("rejects depth %s", (depth) => {
     expect(() => toolCallOriginSchema.parse({ ...subagent, depth })).toThrow();
   });

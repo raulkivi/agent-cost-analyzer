@@ -1,12 +1,13 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { ToolCallRecord, ToolCallStatus } from "@agent-cost-analyzer/domain";
+import type { ToolCallOrigin, ToolCallRecord, ToolCallStatus } from "@agent-cost-analyzer/domain";
 import type { CopilotEvent } from "../../data-sources/agent-host/copilot-event.js";
 import { MAX_ARGS_SUMMARY_LENGTH, summarizeToolArgs } from "../tool-audit/args-summary.js";
 import { buildToolCallOutcome } from "../tool-audit/outcome-builder.js";
 import { excerptOf } from "../tool-audit/output-redactor.js";
 import { parseShellCommand } from "../tool-audit/shell-command-parser.js";
 import { resolveToolKind } from "../tool-audit/tool-kind-resolver.js";
+import { indexSubagentStarts, orderByOrigin, originOf } from "./agent-host-tool-call-origin.js";
 import { isSubagentEvent, type MatchedTurn, type UnmatchedTurn } from "./copilot-turn-segmenter.js";
 
 // Turn text and tool calls with outcomes for an Agent Host turn, from the
@@ -35,6 +36,8 @@ export interface ToolOutcomeIndex {
 export interface BuildTurnContentOptions {
   // Defaults to an index over the turn's own events.
   outcomes?: ToolOutcomeIndex;
+  // subagent.started toolCallId -> agentName; defaults to the turn's own events.
+  subagentNames?: ReadonlyMap<string, string>;
 }
 
 const APPROVED_KINDS = new Set(["approved", "approved-for-location"]);
@@ -179,6 +182,7 @@ function buildRecord(
   roundIndex: number | undefined,
   outcomes: ToolOutcomeIndex,
   aborted: boolean,
+  origin: ToolCallOrigin,
 ): ToolCallRecord {
   const kind = resolveToolKind(draft.name);
   const complete = outcomes.completes.get(draft.id);
@@ -198,6 +202,8 @@ function buildRecord(
     ...(draft.startedAt ? { startedAt: draft.startedAt } : {}),
     ...(durationMs !== undefined ? { durationMs } : {}),
     ...(roundIndex !== undefined ? { roundIndex } : {}),
+    // A record without origin is the main agent's (plan §5.1).
+    ...(origin.kind === "subagent" ? { origin } : {}),
     ...(filesTouched.length > 0 ? { filesTouched } : {}),
   };
 }
@@ -223,10 +229,13 @@ export function buildAgentHostTurnContent(turn: MatchedTurn, options: BuildTurnC
   const aborted = turn.events.some((e) => e.type === "abort");
   const drafts = collectCalls(turn.events);
   const byId = new Map(drafts.map((d) => [d.id, d]));
+  const subagentNames = options.subagentNames ?? indexSubagentStarts(turn.events);
   return {
     userMessage: str(turn.userMessage.data.content) ?? "",
     assistantResponse: assistantResponseOf(turn.events),
-    toolCalls: drafts.map((d) => buildRecord(d, roundOf(d, byId), outcomes, aborted)),
+    toolCalls: orderByOrigin(
+      drafts.map((d) => buildRecord(d, roundOf(d, byId), outcomes, aborted, originOf(d, byId, subagentNames))),
+    ),
   };
 }
 

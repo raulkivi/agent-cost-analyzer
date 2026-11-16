@@ -19,6 +19,7 @@ import {
 } from "../../data-sources/agent-host/agent-session-store.js";
 import type { CopilotEvent } from "../../data-sources/agent-host/copilot-event.js";
 import { buildAgentHostSystemPrompt } from "./agent-host-system-prompt-builder.js";
+import { indexSubagentStarts } from "./agent-host-tool-call-origin.js";
 import {
   buildAgentHostTurnContent,
   buildUnmatchedAgentHostTurnContent,
@@ -76,6 +77,8 @@ const EVENT_TYPES_USED = new Set([
   "tool.execution_start",
   "tool.execution_complete",
   "permission.completed",
+  // Step 10.20: agentName labels a subagent run's tool calls.
+  "subagent.started",
   "abort",
   "system.message",
   "session.shutdown",
@@ -202,9 +205,10 @@ function turnContentSources(rows: AgentHostTurnRow[], eventLog: AgentHostEventLo
   // Over the whole log: a steering message splits a turn, so a call can
   // complete in the next turn's events.
   const outcomes = indexToolOutcomeEvents(eventLog.events);
+  const subagentNames = indexSubagentStarts(eventLog.events);
   return rows.map((row) => {
     const turn = segmented.get(row.turnId) ?? { turnId: row.turnId, matched: false, reason: TURN_EVENT_NOT_FOUND_REASON };
-    const content = turn.matched ? buildAgentHostTurnContent(turn, { outcomes }) : buildUnmatchedAgentHostTurnContent(turn);
+    const content = turn.matched ? buildAgentHostTurnContent(turn, { outcomes, subagentNames }) : buildUnmatchedAgentHostTurnContent(turn);
     return { kind: "content", content, turn };
   });
 }
