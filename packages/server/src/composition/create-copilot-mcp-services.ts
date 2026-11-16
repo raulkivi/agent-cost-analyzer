@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { AppSettingsStore } from "../data-sources/log-providers/app-settings.js";
 import { COST_BASIS_INSTRUCTIONS, REPLAY_INSTRUCTIONS, SUBAGENT_INSTRUCTIONS, type McpIdentity } from "../mcp/mcp-identity.js";
-import { WITHOUT_BILLING_TOOL_GROUPS, type McpServerDeps } from "../mcp/mcp-server.js";
+import { EXTENSION_TOOL_GROUPS, type McpServerDeps } from "../mcp/mcp-server.js";
 import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";
 import { createCopilotAttribution } from "./create-copilot-attribution.js";
 import { createBundledPriceBookBeside } from "./create-price-book.js";
@@ -102,6 +102,6 @@ export function createCopilotMcpServices(options: CopilotMcpServicesOptions): Mc
       priceBook ? { profiles, priceBook } : undefined,
     ),
     ...(priceBook ? { priceBook } : {}),
-    toolGroups: WITHOUT_BILLING_TOOL_GROUPS,
+    toolGroups: EXTENSION_TOOL_GROUPS,
   };
 }

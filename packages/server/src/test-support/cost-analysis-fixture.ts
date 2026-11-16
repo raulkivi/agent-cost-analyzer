@@ -5,7 +5,8 @@ import { DatasetCostCubeSource } from "../services/cost-analysis/cost-analysis-s
 import { priceBookHashOf, StatementService } from "../services/billing/statement-service.js";
 import { InMemoryStatementStore } from "./in-memory-statement-store.js";
 import { EstimateService } from "../services/billing/estimate-service.js";
-import type { LogProviderStatus, RequestTrace, Session, TokenCount, Turn, TurnUsage } from "@agent-cost-analyzer/domain";
+import { MonthlyAllowanceService, variantOfUserDataDir } from "../services/monthly-allowance/monthly-allowance-service.js";
+import type { AllowanceSettings, LogProviderStatus, RequestTrace, Session, TokenCount, Turn, TurnUsage } from "@agent-cost-analyzer/domain";
 import type { RequestTraceReader } from "../data-sources/log-providers/log-provider.js";
 import { loadVendorProfiles } from "../data-sources/vendor-profiles/loader.js";
 import { createSessionReplay } from "../composition/create-session-replay.js";
@@ -216,9 +217,11 @@ export type CostFixtureOptions = Pick<McpServerDeps, "toolGroups" | "identity" |
   projects?: unknown;
   // Step 10.19: the VS Code sessions, when a test needs others (e.g. with subagent runs).
   copilot?: Session[];
+  // MS9: the monthly allowance in settings; not set by default.
+  allowance?: AllowanceSettings;
 };
 
-export function composeCostFixture({ home = FIXTURE_HOME, portalApiRemote, projects = fixtureProjects, copilot = copilotSessions, ...options }: CostFixtureOptions = {}) {
+export function composeCostFixture({ home = FIXTURE_HOME, portalApiRemote, projects = fixtureProjects, copilot = copilotSessions, allowance = { aiCredits: null, resetDay: 1, warnAtPercent: 80 }, ...options }: CostFixtureOptions = {}) {
   const providers = [
     new TracedFakeProvider("vscode", rehome(copilot, home), "vscode-local"),
     new TracedFakeProvider("claude-code", rehome(claudeCodeSessions, home), "claude-code"),
@@ -267,7 +270,15 @@ export function composeCostFixture({ home = FIXTURE_HOME, portalApiRemote, proje
     replay: { sessions: sessionReplay, models: new ReplayModelResolver(profiles) },
   });
   // The cost routes read only costAnalysis, statements and estimates (app.ts passes req.query unchanged).
-  const api = new ApiService({ costAnalysis, statements, estimates, savingsReport } as unknown as ApiServiceDeps);
+  // MS9: the allowance over the fixture's VS Code provider, as the route and the tool both read it.
+  const monthlyAllowance = new MonthlyAllowanceService({
+    settings: { read: () => allowance, write: () => undefined },
+    copilot: providers[0]!,
+    now: () => FIXTURE_NOW,
+    timeZone: "UTC",
+    variant: variantOfUserDataDir(null),
+  });
+  const api = new ApiService({ costAnalysis, statements, estimates, savingsReport, monthlyAllowance } as unknown as ApiServiceDeps);
   const deps: McpServerDeps = {
     auditQueries: new AuditQueryService(lookup),
     analysisQueries: new AnalysisQueryService(lookup, insights, { attribution: attributor, pricer }),
@@ -281,6 +292,7 @@ export function composeCostFixture({ home = FIXTURE_HOME, portalApiRemote, proje
     estimates,
     sessionReplay,
     savingsReport,
+    monthlyAllowance,
     ...options,
   };
   const server = createMcpServer(deps);

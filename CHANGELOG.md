@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - The savings report now lists unused tools for pi sessions: each tool a pi session declared and never ran, with its definition tokens per request (an estimate) and the requests it was declared for, including a tool pi dropped or added mid-session. pi on a local model has no price, so its rows say "Not priced" with the reason and rank last; their tokens and requests are shown, never a made-up dollar figure. A branch of a forked pi file counts the requests it shares with an earlier branch once. Sessions without a system message in the file (only the logger's record) stay under Not analysed. <!-- codespell:ignore analysed -->
+- MCP tool `get_monthly_allowance` in the standalone server: the AI Credits used so far this billing period against the monthly allowance set in the app, the same answer as the app's header. Read-only, no arguments; a lower bound says "at least", and unknown is never 0. The extension's MCP server does not have it.
 - Any session whose model has no known price channel, not only pi, now gets its unused-tools row with "Not priced" and the reason, instead of being left under Not analysed. <!-- codespell:ignore analysed -->
 
 ### Fixed

@@ -5,12 +5,14 @@ import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { readAppVersion } from "../composition/app-version.js";
 import { loadBundledVendorProfiles } from "../composition/bundled-vendor-profiles.js";
 import { composeLogProviders, type LogProviderCompositionOptions } from "../composition/compose-log-providers.js";
+import { createMonthlyAllowance } from "../composition/create-monthly-allowance.js";
 import { createStandalonePriceBook } from "../composition/create-price-book.js";
 import { createStandaloneAttribution } from "../composition/create-standalone-attribution.js";
 import { createTurnPricer } from "../composition/create-turn-pricer.js";
 import { createMcpServices } from "../composition/mcp-services.js";
 import { bundledDataDirsOf, type PackageLayout } from "../composition/package-layout.js";
 import { FileStatementStore } from "../data-sources/statements/file-statement-store.js";
+import { resolveUserDataDir } from "../platform/vscode-paths/resolve-user-data-dir.js";
 import { clockFromEnv } from "../platform/clock/clock-from-env.js";
 import { priceBookHashOf } from "../services/billing/statement-service.js";
 import { resolveAppViews } from "./apps/resolve-app-views.js";
@@ -77,6 +79,12 @@ export function createStandaloneMcpServerFactory(options: StandaloneMcpServerOpt
     { profiles: vendorProfiles, priceBook },
     now),
     priceBook,
+    // MS9: get_monthly_allowance over the VS Code provider whatever provider is
+    // active, as the app's header reads it (createMonthlyAllowance).
+    monthlyAllowance: createMonthlyAllowance(registry, resolvedAppSettingsDir, {
+      agentHostUserDataDir: compositionOptions.agentHostUserDataDir !== undefined ? compositionOptions.agentHostUserDataDir : resolveUserDataDir(),
+      now,
+    }),
   };
   return { version, createServer: () => createMcpServer(deps) };
 }

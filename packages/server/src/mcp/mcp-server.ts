@@ -10,6 +10,8 @@ import type { CostAnalysisQueries } from "../services/cost-analysis/cost-analysi
 import { MCP_ICONS, MCP_WEBSITE_URL } from "./mcp-branding.js";
 import { STANDALONE_MCP_IDENTITY, type McpIdentity } from "./mcp-identity.js";
 import { registerAttributionTools } from "./attribution-tools.js";
+import { registerAllowanceTools } from "./allowance-tools.js";
+import type { MonthlyAllowanceQueries } from "../services/monthly-allowance/monthly-allowance-service.js";
 import { registerAuditTools } from "./audit-tools.js";
 import { registerBillingTools } from "./billing-tools.js";
 import type { StatementQueries } from "../services/billing/statement-service.js";
@@ -67,6 +69,9 @@ export interface McpServerDeps {
   // Phase 16 SR19: get_savings_report, over the service the Savings tab reads.
   // Both products pass it where they have a price book and replays.
   savingsReport?: SavingsQueries;
+  // MS9: get_monthly_allowance, over the service the app's header reads
+  // (the standalone server only; the extension leaves the group out).
+  monthlyAllowance?: Pick<MonthlyAllowanceQueries, "get">;
   version: string;
   // Phase 12 (docs/plans/mcp-apps.md §4.2): the MCP App views. When given,
   // the server serves the views resource, the app-only get_turn_series and
@@ -83,11 +88,13 @@ export interface McpServerDeps {
 
 // The tool groups, one module each (open/closed): sessions, audit and cost
 // (session_cost, cost_rollup) and findings are Phase 9.12's; the rest come
-// with Phase 15 and need their services; replay comes with Phase 14, savings with Phase 16.
-export const MCP_TOOL_GROUPS = ["sessions", "audit", "cost", "findings", "attribution", "pricing", "costAnalysis", "replay", "savings", "billing"] as const;
+// with Phase 15 and need their services; replay comes with Phase 14, savings with Phase 16, allowance with MA13.
+export const MCP_TOOL_GROUPS = ["sessions", "audit", "cost", "findings", "attribution", "pricing", "costAnalysis", "replay", "savings", "billing", "allowance"] as const;
 export type McpToolGroup = (typeof MCP_TOOL_GROUPS)[number];
-// The extension's set: billing and estimates are standalone-only (D7).
-export const WITHOUT_BILLING_TOOL_GROUPS: readonly McpToolGroup[] = MCP_TOOL_GROUPS.filter((group) => group !== "billing");
+// The extension's set: billing and estimates are standalone-only (D7), and so
+// is the allowance (monthly-allowance-standalone.md D7).
+const STANDALONE_ONLY_TOOL_GROUPS: readonly McpToolGroup[] = ["billing", "allowance"];
+export const EXTENSION_TOOL_GROUPS: readonly McpToolGroup[] = MCP_TOOL_GROUPS.filter((group) => !STANDALONE_ONLY_TOOL_GROUPS.includes(group));
 
 // Kept for the standalone server's callers; the wording lives in the identity.
 export const SERVER_INSTRUCTIONS = STANDALONE_MCP_IDENTITY.instructions;
@@ -140,6 +147,7 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
   if (serves("attribution") && deps.attribution) registerAttributionTools(server, toolDeps, deps.attribution, guarded);
   if (serves("replay") && deps.sessionReplay) registerReplayTools(server, toolDeps, deps.sessionReplay, guarded);
   if (serves("savings") && deps.savingsReport) registerSavingsTools(server, toolDeps, deps.savingsReport, guarded);
+  if (serves("allowance") && deps.monthlyAllowance) registerAllowanceTools(server, deps.monthlyAllowance, guarded);
   if (statements || estimates) registerBillingTools(server, { statements, estimates }, guarded);
   if (deps.appViews && registered) {
     registerAppViews(server, { identity, version: deps.version, source: deps.appViews.source, analysisQueries: deps.analysisQueries }, registered, guarded);

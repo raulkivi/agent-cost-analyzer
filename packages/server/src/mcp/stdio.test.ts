@@ -14,7 +14,7 @@ import {
   spawnJsonRpcStdio,
   type JsonRpcStdioPeer,
 } from "../test-support/json-rpc-stdio.js";
-import { costRollupSchema, priceBookListingSchema, projectListSchema, repositoryListSchema, sessionCostSchema, sessionReplaySchema } from "@agent-cost-analyzer/domain";
+import { costRollupSchema, monthlyAllowanceAnswerSchema, priceBookListingSchema, projectListSchema, repositoryListSchema, sessionCostSchema, sessionReplaySchema } from "@agent-cost-analyzer/domain";
 
 // End-to-end: spawns the real stdio entry point (what `claude mcp add`
 // runs) against a temporary HOME holding the real-capture Claude Code
@@ -80,11 +80,11 @@ describe("stdio MCP entry point", () => {
     expect(findings.isError).toBeFalsy();
   }, 60_000);
 
-  // Phase 14 step 14.5 (D7): 22 tools and 6 prompts, the replay group among
+  // Phase 14 step 14.5 (D7): 23 tools and 6 prompts, the replay group among
   // them, and replay_session over the real-capture Claude Code fixture.
-  it("lists 22 read-only tools and 6 prompts, and replays the fixture session on another model, labelled simulated", async () => {
+  it("lists 23 read-only tools and 6 prompts, and replays the fixture session on another model, labeled simulated", async () => {
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(22);
+    expect(tools).toHaveLength(23);
     expect((await client.listPrompts()).prompts).toHaveLength(6);
     expect(tools.every((tool) => tool.annotations?.readOnlyHint === true)).toBe(true);
 
@@ -94,6 +94,18 @@ describe("stdio MCP entry point", () => {
 
     expect(result.isError, JSON.stringify(result.content)).toBeFalsy();
     expect(sessionReplaySchema.parse(result.structuredContent)).toMatchObject({ simulated: true, model: "claude-haiku-5.5", sessionId: session.id });
+    expect(JSON.stringify(result)).not.toContain(home);
+  }, 60_000);
+
+  // MS9: over the real entry point, with no allowance in the temporary HOME's
+  // settings, the answer is "not set" and carries no figure and no local path.
+  it("answers get_monthly_allowance with the schema's answer and no figure when no allowance is set", async () => {
+    const result = await client.callTool({ name: "get_monthly_allowance", arguments: {} });
+
+    expect(result.isError, JSON.stringify(result.content)).toBeFalsy();
+    const answer = monthlyAllowanceAnswerSchema.parse(result.structuredContent);
+    expect(answer).toMatchObject({ state: "not-set", settings: { aiCredits: null } });
+    expect(answer.figures).toBeUndefined();
     expect(JSON.stringify(result)).not.toContain(home);
   }, 60_000);
 
@@ -163,11 +175,11 @@ describe("stdio MCP entry point, app views", () => {
     expect((contents[0] as { text: string }).text).toContain("built views");
   }, 60_000);
 
-  it("starts normally with its 22 tools and no views when the file is missing", async () => {
+  it("starts normally with its 23 tools and no views when the file is missing", async () => {
     const client = await connect(["--app-views-html", path.join(home, "missing", "views.html")]);
 
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(22);
+    expect(tools).toHaveLength(23);
     expect(tools.some((tool) => tool._meta !== undefined)).toBe(false);
     const result = await client.callTool({ name: "list_sessions", arguments: { provider: "claude-code" } });
     expect(result.isError).toBeFalsy();
@@ -207,14 +219,14 @@ describe("stdio MCP entry point, protocol revisions (MCP SDK 2, D1, D4)", () => 
     return peer;
   }
 
-  it.each(["2025-06-18", "2025-11-25"])("answers a 2025-era initialize at %s with that version and lists its 23 tools", async (protocolVersion) => {
+  it.each(["2025-06-18", "2025-11-25"])("answers a 2025-era initialize at %s with that version and lists its 24 tools", async (protocolVersion) => {
     const peer = start();
 
     const initialized = await initializeLegacy(peer, protocolVersion);
     const listed = await peer.request("tools/list");
 
     expect(initialized.result).toMatchObject({ protocolVersion, serverInfo: { name: "agent-cost-analyzer" } });
-    expect((listed.result?.tools as unknown[]).length).toBe(23);
+    expect((listed.result?.tools as unknown[]).length).toBe(24);
   }, 60_000);
 
   it("answers server/discover with 2026-07-28 and serves 2026-07-28 requests on the same connection", async () => {
@@ -226,7 +238,7 @@ describe("stdio MCP entry point, protocol revisions (MCP SDK 2, D1, D4)", () => 
     expect(discovered.error).toBeUndefined();
     expect(discovered.result?.supportedVersions).toContain(MODERN_PROTOCOL_VERSION);
     expect(discovered.result?.capabilities).toMatchObject({ tools: {}, resources: {}, prompts: {} });
-    expect((listed.result?.tools as unknown[]).length).toBe(23);
+    expect((listed.result?.tools as unknown[]).length).toBe(24);
   }, 60_000);
 
   it("answers a 2026-07-28 read of the views resource with ttlMs 0, and a 2025-era one without cache hints", async () => {
