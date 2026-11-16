@@ -26,8 +26,10 @@ export interface ResolvedPiSystemPrompt {
 export function resolvePiSystemPrompt(
   branch: PiRawEntry[],
   sidecarRecords: readonly PiSystemPromptSidecarRecord[] | undefined,
+  // D27: the leading requests an earlier branch of the file owns; they are not counted per tool.
+  skipRequests = 0,
 ): ResolvedPiSystemPrompt {
-  const state = replaySystemMessages(branch);
+  const state = replaySystemMessages(branch, skipRequests);
   const record = selectSidecarRecord(sidecarRecords, branchEndTimestamp(branch));
 
   if (state && record) {

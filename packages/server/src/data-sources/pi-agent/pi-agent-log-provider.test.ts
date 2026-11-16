@@ -192,13 +192,14 @@ describe("PiAgentLogProvider", () => {
       ]);
     });
 
-    it("counts a pi tool's definition from the declaration persisted in the file; a tool removed since is unknown with a reason", async () => {
+    it("counts a pi tool's definition from the declaration persisted in the file; a tool removed since keeps the one it had (V27)", async () => {
       const session = await new PiAgentLogProvider({ sessionsDirPath: fixturesDir }).readSession(schemaSessionId);
       const [read, bash, write] = session?.toolInventory ?? [];
 
       expect(read.definitionTokens).toMatchObject({ known: true, estimated: true });
       expect(bash.definitionTokens).toMatchObject({ known: true, estimated: true });
-      expect(write.definitionTokens).toEqual({ known: false, reason: expect.stringContaining("no longer declared") });
+      expect(write.definitionTokens).toMatchObject({ known: true, estimated: true });
+      expect(write.loadedRequests).toBeLessThan(read.loadedRequests ?? 0);
     });
 
     it("leaves toolInventory unset for a session file with no system messages", async () => {

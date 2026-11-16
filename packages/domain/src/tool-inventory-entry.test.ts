@@ -35,4 +35,17 @@ describe("toolInventoryEntrySchema", () => {
   it("rejects a definition token count with neither a value nor a reason", () => {
     expect(() => toolInventoryEntrySchema.parse({ name: "read_file", loaded: true, invokedInTurns: [], definitionTokens: { known: false } })).toThrow();
   });
+
+  it("accepts the requests a tool was declared for (V27)", () => {
+    const sample = { name: "write", loaded: true, invokedInTurns: [], loadedRequests: 7 };
+
+    expect(toolInventoryEntrySchema.parse(sample)).toEqual(sample);
+  });
+
+  it("rejects a negative or fractional loadedRequests", () => {
+    const base = { name: "write", loaded: true, invokedInTurns: [] };
+
+    expect(() => toolInventoryEntrySchema.parse({ ...base, loadedRequests: -1 })).toThrow();
+    expect(() => toolInventoryEntrySchema.parse({ ...base, loadedRequests: 1.5 })).toThrow();
+  });
 });

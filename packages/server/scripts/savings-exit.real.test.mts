@@ -7,7 +7,7 @@
 //   npm run test:real-data:savings --workspace=packages/server
 //   REAL_DATA_USER_DATA="<dir>,<dir>" ...   (default ~/.config/Code and "~/.config/Code - Insiders")
 //
-// Expected figures come from savings-oracle.mts (raw Claude Code JSONL lines and
+// Expected figures come from savings-oracle.mts (raw Claude Code and pi JSONL lines and
 // the bundled price book and vendor-profile JSON; no code shared with the
 // savings detectors or the cost pricer). Actual figures come from the two
 // products' own composition roots: the standalone app's ApiService and the
@@ -43,11 +43,13 @@ import { resolveAppSettingsDir } from "../src/platform/app-settings-dir/resolve-
 import type { ApiService } from "../src/services/api/api-service.js";
 import { InMemoryAppSettingsStore } from "../src/test-support/in-memory-app-settings-store.js";
 import { FIXTURE_VENDOR_PROFILES_DIR } from "../src/test-support/vendor-profiles-dir.js";
-import { activeBranchOf, idleBreaksOf, loadBundledTables, parseJsonl, requestsOf, toolSessionFactsOf, unusedToolRowOf, type OracleIdleBreak, type ToolSessionFacts } from "./savings-oracle.mjs";
+import { activeBranchOf, idleBreaksOf, loadBundledTables, parseJsonl, piBranchesOf, piUnusedToolRowOf, requestsOf, toolSessionFactsOf, unusedToolRowOf, type OracleIdleBreak, type PiBranchFacts, type ToolSessionFacts } from "./savings-oracle.mjs";
 
 const REAL_DATA = process.env.REAL_DATA === "1";
 const HOME = homedir();
 const CLAUDE_PROJECTS = path.join(HOME, ".claude", "projects");
+const PI_AGENT = path.join(HOME, ".pi", "agent");
+const PI_SESSIONS = path.join(PI_AGENT, "sessions");
 const defaultDirs = [path.join(HOME, ".config", "Code"), path.join(HOME, ".config", "Code - Insiders")];
 const userDataDirs = (process.env.REAL_DATA_USER_DATA?.split(",").map((d) => d.trim()).filter(Boolean) ?? defaultDirs).filter((d) => isDir(d));
 
@@ -161,6 +163,48 @@ function buildClaudeView(now: number): ClaudeView {
     }
   }
   return { dir, files, live, skippedOld, targets };
+}
+
+// ---- the stable view of ~/.pi/agent/sessions the pi provider reads ----------
+
+interface PiView {
+  dir: string;
+  // A symlink per stable session file, keeping the folder the file lives in.
+  files: string[];
+  live: number;
+  skippedOld: number;
+  targets: string[];
+}
+
+function buildPiView(now: number): PiView {
+  const dir = mkdtempSync(path.join(tmpdir(), "savings-exit-pi-"));
+  const view: PiView = { dir, files: [], live: 0, skippedOld: 0, targets: [] };
+  if (!isDir(PI_SESSIONS)) return view;
+  for (const target of listFiles(PI_SESSIONS)) {
+    if (!target.toLowerCase().endsWith(".jsonl")) continue;
+    const age = now - statSync(target).mtimeMs;
+    if (age < LIVE_MS) {
+      view.live += 1;
+      continue;
+    }
+    if (age > VIEW_DAYS * 86_400_000) {
+      view.skippedOld += 1;
+      continue;
+    }
+    const link = path.join(dir, path.relative(PI_SESSIONS, target));
+    mkdirSync(path.dirname(link), { recursive: true });
+    symlinkSync(target, link);
+    view.files.push(link);
+    view.targets.push(target);
+  }
+  return view;
+}
+
+// The pi provider names a session sha256("<file path>:<mtimeMs>")[0..16], and a branch of
+// a forked file "<that>__branch__<leaf entry id>" (the log's identity, not a cost figure).
+function piSessionIdOf(file: string, branch: PiBranchFacts): string {
+  const hash = createHash("sha256").update(`${file}:${statSync(file).mtimeMs}`).digest("hex").slice(0, 16);
+  return branch.leafCount > 1 ? `${hash}__branch__${branch.leafId}` : hash;
 }
 
 // The products name a Claude Code session by sha256("<file path>:<mtimeMs>")[0..16].
@@ -337,6 +381,16 @@ function readClaudeSession(file: string, tables: ReturnType<typeof loadBundledTa
   };
 }
 
+interface PiBranch {
+  id: string;
+  startedDate: string;
+  facts: PiBranchFacts;
+}
+
+function readPiBranches(file: string): PiBranch[] {
+  return piBranchesOf(parseJsonl(readFileSync(file, "utf-8"))).map((facts) => ({ id: piSessionIdOf(file, facts), startedDate: (facts.startedAt ?? "").slice(0, 10), facts }));
+}
+
 const KIND_LABELS: Record<SavingsOpportunity["kind"], string[]> = {
   "unused-tools": ["range"],
   "idle-cache-expiry": ["upper-bound"],
@@ -361,10 +415,19 @@ const say = (line: string) => {
     path.join(HOME, ".claude", "CLAUDE.md"),
     path.join(HOME, ".claude.json"),
     ...userDataDirs.map((d) => path.join(d, "User", "settings.json")),
+    // V27: pi's settings, model list and MCP config, and its system-prompt sidecar log
+    // unless a running pi is appending to it (then it is live, like a live session file).
+    ...["settings.json", "models.json", "models-store.json", "mcp.json"].map((name) => path.join(PI_AGENT, name)),
+    ...[path.join(PI_AGENT, "logs", "system-prompts.jsonl")].filter((file) => existsSync(file) && startedAt - statSync(file).mtimeMs >= LIVE_MS),
   ];
   const configDirs = [appSettingsDir, path.join(HOME, ".claude", "agents"), path.join(HOME, ".claude", "skills"), path.join(HOME, ".claude", "hooks")];
 
   let view: ClaudeView;
+  let piView: PiView;
+  let piReport: SavingsReport;
+  let piTool: ToolAnswer;
+  const piBranches: PiBranch[] = [];
+  let piWindow: PiBranch[] = [];
   let before = "";
   let stableLogs: string[] = [];
   let tmpRoot = "";
@@ -381,10 +444,11 @@ const say = (line: string) => {
 
   beforeAll(async () => {
     view = buildClaudeView(startedAt);
+    piView = buildPiView(startedAt);
     tmpRoot = view.dir;
     // Stable logs whose name, size and mtime must not change: the Claude Code
-    // files the products read, and each edition's session debug logs older than LIVE_MS.
-    stableLogs = [...view.targets];
+    // and pi files the products read, and each edition's session debug logs older than LIVE_MS.
+    stableLogs = [...view.targets, ...piView.targets];
     for (const userData of userDataDirs) {
       for (const root of listWorkspaceDebugLogsDirPaths({ userDataDir: userData })) {
         for (const file of listFiles(root)) if (startedAt - statSync(file).mtimeMs >= LIVE_MS) stableLogs.push(file);
@@ -417,6 +481,18 @@ const say = (line: string) => {
     claudeTool = await callSavingsTool(claudeMcp, { provider: "claude-code", limit: MAX_SAVINGS_TOOL_OPPORTUNITIES });
     claudeToolDefault = await callSavingsTool(claudeMcp, { provider: "claude-code" });
 
+    // V27: pi through the standalone app and its MCP server, over the stable view; the sidecar log is
+    // off (its records join on the real file path, which the view's links don't have).
+    const piOptions = { appSettingsDir, claudeCodeProjectsDirPath: null, piAgentSessionsDirPath: piView.dir, systemPromptLogPath: null, mitmproxyCapturesDirPath: null, vscodeSettingsPath: null };
+    const piApp = createStandaloneApiService({
+      ...piOptions,
+      vendorProfilesDir: FIXTURE_VENDOR_PROFILES_DIR,
+      appVersion: "0.0.0-real-data",
+      learnScriptsDir: path.join(FIXTURE_VENDOR_PROFILES_DIR, "..", "learn-scripts"),
+    });
+    piReport = savingsReportSchema.parse(await piApp.getSavingsReport({ provider: "pi-agent" }));
+    piTool = await callSavingsTool(standaloneMcpDeps(piOptions), { provider: "pi-agent", limit: MAX_SAVINGS_TOOL_OPPORTUNITIES });
+
     for (const edition of editions) {
       const standalone = savingsReportSchema.parse(await edition.standalone.getSavingsReport({ provider: "vscode" }));
       const extension = savingsReportSchema.parse(await edition.extension.getSavingsReport({}));
@@ -435,10 +511,19 @@ const say = (line: string) => {
       claudeSessions.push(read);
     }
     windowSessions = claudeSessions.filter((s) => s.startedDate >= since && s.startedDate <= until);
+
+    // The pi oracle's side: every branch of every stable pi file that could start in the pi report's window.
+    const piWindowDates = piReport.window;
+    for (const link of piView.files) {
+      if (statSync(link).mtimeMs < sinceMs(piWindowDates.since)) continue;
+      piBranches.push(...readPiBranches(link));
+    }
+    piWindow = piBranches.filter((b) => b.startedDate >= piWindowDates.since && b.startedDate <= piWindowDates.until);
   }, 1_800_000);
 
   afterAll(() => {
     if (tmpRoot) rmSync(tmpRoot, { recursive: true, force: true });
+    if (piView?.dir) rmSync(piView.dir, { recursive: true, force: true });
     console.log(["", "Savings exit-criterion summary (automated half)", ...summary].join("\n"));
   });
 
@@ -577,6 +662,80 @@ const say = (line: string) => {
     say(`  by hand: low = tokens x cache-read rate x requests, high = tokens x input rate x requests, per model at the session's first request (rates in ${row!.perWindow.priceVersionIds.length} price versions: ${row!.perWindow.priceVersionIds.join(", ")})`);
   });
 
+  it("the window holds at least one pi session (D30), and pi sessions with system messages are not under 'no tool inventory'", () => {
+    const withInventory = piWindow.filter((b) => b.facts.declared !== undefined);
+    const sidecarOnly = piWindow.filter((b) => b.facts.declared === undefined);
+    expect(
+      piWindow.length,
+      "no pi session in the window: capture one (plan D30): run pi on a local model for a linear session with a pause longer than 5 minutes and a tool left unused, then run this check again",
+    ).toBeGreaterThan(0);
+
+    const noInventory = piReport.notAnalysed.filter((n) => n.kind === "unused-tools" && n.reason.includes("no tool inventory")).reduce((sum, n) => sum + n.sessions, 0);
+    // D29: exactly the sessions without a system message (the sidecar has names, no definitions) stay under Not analysed. // codespell:ignore analysed
+    expect(noInventory, "sessions listed under 'no tool inventory'").toBe(sidecarOnly.length);
+    const changed = withInventory.filter((b) => [...b.facts.declared!.values()].some((tool) => tool.loadedRequests !== b.facts.ownRequests));
+    const forked = piWindow.filter((b) => b.facts.sharedPrefixRequests > 0);
+    say("");
+    say(`pi: ${piView.files.length} session files in the stable view (${piView.live} live files left out, ${piView.skippedOld} older than ${VIEW_DAYS} days left out); ${piBranches.length} branches read, ${piWindow.length} started in the window`);
+    say(`  ${withInventory.length} with system messages (a tool inventory), ${sidecarOnly.length} without (D29: Not analysed, ${noInventory} so listed); ${changed.length} changed their tool list between requests; ${forked.length} forked branches sharing a prefix (D27)`); // codespell:ignore analysed
+    say(`  ${piReport.opportunities.length} ranked rows ${JSON.stringify(piReport.opportunities.reduce<Record<string, number>>((acc, o) => ({ ...acc, [o.kind]: (acc[o.kind] ?? 0) + 1 }), {}))}`);
+  });
+
+  it("the top pi unused-tools row equals the oracle's rebuild from the raw pi logs (sessions, requests, tokens per request, per-tool tokens, money)", () => {
+    const row = piReport.opportunities.find((o) => o.kind === "unused-tools");
+    expect(row, "no pi unused-tools row in the window: nothing to check (capture an unused tool, plan D30)").toBeDefined();
+    const subject = String(row!.actionParams.group);
+    const bucket = row!.key.endsWith(":unpriced") ? "unpriced" : "priced";
+    const mine = piUnusedToolRowOf(subject, piWindow.map((b) => b.facts), tables, bucket);
+    const idOfBranch = new Map(piWindow.map((b) => [b.facts, b.id]));
+
+    expect(mine.ran, `${subject} ran in a window session, so it is not unused`).toBe(false);
+    expect(new Set(row!.sessions.map((s) => s.sessionId)), "same sessions").toEqual(new Set(mine.branches.map((b) => idOfBranch.get(b))));
+    expect(row!.evidence.sessions, "sessions that declared it").toBe(mine.sessions);
+    expect(row!.evidence.requests, "requests").toBe(mine.requests);
+    const reportedTokens = row!.evidence.tokens?.known ? row!.evidence.tokens.value : -1;
+    expect(Math.abs(mine.tokensPerSession - reportedTokens), "tokens per request").toBeLessThanOrEqual(TOKEN_TOLERANCE);
+    expect(row!.evidence.tokens?.known && row!.evidence.tokens.estimated, "labeled estimate").toBe(true);
+
+    const listed = row!.tools ?? [];
+    expect(listed.length, "per-tool list").toBeGreaterThan(0);
+    expect(listed.length, "at most 20 tools").toBeLessThanOrEqual(20);
+    expect(row!.toolsTotal, "toolsTotal is the group's tool count").toBe(mine.perTool.length);
+    const oracleTools = new Map(mine.perTool.map((tool) => [tool.name, tool]));
+    for (const tool of listed) {
+      const expected = oracleTools.get(tool.name);
+      expect(expected, `tool ${tool.name} is in the oracle's group`).toBeDefined();
+      expect(tool.tokens.known && tool.tokens.estimated, `${tool.name}: labeled estimate`).toBe(true);
+      expect(tool.tokens.known ? Math.abs(tool.tokens.value - expected!.tokens) : Number.POSITIVE_INFINITY, `${tool.name}: tokens`).toBeLessThanOrEqual(TOKEN_TOLERANCE);
+      expect(tool.sessions, `${tool.name}: sessions that declared it`).toBe(expected!.sessions);
+    }
+    const tokensOf = (tool: { tokens: { known: boolean; value?: number } }) => (tool.tokens.known ? tool.tokens.value! : -1);
+    expect(listed.map(tokensOf), "largest first").toEqual([...listed.map(tokensOf)].sort((a, b) => b - a));
+
+    // Money: Not priced (with a reason) for a model no price book lists, else the oracle's range.
+    if (bucket === "unpriced") {
+      expect(row!.perWindow.known || row!.perWeek.known, "an unpriced row shows no amount").toBe(false);
+      if (!row!.perWindow.known) expect(row!.perWindow.reason.length, "Not priced without a reason").toBeGreaterThan(0);
+      expect(row!.sessions.every((s) => s.perWindow?.known === false), "every session of an unpriced row is Not priced").toBe(true);
+    } else {
+      expect(row!.perWindow.known && row!.perWeek.known).toBe(true);
+      if (row!.perWindow.known) {
+        expect(near(row!.perWindow.low, mine.low), `window low ${row!.perWindow.low} vs ${mine.low}`).toBe(true);
+        expect(near(row!.perWindow.high, mine.high), `window high ${row!.perWindow.high} vs ${mine.high}`).toBe(true);
+      }
+    }
+
+    say("");
+    say(`pi unused-tools row "${short(row!.key)}": ${row!.evidence.sessions} sessions declared it, ${row!.evidence.requests} requests, ${reportedTokens} tokens (estimate) in each request, coverage ${row!.coverage.sessionsAnalysed} of ${row!.coverage.sessionsInWindow} sessions`);
+    say(`  oracle: ${mine.sessions} sessions, ${mine.requests} requests, ${mine.tokensPerSession} tokens, ran in no window session; same session ids; ${bucket === "unpriced" ? "money Not priced on both sides (no price for the model)" : `${money(mine.low)}..${money(mine.high)} USD`}`);
+    say(`  per tool: ${listed.length} of ${row!.toolsTotal} tools listed, each equal to the oracle's within ${TOKEN_TOLERANCE} tokens`);
+  });
+
+  it("get_savings_report lists pi's rows as the standalone report does (Increment 2)", () => {
+    say("");
+    say(`get_savings_report, pi (standalone MCP server): ${expectToolAgrees("pi", piReport, piTool, MAX_SAVINGS_TOOL_OPPORTUNITIES)}`);
+  });
+
   it("get_savings_report lists the same ranked opportunities as the products' reports, capped, with no prompt text (Increment 2)", () => {
     say("");
     say(`get_savings_report, Claude Code (standalone MCP server): ${expectToolAgrees("Claude Code", claudeReport, claudeTool, MAX_SAVINGS_TOOL_OPPORTUNITIES)}`);
@@ -631,6 +790,7 @@ const say = (line: string) => {
     const files = before.split("\n").length;
     say("");
     say(`Read-only: ${files} fingerprints (settings and config files by content hash, ${stableLogs.length} session logs by size and mtime) identical before and after`);
+    say(`  pi (V27): ${piView.targets.length} stable session files by name, size and mtime; ~/.pi/agent settings.json, models.json, models-store.json, mcp.json and the system-prompt log (when no pi is appending to it) by content hash`);
     say(`  settings checked: ~/.claude/settings(.local).json, CLAUDE.md, ~/.claude.json, ${userDataDirs.length} VS Code settings.json, the app config dir (${path.basename(appSettingsDir)}, including settings.json with the active provider), ~/.claude agents, skills, hooks`);
     say("  D15: the report never calls 'Open in Analyze'; the app's active-provider state sits in the app config dir, so it is inside the check and unchanged");
     say("");

@@ -170,6 +170,25 @@ describe("sessionSchema", () => {
     expect(sessionSchema.parse(sample)).toEqual(sample);
   });
 
+  it("accepts how many leading requests a forked pi branch shares with an earlier branch (V27, D27)", () => {
+    const sample = {
+      id: "s__branch__b",
+      mode: "analyze",
+      providerId: "pi-agent",
+      title: "Branch",
+      model: "m",
+      turns: [turn],
+      turnCount: 1,
+      costAiCredits: { known: true, value: 0 },
+      usageDataAvailable: true,
+      sharedPrefixRequests: 3,
+    };
+
+    expect(sessionSchema.parse(sample)).toEqual(sample);
+    expect(() => sessionSchema.parse({ ...sample, sharedPrefixRequests: -1 })).toThrow();
+    expect(() => sessionSchema.parse({ ...sample, sharedPrefixRequests: 0.5 })).toThrow();
+  });
+
   it("accepts the Copilot harness a VS Code session came from", () => {
     const base = {
       id: "session-123",

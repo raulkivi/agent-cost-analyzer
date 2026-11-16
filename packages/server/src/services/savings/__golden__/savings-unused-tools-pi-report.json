@@ -1,0 +1,73 @@
+{
+  "opportunities": [
+    {
+      "key": "unused-tools:write:unpriced",
+      "kind": "unused-tools",
+      "subject": "write",
+      "sessions": [
+        {
+          "providerId": "pi-agent",
+          "sessionId": "pi-linear",
+          "startedAt": "2026-11-14T22:18:08.386Z",
+          "perWindow": {
+            "known": false,
+            "reason": "This provider calls the model vendor's own API, but the vendor is unknown: No vendor profile lists the model \"qwen3.8-flash-next:setup6\" or its model family, so its vendor is unknown."
+          }
+        },
+        {
+          "providerId": "pi-agent",
+          "sessionId": "pi-compaction",
+          "startedAt": "2026-11-14T22:35:05.005Z",
+          "perWindow": {
+            "known": false,
+            "reason": "This provider calls the model vendor's own API, but the vendor is unknown: No vendor profile lists the model \"qwen3.8-flash-next:setup6\" or its model family, so its vendor is unknown."
+          }
+        }
+      ],
+      "evidence": {
+        "sessions": 2,
+        "requests": 14,
+        "tokens": {
+          "known": true,
+          "value": 127,
+          "estimated": true
+        },
+        "occurrences": null
+      },
+      "perWeek": {
+        "known": false,
+        "reason": "This provider calls the model vendor's own API, but the vendor is unknown: No vendor profile lists the model \"qwen3.8-flash-next:setup6\" or its model family, so its vendor is unknown."
+      },
+      "perWindow": {
+        "known": false,
+        "reason": "This provider calls the model vendor's own API, but the vendor is unknown: No vendor profile lists the model \"qwen3.8-flash-next:setup6\" or its model family, so its vendor is unknown."
+      },
+      "coverage": {
+        "sessionsInWindow": 2,
+        "sessionsAnalysed": 2,
+        "notAnalysed": []
+      },
+      "actionParams": {
+        "group": "write",
+        "tools": 1,
+        "tokens": 127,
+        "sessions": 2,
+        "days": 30
+      },
+      "inferred": false,
+      "tools": [
+        {
+          "name": "write",
+          "tokens": {
+            "known": true,
+            "value": 127,
+            "estimated": true
+          },
+          "sessions": 2
+        }
+      ],
+      "toolsTotal": 1
+    }
+  ],
+  "notAnalysed": []
+}

@@ -1,6 +1,6 @@
 # Savings report Increment 3: pi, per-tool tokens, per-session figures, titles
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 **Status: Plan approved 2026-11-14 (task V23 in
 [implementation-plan.md](../implementation-plan.md#100-release), criterion
@@ -229,6 +229,43 @@ system messages. V27 verifies and completes it:
    tool had when it was declared, so it is no longer unknown.
 3. Sidecar-only sessions (no system messages in the file): D29.
 
+**Done in V27 (2026-11-16).**
+
+- *Tool-list-change count (step 2), counts only.* V14's ten generated
+  files: 10 branches, 52 requests, all with system messages, none changing
+  its tool list (one list per branch). The owner's `~/.pi/agent/sessions`
+  (261 files, 261 branches, 8,966 requests): 125 branches have system
+  messages and 136 only the sidecar (D29); 2 of the 125 change their list
+  between requests (both by adding a tool, none by removal or compaction;
+  up to 3 distinct lists in one branch); no file is forked (no D27 case).
+  In the 30-day window of the check: 58 branches, all with system
+  messages, none changing. Lists do change, so `ToolInventoryEntry` gains
+  the optional `loadedRequests` and the detector uses it.
+- *Inventory.* `replaySystemMessages` keeps, per declared tool, its last
+  definition (a removed tool is no longer unknown) and the assistant
+  requests it was declared for; the pi provider fills `definitionTokens` and
+  `loadedRequests` from it. Claude Code and Copilot entries have no
+  `loadedRequests` (every request).
+- *Detector.* A group's tokens per request stay the sum of its tools'
+  definitions (what the row and its per-tool list show); the money weights
+  each tool by `loadedRequests` ÷ the session's own requests (capped at 1),
+  per model, so a tool dropped or added mid-session is not charged for
+  requests that never carried it.
+- *Not priced.* A session whose channel is unknown (pi on a local model:
+  "the vendor is unknown") is no longer "Not analysed": its tokens and <!-- codespell:ignore analysed -->
+  requests are counted and its amount is unknown with the channel's reason,
+  in a row of its own (`unused-tools:<group>:unpriced`) ranked last. This
+  holds for every provider, not only pi. A session whose tool sizes are
+  unknown stays under Not analysed. <!-- codespell:ignore analysed -->
+- *Forked files (D27).* `Session.sharedPrefixRequests` (requests, not turns,
+  so a fork inside a turn is exact) counts the leading assistant requests a
+  branch shares with an earlier branch of its file; the pi provider fills it
+  and the detector leaves them out of the row's requests and money. A
+  branch with no request of its own gives no row. The O2–O4 side (breaks,
+  the unchecked first request) is V28's.
+- *Check.* The real-data check's pi half (§14) runs over a symlinked view
+  of `~/.pi/agent/sessions`, as for Claude Code.
+
 ### 7.2 A pi request trace (V28) — after 1.0 (owner 2026-11-14)
 
 A pure builder `buildPiRequestTrace(branchEntries, turns)` in
@@ -385,6 +422,8 @@ Decided 2026-11-14: the owner accepted each recommendation (D22–D32).
 | D30 | pi data for the real-data check | Add to V13's capture steps: one pause longer than 5 minutes in the linear session (an idle expiry on Anthropic's default lifetime) and one tool left unused; the check fails, with that instruction, when the window holds no pi session. The generated `pi-linear` fixture has both (310 s pause, `write` unused; 2026-11-14) |
 | D31 | SR22 findings | Fold R12 and R15 into V24, R14 into V26; R13 and R16 stay recorded (§8) |
 | D32 | Mock-ups | Amend the existing boards (§10) and approve them once (V23b) before V24–V26's UI code; the server halves of V24 and V26 may start before |
+| D33 | Unused tools of a session whose model has no known price (V27) | Owner 2026-11-16: every provider gets its own `unused-tools:<group>:unpriced` row, amount "Not priced" with the channel's reason, ranked last, instead of leaving the session under Not analysed | <!-- codespell:ignore analysed -->
+| D34 | Row's `requests` when a tool was added mid-session (V27, `loadedRequests`) | Owner 2026-11-16: the row shows the session's request count; the money weights each tool by the requests it was declared, so requests × tokens may not multiply to the money for those rows (documented, rare: 2 of 125 owner branches, none in the window) |
 
 ## 13. Risks
 
@@ -408,16 +447,21 @@ its output. Each task extends the check for its own field (it skips
 without `REAL_DATA`, so CI is unaffected); V29 runs it on the owner's logs.
 Added to the existing assertions (savings-report.md §14):
 
-- **pi rows.** The standalone report (pi provider) has no pi session under
-  "no request trace" any more; at least one pi session is in the window
-  (else the check fails with D30's capture instruction).
-- **pi oracle.** `savings-oracle.mts` gains a pi reader that parses the raw
-  pi JSONL itself (no import from the provider, the trace builder, the
-  detectors or the pricer; a test checks it). For the top pi idle-expiry
-  (or, if none, unexplained) row: the same breaks, lost tokens, sessions
-  and extra cost; for the top pi unused-tools row: the same sessions,
-  requests, tokens per request and cost range. Tolerance as today: tokens
-  and counts exact, money within 1e-9 relative.
+- **pi rows (V27).** At least one pi session is in the window (else the
+  check fails with D30's capture instruction), and the standalone report
+  (pi provider) lists under "no tool inventory" exactly the pi sessions
+  without a system message (D29), no others.
+- **pi oracle (V27).** `savings-oracle.mts` gains a pi reader that parses
+  the raw pi JSONL itself (no import from the provider, the trace builder,
+  the detectors or the pricer; a test checks it). For the top pi
+  unused-tools row: the same sessions, requests and tokens per request
+  (exact), per-tool tokens (exact), and "Not priced" for a model no price
+  book lists, else the same cost range (money within 1e-9 relative).
+- **After 1.0 (V28; owner decision 2026-11-14).** The pi bullets that need
+  the pi request trace move to V28: no pi session under "no request trace",
+  and the top pi idle-expiry (or, if none, unexplained) row with the same
+  breaks, lost tokens, sessions and extra cost. They are not part of the 1.0
+  check; V28 adds them to this list with its trace.
 - **Per-session figures (c).** Every shown session's date equals its
   session's start; the known per-session amounts of each row add up to its
   `perWindow`; `get_savings_report` carries the same values for its 10.
@@ -449,7 +493,7 @@ new and needs a row there.
 | V24 (done 2026-11-15) | (c) Each session's date and saving: `savingsSessionRefSchema` `startedAt` and `perWindow` with the label refinement; the four detectors fill them; `sessionsByContribution` reads the ref; tool output and text answer; R12 (no `rank` on Simulated rows) and R15 (dead `gapText` case); both tool-list snapshots updated on purpose; `SavingsDetail` and U18 session lists; component, axe, keyboard tests; Playwright `sv1` and `u18`, wdio `sv1`; the real-data check's per-session assertions | Goldens: known per-session amounts add up to each row's `perWindow`; specs pass in CI | medium | Sonnet | V23 approved; V23b for the UI half |
 | V25 (done 2026-11-15) | (d) Session titles: `sessionTitleLookup` from the insights dataset, `titleOf` prop on `SavingsDetail` in both products; hostile-title, miss and no-title-in-result tests; Playwright `sv1` and wdio `sv1` assertions; the real-data check's no-title assertion | No title in any report, RPC or MCP result (tests); titles shown in both products; specs pass | medium | Sonnet | V23b; V24 (same list component) |
 | V26 (done 2026-11-15) | (b) Per-tool tokens: `tools` and `toolsTotal` on unused-tools rows with refinements; `groupTokens` per tool; D26 name form; tool output (20) and text (5); Evidence block and U18 list; R14 pluralisation in every template; goldens and action-text specs updated; the real-data check's per-tool assertions | Golden per-tool lists over the multi-session fixture and a hostile-name test; specs pass | medium | Sonnet | V23 approved; V23b for the UI half |
-| V27 | (a) O1 per tool for pi: tests over V14's real fixtures; the read-only tool-list-change count; `loadedRequests` and kept definitions if the count shows changes; D29 | pi unused-tools golden over the real fixtures; pi sessions with system messages no longer under "no tool inventory" | medium | Sonnet | V14, V23 approved |
+| V27 (done 2026-11-16) | (a) O1 per tool for pi: tests over V14's real fixtures; the read-only tool-list-change count; `loadedRequests` and kept definitions if the count shows changes; D29 | pi unused-tools golden over the real fixtures; pi sessions with system messages no longer under "no tool inventory" | medium | Sonnet | V14, V23 approved |
 | V28 | (a) pi request trace and O2–O4: `buildPiRequestTrace`; `harnessSchema` `pi`; `CacheBreakTraceReader` on the pi provider with prompt-change markers; D27's shared-prefix counts and the unchecked first request after a branch point; caveat if end times only; pi oracle in `savings-oracle.mts` and the real-data check's pi assertions; branch-id round-trip test (R16) | Trace golden equals the turns' usage over both real captures; cache-break goldens (idle, switch, tool change, fork); replay still refuses pi | high | Opus | V14, V23 approved; after V27 (same provider files) |
 | V29 | Review (as SR16, SR22) of V24–V28 against §7 honesty rules, §9 and §11; docs (§16); `npm run test:real-data:savings` on the owner's logs | Findings fixed test-first and recorded in this plan; the owner signs off the check's output | medium | Opus | V24–V28 |
 

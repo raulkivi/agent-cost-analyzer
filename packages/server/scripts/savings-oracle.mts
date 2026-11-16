@@ -519,3 +519,202 @@ export function unusedToolRowOf(subject: string, sessions: readonly ToolSessionF
   const perTool = [...byTool].map(([rawName, { total, sessions: loadedIn }]) => ({ rawName, name: toolDisplayNameOf(rawName), tokens: Math.round(total / loadedIn), sessions: loadedIn }));
   return { perTool, sessions: rows.length, requests, tokensPerSession, ran, low, high, pricedSessions };
 }
+
+// ------------------------------------------- O1 for pi (V27, plan §7.1, §7.4)
+//
+// Read from pi's raw session JSONL (https://pi.dev/docs/latest/session-format):
+//   - the file is a tree; every entry that is nobody's parent is a leaf and each
+//     leaf is one session holding its whole root-to-leaf path (D27: a prefix a
+//     later leaf shares with an earlier one is counted under the earlier one);
+//   - a system message (or a compaction's `systemMessage`, or one with
+//     `replace: true`, which start afresh) adds `toolsAdded` and drops
+//     `toolsRemoved`; a tool's definition tokens are the local estimate over its
+//     own JSON, as it was last declared (a removed tool keeps its last one);
+//   - a request is one assistant message after the first user message; a tool
+//     was declared for the requests made while it was in the list, and costs
+//     tokens x (requests it was declared for / the session's own requests);
+//   - a tool ran when a tool result names it; a turn's requests all belong to
+//     the model of the turn's last assistant message.
+// A leaf with no system message has no inventory and is left out (D29).
+
+export interface PiBranchFacts {
+  // The branch's place in its file, to rebuild the session id the products give it.
+  leafId: string;
+  leafIndex: number;
+  leafCount: number;
+  // The session header's time: the day the saving is priced on.
+  startedAt: string | undefined;
+  // Tool name -> definition tokens (as last declared) and the requests it was declared for;
+  // undefined when the branch has no system message.
+  declared: Map<string, { tokens: number; loadedRequests: number }> | undefined;
+  invoked: Set<string>;
+  // Own requests (the shared prefix left out), by model.
+  requestsByModel: Map<string, number>;
+  ownRequests: number;
+  sharedPrefixRequests: number;
+}
+
+const idOf = (line: RawLine): string | undefined => (typeof line.id === "string" ? line.id : undefined);
+const roleOf = (line: RawLine): unknown => messageOf(line)?.role;
+
+function piChains(lines: readonly RawLine[]): RawLine[][] {
+  const body = lines.filter((line) => line.type !== "session" && idOf(line) !== undefined);
+  const byId = new Map(body.map((line) => [idOf(line)!, line]));
+  const parents = new Set(body.map((line) => line.parentId).filter((id): id is string => typeof id === "string"));
+  return body
+    .filter((line) => !parents.has(idOf(line)!))
+    .map((leaf) => {
+      const chain: RawLine[] = [];
+      const seen = new Set<string>();
+      for (let line: RawLine | undefined = leaf; line !== undefined && !seen.has(idOf(line)!); line = typeof line.parentId === "string" ? byId.get(line.parentId) : undefined) {
+        seen.add(idOf(line)!);
+        chain.push(line);
+      }
+      return chain.reverse();
+    });
+}
+
+interface PiTool {
+  name: string;
+  definition: Record<string, unknown>;
+}
+const piToolsIn = (value: unknown): PiTool[] =>
+  Array.isArray(value) ? value.filter(isRecord).flatMap((tool) => (typeof tool.name === "string" ? [{ name: tool.name, definition: tool }] : [])) : [];
+
+export function piBranchesOf(lines: readonly RawLine[]): PiBranchFacts[] {
+  const header = lines.find((line) => line.type === "session");
+  const startedAt = typeof header?.timestamp === "string" ? header.timestamp : undefined;
+  const chains = piChains(lines);
+  return chains.map((chain, leafIndex) => {
+    const earlier = new Set(chains.slice(0, leafIndex).flatMap((other) => other.map((line) => idOf(line)!)));
+    // Requests of the shared prefix: assistant messages in the leading entries an earlier leaf holds.
+    let sharedPrefixRequests = 0;
+    {
+      let turns = false;
+      for (const line of chain) {
+        if (!earlier.has(idOf(line)!)) break;
+        turns ||= roleOf(line) === "user";
+        if (turns && roleOf(line) === "assistant") sharedPrefixRequests += 1;
+      }
+    }
+
+    let current: Map<string, PiTool> | undefined;
+    const history = new Map<string, { definition: Record<string, unknown>; loadedRequests: number }>();
+    const invoked = new Set<string>();
+    const requestsByModel = new Map<string, number>();
+    let ownRequests = 0;
+    let assistants = 0;
+    let turns = false;
+    const turnRequests: number[] = [];
+    const turnModels: (string | undefined)[] = [];
+
+    for (const line of chain) {
+      const role = roleOf(line);
+      if (role === "user") {
+        turns = true;
+        turnRequests.push(0);
+        turnModels.push(undefined);
+      }
+      if (turns && role === "assistant") {
+        assistants += 1;
+        const model = messageOf(line)?.model;
+
+        turnModels[turnModels.length - 1] = typeof model === "string" ? model : "unknown";
+        if (assistants > sharedPrefixRequests) {
+          turnRequests[turnRequests.length - 1]! += 1;
+          ownRequests += 1;
+          for (const name of current?.keys() ?? []) history.get(name)!.loadedRequests += 1;
+        }
+      }
+      if (turns && role === "toolResult") {
+        const name = messageOf(line)?.toolName;
+        if (typeof name === "string") invoked.add(name);
+      }
+      const system = line.type === "message" && role === "system" ? messageOf(line) : line.type === "compaction" && isRecord(line.systemMessage) ? line.systemMessage : undefined;
+      if (system) {
+        // A system message afresh: `replace: true`, or a compaction's checkpoint.
+        if (current === undefined || line.type === "compaction" || system.replace === true) current = new Map();
+        for (const tool of piToolsIn(system.toolsRemoved)) current.delete(tool.name);
+        for (const tool of piToolsIn(system.toolsAdded)) {
+          current.set(tool.name, tool);
+          history.set(tool.name, { definition: tool.definition, loadedRequests: history.get(tool.name)?.loadedRequests ?? 0 });
+        }
+      }
+    }
+    turnRequests.forEach((count, index) => {
+      const model = turnModels[index] ?? "unknown";
+      if (count > 0) requestsByModel.set(model, (requestsByModel.get(model) ?? 0) + count);
+    });
+    return {
+      leafId: idOf(chain.at(-1)!)!,
+      leafIndex,
+      leafCount: chains.length,
+      startedAt,
+      declared:
+        current === undefined
+          ? undefined
+          : new Map([...history].map(([name, { definition, loadedRequests }]) => [name, { tokens: countTokens(JSON.stringify(definition)), loadedRequests }])),
+      invoked,
+      requestsByModel,
+      ownRequests,
+      sharedPrefixRequests,
+    };
+  });
+}
+
+// The branch's models all have a price on its start day (the book is anthropic-api's:
+// a local model has none, so its money is Not priced).
+export function piBranchPriced(branch: PiBranchFacts, tables: ModelTables): boolean {
+  const atMs = branch.startedAt === undefined ? Number.NaN : Date.parse(branch.startedAt);
+  if (Number.isNaN(atMs)) return false;
+  return [...branch.requestsByModel.keys()].every((model) => tables.priceVersion(model, atMs) !== undefined);
+}
+
+export interface PiUnusedToolRow extends UnusedToolRow {
+  // The window's branches that entered the row (inventory, own requests) and
+  // whether the row holds the priced or the unpriced ones.
+  branches: PiBranchFacts[];
+}
+
+// One row of the unused-tools list for a group: the branches whose money can be priced
+// (bucket "priced") or not ("unpriced"). `ran` looks at every branch with an inventory.
+export function piUnusedToolRowOf(subject: string, branches: readonly PiBranchFacts[], tables: ModelTables, bucket: "priced" | "unpriced"): PiUnusedToolRow {
+  let ran = false;
+  const rows: Array<{ branch: PiBranchFacts; tokens: number; weighted: number }> = [];
+  const byTool = new Map<string, { total: number; sessions: number }>();
+  for (const branch of branches) {
+    if (branch.declared === undefined) continue;
+    if ([...branch.invoked].some((name) => toolGroupOf(name) === subject)) ran = true;
+    if (branch.ownRequests === 0 || piBranchPriced(branch, tables) !== (bucket === "priced")) continue;
+    let tokens = 0;
+    let weighted = 0;
+    let loaded = false;
+    for (const [name, { tokens: count, loadedRequests }] of branch.declared) {
+      if (toolGroupOf(name) !== subject) continue;
+      loaded = true;
+      tokens += count;
+      weighted += count * Math.min(1, loadedRequests / branch.ownRequests);
+      const sum = byTool.get(name) ?? { total: 0, sessions: 0 };
+      byTool.set(name, { total: sum.total + count, sessions: sum.sessions + 1 });
+    }
+    if (loaded) rows.push({ branch, tokens, weighted });
+  }
+  let low = 0;
+  let high = 0;
+  let pricedSessions = 0;
+  if (bucket === "priced") {
+    for (const { branch, weighted } of rows) {
+      const atMs = Date.parse(branch.startedAt!);
+      for (const [model, requests] of branch.requestsByModel) {
+        const tier = tierFor(tables.priceVersion(model, atMs)!, weighted);
+        low += (weighted * tier.cachedInputUsdPerM * requests) / 1_000_000;
+        high += (weighted * tier.inputUsdPerM * requests) / 1_000_000;
+      }
+      pricedSessions += 1;
+    }
+  }
+  const requests = rows.reduce((sum, { branch }) => sum + branch.ownRequests, 0);
+  const tokensPerSession = rows.length === 0 ? 0 : Math.round(rows.reduce((sum, row) => sum + row.tokens, 0) / rows.length);
+  const perTool = [...byTool].map(([rawName, { total, sessions: loadedIn }]) => ({ rawName, name: toolDisplayNameOf(rawName), tokens: Math.round(total / loadedIn), sessions: loadedIn }));
+  return { perTool, sessions: rows.length, requests, tokensPerSession, ran, low, high, pricedSessions, branches: rows.map((row) => row.branch) };
+}

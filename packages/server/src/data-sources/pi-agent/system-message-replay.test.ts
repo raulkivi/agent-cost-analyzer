@@ -40,6 +40,10 @@ describe("replaySystemMessages", () => {
       text: "You are an expert coding assistant.\n\n<tools>read</tools>\n\ncwd: /p",
       tools: [tool("read"), tool("bash")],
       declaredToolNames: ["read", "bash"],
+      toolHistory: [
+        { name: "read", definition: tool("read"), loadedRequests: 0 },
+        { name: "bash", definition: tool("bash"), loadedRequests: 0 },
+      ],
     });
   });
 
@@ -103,6 +107,59 @@ describe("replaySystemMessages", () => {
       systemMessage("s0", { content: 42, sections: "nope", toolsAdded: [null, { description: "no name" }, tool("read")] }),
     ]);
 
-    expect(state).toEqual({ baseContent: "", sections: [], text: "", tools: [tool("read")], declaredToolNames: ["read"] });
+    expect(state).toEqual({ baseContent: "", sections: [], text: "", tools: [tool("read")], declaredToolNames: ["read"], toolHistory: [{ name: "read", definition: tool("read"), loadedRequests: 0 }] });
+  });
+});
+
+const assistant = (id: string): PiRawEntry => ({ type: "message", id, message: { role: "assistant", content: [], usage: { input: 1, output: 1 } } });
+
+// V27 (savings-increment-3.md §7.1): the tool list can change mid-branch, so
+// each tool carries the requests it was declared for, and a removed tool keeps
+// the definition it last had.
+describe("replaySystemMessages: tool history", () => {
+  it("counts the assistant requests each tool was declared for, and keeps a removed tool's last definition", () => {
+    const readV2 = { ...tool("read"), description: "read, second version" };
+    const state = replaySystemMessages([
+      systemMessage("s0", { toolsAdded: [tool("read"), tool("write")] }),
+      userMessage("u1"),
+      assistant("a1"),
+      assistant("a2"),
+      systemMessage("s1", { toolsRemoved: [{ name: "write" }], toolsAdded: [readV2, tool("grep")] }),
+      assistant("a3"),
+    ]);
+
+    expect(state?.toolHistory).toEqual([
+      { name: "read", definition: readV2, loadedRequests: 3 },
+      { name: "write", definition: tool("write"), loadedRequests: 2 },
+      { name: "grep", definition: tool("grep"), loadedRequests: 1 },
+    ]);
+    expect(state?.tools.map((t) => t.name)).toEqual(["read", "grep"]);
+  });
+
+  it("a compaction checkpoint ends the declaration of a tool it leaves out", () => {
+    const state = replaySystemMessages([
+      systemMessage("s0", { toolsAdded: [tool("read"), tool("write")] }),
+      userMessage("u1"),
+      assistant("a1"),
+      { type: "compaction", id: "c1", summary: "s", firstKeptEntryId: "u1", tokensBefore: 1, systemMessage: { role: "system", content: "", toolsAdded: [tool("read")], timestamp: 0 } },
+      assistant("a2"),
+    ]);
+
+    expect(state?.toolHistory.map(({ name, loadedRequests }) => [name, loadedRequests])).toEqual([
+      ["read", 2],
+      ["write", 1],
+    ]);
+  });
+
+  it("does not count assistant entries before the first user message", () => {
+    const state = replaySystemMessages([systemMessage("s0", { toolsAdded: [tool("read")] }), assistant("a0"), userMessage("u1"), assistant("a1")]);
+
+    expect(state?.toolHistory[0]?.loadedRequests).toBe(1);
+  });
+
+  it("skips the first N requests when asked (a forked branch's shared prefix, D27)", () => {
+    const state = replaySystemMessages([systemMessage("s0", { toolsAdded: [tool("read")] }), userMessage("u1"), assistant("a1"), assistant("a2"), assistant("a3")], 2);
+
+    expect(state?.toolHistory[0]?.loadedRequests).toBe(1);
   });
 });

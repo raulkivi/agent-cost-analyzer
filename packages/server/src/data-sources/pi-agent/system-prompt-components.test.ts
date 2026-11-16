@@ -103,6 +103,7 @@ describe("buildPiSystemPromptComponentsFromState (in-file system messages)", () 
       { name: "bash", description: "Run a command", parameters: { type: "object" } },
     ],
     declaredToolNames: ["read", "bash"],
+    toolHistory: [],
   };
 
   it("builds a built-in component for the base content and one per named section, each with a real estimated count", () => {

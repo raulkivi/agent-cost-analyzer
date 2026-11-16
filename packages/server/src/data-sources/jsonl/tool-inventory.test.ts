@@ -111,3 +111,14 @@ describe("buildToolInventory definition tokens", () => {
   });
 });
 
+describe("buildToolInventory loaded requests (V27)", () => {
+  it("adds the requests each tool was declared for when a lookup is given, and none for a name it does not know", () => {
+    const requests = (name: string) => (name === "read" ? 5 : undefined);
+
+    expect(buildToolInventory(["read", "write"], [["read"]], undefined, requests)).toEqual([
+      { name: "read", loaded: true, invokedInTurns: [0], loadedRequests: 5 },
+      { name: "write", loaded: true, invokedInTurns: [] },
+    ]);
+  });
+});
+
