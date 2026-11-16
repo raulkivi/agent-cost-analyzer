@@ -139,6 +139,15 @@ describe("get_savings_report registration", () => {
     expect(tool.description).toMatch(/not billed/i);
   });
 
+  // V29: the fields V24 and V26 added, and how to read them, are in the description the model reads.
+  it("says what each listed session and an unused-tools row's tool list carry", async () => {
+    const { tools } = await (await connect(new FakeSavings(reportOf([])))).listTools();
+    const description = tools.find((candidate) => candidate.name === "get_savings_report")!.description;
+
+    expect(description).toMatch(/each with its start and its own saving over the window \(not per week\)/);
+    expect(description).toMatch(/up to 20 of its tools with estimated definition tokens per request/);
+  });
+
   it("is registered only in the savings group and only with the service", async () => {
     const withoutService = await (await connect()).listTools();
     expect(withoutService.tools.map((tool) => tool.name)).not.toContain("get_savings_report");
@@ -266,6 +275,22 @@ describe("get_savings_report answer", () => {
     expect(structured(result).sessionsLeftOut).toEqual(report.sessionsLeftOut);
     expect(textOf(result)).toMatch(/Not analysed.*No tool inventory in the log\./s);
     expect(textOf(result)).toMatch(/Left out.*7 sessions/s);
+  });
+
+  // V29 (R14 for the text answer): a count of one reads in the singular.
+  it("writes one session as 'session', not 'sessions', in coverage and in the lists of sessions left out", async () => {
+    const one = { sessionsInWindow: 1, sessionsAnalysed: 1, notAnalysed: [] };
+    const report = savingsReportSchema.parse({
+      ...reportOf([opportunity(1, { coverage: one })]),
+      notAnalysed: [{ kind: "unused-tools", providerId: "claude-code", reason: "No tool inventory in the log.", sessions: 1 }],
+      sessionsLeftOut: [{ providerId: "claude-code", reason: "The session's log could not be read.", sessions: 1 }],
+    });
+    const text = textOf(await call(await connect(new FakeSavings(report))));
+
+    expect(text).toContain("1 of 1 session analysed."); // codespell:ignore analysed
+    expect(text).toContain("- unused-tools, claude-code: 1 session. No tool inventory in the log.");
+    expect(text).toContain("- claude-code: 1 session. The session's log could not be read.");
+    expect(text).not.toMatch(/\b1 (of 1 )?sessions\b/);
   });
 
   it("passes the SDK's output-schema check with Simulated rows", async () => {

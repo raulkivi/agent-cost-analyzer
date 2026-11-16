@@ -1,6 +1,6 @@
 # pi coding-agent LogProvider — working notes
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Internal engineering summary of the `PiAgentLogProvider`, kept alongside the
 authoritative description in
@@ -39,7 +39,8 @@ idle-gap split.
 | [resolve-pi-agent-sessions-dir.ts](../../packages/server/src/platform/pi-agent-paths/resolve-pi-agent-sessions-dir.ts) | Locates `~/.pi/agent/sessions/` and lists session files for the current cwd |
 | [resolve-pi-system-prompt-log-path.ts](../../packages/server/src/platform/pi-agent-paths/resolve-pi-system-prompt-log-path.ts) | Resolves the optional `pi-system-prompt-logger` sidecar log path (`PI_SYSTEM_PROMPT_LOG_PATH` env override, else `~/.pi/agent/logs/system-prompts.jsonl`) |
 | [system-prompt-sidecar-reader.ts](../../packages/server/src/data-sources/pi-agent/system-prompt-sidecar-reader.ts) | Reads the sidecar JSONL into a `Map` keyed by resolved `sessionFile` path, keeping every record of a file in `capturedAt` order; `system-prompt-sidecar-matcher.ts` picks one per branch (PR #279) |
-| [system-message-replay.ts](../../packages/server/src/data-sources/pi-agent/system-message-replay.ts) | `replaySystemMessages` — replays a branch's `role: "system"` messages (and compaction checkpoints) into the current prompt text, sections and tools, like pi-ai's `getCurrentSystemMessage` |
+| [system-message-replay.ts](../../packages/server/src/data-sources/pi-agent/system-message-replay.ts) | `replaySystemMessages` — replays a branch's `role: "system"` messages (and compaction checkpoints) into the current prompt text, sections and tools, like pi-ai's `getCurrentSystemMessage`; since savings Increment 3 V27 also `toolHistory`: each declared tool's last definition and the requests it was declared for |
+| [shared-prefix.ts](../../packages/server/src/data-sources/pi-agent/shared-prefix.ts) | `sharedPrefixRequests` — the leading requests a branch shares with an earlier branch of its file, in leaf order (`Session.sharedPrefixRequests`; savings D27) |
 | [system-prompt-components.ts](../../packages/server/src/data-sources/pi-agent/system-prompt-components.ts) | `buildPiSystemPromptComponentsFromState` (in-file system prompt) and `buildPiSystemPromptComponents` (sidecar fallback) → `SystemPromptComponent[]`, mirroring `buildSystemPromptBreakdown`'s VS Code shape |
 | `packages/server/fixtures/pi-agent/*.jsonl` | Test fixtures: `schema-v3-session` (follows the published schema in the vendored package: system messages, `arguments`, `thinking`, toolResult usage, a `cache_warm` usage entry, a compaction with usage and `systemMessage`), plus the older hand-authored `normal-session`, `forked-session`, `malformed-lines-session`, `no-usage-session`. Tests write sidecar logs into a tmpdir, since the join key `sessionFile` is checkout-path-dependent |
 | `packages/server/fixtures/pi-agent/generated/` | Sessions the real pi wrote with a local model, redacted, each with its `.system-prompts.jsonl` records, plus `manifest.json` (see "Generating pi fixtures"); read by `generated-fixtures.test.ts` and `scripts/pi-generated-fixtures.test.mts` |
@@ -57,6 +58,13 @@ branch, and `Session.systemPrompt` (base content + one component per named
 section + tool definitions, all with real tokenizer estimates),
 `Session.toolInventory` (every tool declared on the branch, with the turns
 that invoked it) and `readSystemPromptText` all come from that when present.
+Since savings Increment 3 V27 each inventory entry also has the definition
+size the tool last had (a tool removed mid-session is no longer unknown) and
+`loadedRequests`, the requests it was declared for, which the savings
+report's unused-tools money uses (D34). A forked file's later branch counts
+the requests it shares with an earlier branch in `sharedPrefixRequests`
+and leaves them out of `loadedRequests`, so the report counts them once
+(D27; [savings-increment-3.md](../plans/savings-increment-3.md) §7.1).
 
 Older session files without system messages fall back to the sidecar:
 `Session.systemPrompt` is populated, conditionally, since Phase 9.8: the

@@ -15,7 +15,9 @@
 // them. Increment 2 (SR22): `get_savings_report` is called in-process through
 // each product's MCP server (the standalone stdio server's composition, and the
 // extension's createCopilotMcpServices) and must agree with those reports row
-// for row. Output carries counts, hashed session ids, dates, model ids, token and
+// for row. Increment 3 (V29): every listed session's date and own saving against
+// the insights dataset the Savings tab reads, and no session title from that
+// dataset in any report or tool answer. Output carries counts, hashed session ids, dates, model ids, token and
 // money figures and tool or MCP-server names (cut to 40 characters), never a
 // prompt, response, title, file content or path. Read-only.
 import { createHash } from "node:crypto";
@@ -24,7 +26,7 @@ import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Client, InMemoryTransport } from "@modelcontextprotocol/client";
-import { MAX_SAVINGS_NAME_LENGTH, savingsActionText, savingsReportSchema, type SavingsOpportunity, type SavingsReport } from "@agent-cost-analyzer/domain";
+import { MAX_SAVINGS_NAME_LENGTH, savingsActionText, savingsReportSchema, type InsightsDataset, type SavingsOpportunity, type SavingsReport } from "@agent-cost-analyzer/domain";
 import { composeLogProviders, type LogProviderCompositionOptions } from "../src/composition/compose-log-providers.js";
 import { createCopilotMcpServices } from "../src/composition/create-copilot-mcp-services.js";
 import { createExtensionApiService } from "../src/composition/create-extension-api-service.js";
@@ -83,6 +85,12 @@ const short = (s: string) => (s.length > 40 ? `${s.slice(0, 37)}...` : s);
 const sha256 = (file: string) => createHash("sha256").update(readFileSync(file)).digest("hex");
 // A prompt's first characters: long enough not to match a tool name or an id by chance.
 const PROMPT_PROBE = 24;
+// V29 (§14 (d)): a title's first characters, for the same reason; shorter titles
+// ("find", "Fix") could match a tool name or a word of the fixed action text.
+const TITLE_PROBE = 24;
+const MIN_TITLE_PROBE = 12;
+// The insights dataset the Savings tab looks titles up in (D24), at the session cap.
+const DATASET_LIMIT = 500;
 
 // ---- the files the app could touch, before and after ------------------------
 
@@ -441,6 +449,14 @@ const say = (line: string) => {
   const claudeSessions: ClaudeSession[] = [];
   let windowSessions: ClaudeSession[] = [];
   const idByFile = new Map<string, string>();
+  // V29: each product's insights dataset over its report's window, as the Savings tab loads it for titles (D24).
+  const datasets: { label: string; dataset: InsightsDataset; ms: number }[] = [];
+  // Query values are text, as the HTTP route and the webview dispatcher pass them (a number limit is ignored).
+  const loadDataset = async (label: string, api: ApiService, window: SavingsReport["window"], provider?: string) => {
+    const started = performance.now();
+    const dataset = await api.getInsights({ since: window.since, until: window.until, limit: String(DATASET_LIMIT), ...(provider === undefined ? {} : { provider }) });
+    datasets.push({ label, dataset, ms: performance.now() - started });
+  };
 
   beforeAll(async () => {
     view = buildClaudeView(startedAt);
@@ -500,6 +516,14 @@ const say = (line: string) => {
       // The extension's MCP server (the one Copilot Chat calls), over the same paths.
       const mcp = createCopilotMcpServices({ ...copilotPaths(edition.userData), appVersion: "0.0.0-real-data", vendorProfilesDir: FIXTURE_VENDOR_PROFILES_DIR });
       copilotTools.push({ edition, report: extension, tool: await callSavingsTool(mcp, { limit: MAX_SAVINGS_TOOL_OPPORTUNITIES }) });
+    }
+
+    // V29: the titles and starts each product's Savings tab sees, from its own insights dataset.
+    await loadDataset("Claude Code", claudeApp, claudeReport.window, "claude-code");
+    await loadDataset("pi", piApp, piReport.window, "pi-agent");
+    for (const { edition, standalone } of copilotReports) {
+      await loadDataset(`Copilot ${edition.name} (standalone)`, edition.standalone, standalone.window, "vscode");
+      await loadDataset(`Copilot ${edition.name} (extension)`, edition.extension, standalone.window);
     }
 
     // The oracle's side: every stable session file that could start in the window.
@@ -711,6 +735,10 @@ const say = (line: string) => {
     }
     const tokensOf = (tool: { tokens: { known: boolean; value?: number } }) => (tool.tokens.known ? tool.tokens.value! : -1);
     expect(listed.map(tokensOf), "largest first").toEqual([...listed.map(tokensOf)].sort((a, b) => b - a));
+    // V29 (§14 (b), pi as Claude Code): the listed tools sum to the row within rounding, or fall short of it by the unlisted ones.
+    const sumListed = listed.reduce((sum, tool) => sum + tokensOf(tool), 0);
+    if (listed.length === row!.toolsTotal) expect(Math.abs(sumListed - reportedTokens), "listed tools sum to the row").toBeLessThanOrEqual(TOKEN_TOLERANCE * listed.length + listed.length);
+    else expect(sumListed, "listed tools do not exceed the row (more than rounding)").toBeLessThanOrEqual(reportedTokens + listed.length);
 
     // Money: Not priced (with a reason) for a model no price book lists, else the oracle's range.
     if (bucket === "unpriced") {
@@ -781,6 +809,87 @@ const say = (line: string) => {
       }
     });
     say(`  D16 order: the idle-expiry row's ${row.sessions.length} sessions shown (of ${row.sessionsTotal}) are the oracle's largest, in order (top ${money(highs[0] ?? 0)} USD)`);
+  });
+
+  // V29 (§14 (c), D22, D23): every row's sessions, in every report the check builds.
+  it("each listed session's date is its session's start, and each row's known per-session savings add up to the row's (Increment 3)", () => {
+    const startOf = new Map<string, string | undefined>();
+    for (const { dataset } of datasets) for (const row of dataset.sessions) startOf.set(row.key, row.startedAt);
+    const reports: [string, SavingsReport][] = [["Claude Code", claudeReport], ["pi", piReport], ...copilotReports.flatMap(({ edition, standalone, extension }): [string, SavingsReport][] => [[`Copilot ${edition.name} standalone`, standalone], [`Copilot ${edition.name} extension`, extension]])];
+    let refs = 0;
+    let dated = 0;
+    let undated = 0;
+    let notInDataset = 0;
+    let summed = 0;
+    let unpricedRows = 0;
+    for (const [label, report] of reports) {
+      for (const o of [...report.opportunities, ...report.simulated]) {
+        for (const ref of o.sessions) {
+          refs += 1;
+          expect(ref.perWindow, `${label} ${o.key}: a session without its own saving`).toBeDefined();
+          const key = `${ref.providerId}:${ref.sessionId}`;
+          if (!startOf.has(key)) {
+            notInDataset += 1;
+            continue;
+          }
+          const start = startOf.get(key);
+          const expected = start === undefined || !Number.isFinite(Date.parse(start)) ? undefined : new Date(Date.parse(start)).toISOString();
+          expect(ref.startedAt, `${label} ${o.key}: a session's date is not its start`).toBe(expected);
+          if (expected === undefined) undated += 1;
+          else dated += 1;
+        }
+        const parts = o.sessions.map((ref) => ref.perWindow).filter((amount) => amount?.known === true);
+        if (!o.perWindow.known) {
+          expect(parts.length, `${label} ${o.key}: a known session saving in a row with none`).toBe(0);
+          unpricedRows += 1;
+          continue;
+        }
+        const low = parts.reduce((sum, amount) => sum + (amount?.known ? amount.low : 0), 0);
+        const high = parts.reduce((sum, amount) => sum + (amount?.known ? amount.high : 0), 0);
+        expect(near(low, o.perWindow.low), `${label} ${o.key}: sessions' low ${low} vs the row's ${o.perWindow.low}`).toBe(true);
+        expect(near(high, o.perWindow.high), `${label} ${o.key}: sessions' high ${high} vs the row's ${o.perWindow.high}`).toBe(true);
+        summed += 1;
+      }
+    }
+    say("");
+    say(`Per-session figures (V24): ${refs} session references in ${reports.length} reports; ${dated} dates equal their session's start, ${undated} "date unknown" with no start in the dataset, ${notInDataset} not in the dataset (not compared)`);
+    say(`  ${summed} priced rows whose sessions' own savings add up to the row's (low and high, within ${TOLERANCE} relative); ${unpricedRows} rows Not priced, none with a priced session`);
+    say(`  get_savings_report carries the same date and saving for each row's first ${MAX_SAVINGS_TOOL_SESSIONS} sessions (the rows above, compared field by field)`);
+  });
+
+  // V29 (§14 (d), D19, D24): titles stay in the browser.
+  it("no session title of the window is in any report or get_savings_report answer (compared, never printed)", () => {
+    const probes = [
+      ...new Set(
+        datasets.flatMap(({ dataset }) =>
+          dataset.sessions.flatMap((row) => {
+            const title = row.title.replace(/\s+/g, " ").trim();
+            return title.length >= MIN_TITLE_PROBE ? [title.slice(0, TITLE_PROBE)] : [];
+          }),
+        ),
+      ),
+    ];
+    const short = new Set(datasets.flatMap(({ dataset }) => dataset.sessions.filter((row) => row.title.replace(/\s+/g, " ").trim().length < MIN_TITLE_PROBE).map((row) => row.key))).size;
+    const answers: [string, string][] = [
+      ["Claude Code report", JSON.stringify(claudeReport)],
+      ["pi report", JSON.stringify(piReport)],
+      ...copilotReports.flatMap(({ edition, standalone, extension }): [string, string][] => [[`Copilot ${edition.name} standalone report`, JSON.stringify(standalone)], [`Copilot ${edition.name} extension report`, JSON.stringify(extension)]]),
+      ["Claude Code get_savings_report", claudeTool.json],
+      ["Claude Code get_savings_report (default limit)", claudeToolDefault.json],
+      ["pi get_savings_report", piTool.json],
+      ...copilotTools.map(({ edition, tool }): [string, string] => [`Copilot ${edition.name} get_savings_report`, tool.json]),
+    ];
+    expect(probes.length, "no session title in the window to compare").toBeGreaterThan(0);
+    for (const [label, json] of answers) {
+      const leaked = probes.filter((probe) => json.includes(JSON.stringify(probe).slice(1, -1)));
+      expect(leaked.length, `${leaked.length} session titles found in the ${label}`).toBe(0);
+    }
+    say("");
+    say(`Titles (V25): ${probes.length} distinct title beginnings (${TITLE_PROBE} characters, titles of ${MIN_TITLE_PROBE} or more) from ${datasets.length} insights datasets, none in ${answers.length} reports and tool answers; ${short} shorter titles not compared`);
+    say(`  the Savings tab's title source: ${datasets.map(({ label, dataset, ms }) => `${label} ${dataset.sessions.length} sessions in ${(ms / 1000).toFixed(1)} s`).join("; ")} (getInsights at limit ${DATASET_LIMIT}; the tab asks for 200 per provider, once per window)`);
+    const kB = (json: string) => (Buffer.byteLength(json) / 1024).toFixed(0);
+    const sessionRefs = claudeReport.opportunities.reduce((sum, o) => sum + o.sessions.length, 0);
+    say(`  payload: the Claude Code report is ${kB(JSON.stringify(claudeReport))} kB of JSON with ${sessionRefs} session references (each with its date and saving); get_savings_report at limit 20 is ${kB(claudeTool.json)} kB`);
   });
 
   it("changed no setting and no file", () => {
