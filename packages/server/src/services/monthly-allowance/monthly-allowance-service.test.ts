@@ -156,3 +156,19 @@ describe("variantOfUserDataDir", () => {
     expect(variantOfUserDataDir(null)).toBeNull();
   });
 });
+
+describe("MonthlyAllowanceService.get reads (MS5)", () => {
+  it("lists the sessions once per request, however many harnesses split the answer", async () => {
+    const { service, calls } = build([session(IN, 5, "local"), session(IN, 7, "agent-host"), session(IN, 1)]);
+    await service.get();
+    expect(calls.list).toBe(1);
+    await service.get();
+    expect(calls.list).toBe(2);
+  });
+
+  it("lists nothing when the allowance is not set", async () => {
+    const { service, calls } = build([session(IN, 5)], { settings: { ...SET, aiCredits: null } });
+    await service.get();
+    expect(calls.list).toBe(0);
+  });
+});
