@@ -591,6 +591,11 @@ export class FindingsView {
     await this.content.getByRole("combobox", { name: "Severity" }).selectOption({ label });
   }
 
+  // The run a finding names ("by subagent run Agent-Explore (turn 4)"); the row repeats it for a narrow host.
+  runNote(text: string | RegExp): Locator {
+    return this.table().getByText(text);
+  }
+
   whyFlagged(): Locator {
     return this.content.getByRole("button", { name: "Why flagged" });
   }
@@ -712,6 +717,23 @@ export class AuditView {
 
   recovery(): Locator {
     return this.content.getByRole("region", { name: "Recovery cost", exact: true });
+  }
+
+  // Step 10.20: the Agent filter (All, Main agent, Subagents), the split, the runs.
+  agentFilter(): Locator {
+    return this.content.getByRole("radiogroup", { name: "Agent", exact: true });
+  }
+
+  async chooseAgent(label: "All" | "Main agent" | "Subagents"): Promise<void> {
+    await this.agentFilter().getByText(label, { exact: true }).click();
+  }
+
+  callsByAgent(): Locator {
+    return this.content.getByRole("region", { name: "Calls by agent", exact: true });
+  }
+
+  runs(): Locator {
+    return this.content.getByRole("list", { name: "Subagent runs", exact: true }).getByRole("listitem");
   }
 
   failedPerDay(): Locator {

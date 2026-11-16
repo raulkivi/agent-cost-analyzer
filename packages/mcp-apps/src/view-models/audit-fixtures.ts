@@ -81,3 +81,54 @@ export function auditRollup(overrides: Partial<AuditRollup> = {}): AuditRollup {
     ...overrides,
   });
 }
+
+const outcome = (toolCalls: number, failed: number, unknown: number, extra: { canceled?: number } = {}) => ({
+  toolCalls,
+  succeeded: toolCalls - failed - unknown - (extra.canceled ?? 0),
+  failed,
+  interrupted: 0,
+  denied: 0,
+  unknown,
+  ...extra,
+});
+
+interface SubagentAuditOptions {
+  unread?: boolean; // adds two unread runs: a missing log, and a tool that writes none
+  flagged?: boolean; // the Plan run keeps its totals and carries a flag (D12)
+  nested?: boolean; // adds task-Planner and its depth-2 child
+}
+
+// Invented session of the ST2 boards: 214 calls, 131 by the main agent and 83
+// by three read subagent runs; optionally two more runs unread.
+export function subagentAudit(options: SubagentAuditOptions = {}): SessionAudit {
+  const run = (runId: string, label: string, turnIndex: number, totals: ReturnType<typeof outcome> | null, extra: Record<string, unknown> = {}) => ({
+    runId,
+    label,
+    depth: 1,
+    turnIndex,
+    totals,
+    failureRate: totals === null ? null : (totals.failed + totals.interrupted + totals.denied) / (totals.toolCalls - totals.unknown),
+    ...extra,
+  });
+  const runs = [
+    run("run-explore-1", "Agent-Explore", 3, outcome(41, 4, 1)),
+    run("run-plan", "Agent-Plan", 3, outcome(22, 1, 0), options.flagged === true ? { unreadReason: "The call that started this run is missing from the log." } : {}),
+    run("run-explore-2", "Agent-Explore", 9, outcome(20, 4, 0)),
+    ...(options.nested === true ? [run("run-planner", "task-Planner", 5, outcome(1, 0, 0)), run("run-search", "search_code_subagent", 5, outcome(1, 0, 0), { depth: 2, parentRunId: "run-planner" })] : []),
+    ...(options.unread === true
+      ? [
+          run("run-review", "runSubagent-Review", 7, null, { unreadReason: "The subagent log runSubagent-Review this turn started is missing, so its tool calls are unknown." }),
+          run("run-explore-tool", "searchSubagent", 10, null, { unreadReason: "This subagent tool writes no log the analyzer reads." }),
+        ]
+      : []),
+  ];
+  return sessionAudit({
+    sessionId: "9d41b7e2",
+    title: "Refactor the export module",
+    totals: outcome(214, 20, 6),
+    failureRate: 20 / 208,
+    outcomeCoverage: { known: 208, unknown: 6, unknownReasons: [] },
+    byOrigin: { main: outcome(131, 11, 5), subagents: { ...outcome(83, 9, 1), runs: runs.length } },
+    subagentRuns: runs,
+  });
+}

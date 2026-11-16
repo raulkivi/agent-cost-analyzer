@@ -1,6 +1,6 @@
 # MCP App views in a fake host
 
-**Last changed:** 2026-11-11 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Step 10.17 task G5 ([release-ui-gate.md](../../../docs/plans/release-ui-gate.md), decision D3): Playwright runs the built `dist/views.html` in a fake MCP Apps host, against the real MCP server over stdio, in place of the Claude Desktop hand checks (A16 §2, A24 §2). It proves the views against the protocol and Claude's recorded theme sets, not Claude Desktop's own chrome (risk R4).
 
@@ -57,6 +57,7 @@ Every spec runs in Claude light and Claude dark (`inEachClaudeSet`), with axe in
 | A29 board 7 / §9.2 Q15 U15 refusal: reason, every figure Unknown, no range bar, no run rate | `specs/u14-u15-billing.spec.ts` |
 | A29 board 6 / §9.2 Q16 U15 on another model: "estimate" and "Simulated" tags, replay coverage, turns not replayed, self-check count | `specs/u14-u15-billing.spec.ts` |
 | A29 board 15 U15 at 360 px, plain and simulated: no sideways scroll | `specs/u14-u15-billing.spec.ts` |
+| ST13 (step 10.20) U4 with subagent runs: the sub-line, the Agent filter, the runs list with an unread reason and a flag, canceled calls, 640 and 320 px; U3 names the run on a finding; Claude light and dark, VS Code light, dark and High Contrast | `specs/st13-subagent-audit.spec.ts` |
 | A30 U5 list: rows with title, short id, turns, model and no cost; an Analyse button on every row; the hint that only the fixed text is sent | `specs/a30-audit-picker.spec.ts` |
 | A30 U5 Analyse sends exactly one message matching `Analyse session <id>` (no title, no other host call), the button turns into a disabled Added to chat with the press-send hint, and pressing it again sends nothing; by keyboard too | `specs/a30-audit-picker.spec.ts` |
 | A30 U5 the host declines (owner, 2026-11-11, §9.2 Q7: try, then fall back): that row reads "Ask in the chat: Analyse session <id>" in place of its button, the other rows keep Analyse, one attempt only; 360 px with no sideways scroll | `specs/a30-audit-picker.spec.ts` |

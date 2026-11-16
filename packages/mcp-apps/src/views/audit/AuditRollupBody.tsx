@@ -43,6 +43,8 @@ export function AuditRollupBody({ vm }: { vm: AuditRollupViewModel }) {
         {vm.leftOut !== undefined && <StatTile label="Left out" value={vm.leftOut.text} note={vm.leftOut.note} />}
       </div>
 
+      {vm.unreadNote !== undefined && <p className="au-unread-note">{vm.unreadNote}</p>}
+
       {vm.unavailableReason !== undefined && !vm.tiles.toolCalls.known && (
         <p role="status" className="text-muted">
           No session in this range has recorded tool calls: {vm.unavailableReason}

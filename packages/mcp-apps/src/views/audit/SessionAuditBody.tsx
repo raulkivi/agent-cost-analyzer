@@ -1,15 +1,17 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { SessionAuditViewModel } from "../../view-models/index.js";
+import type { AgentScope, SessionAuditViewModel } from "../../view-models/index.js";
 import { AuditTile } from "./AuditTile.js";
 import { CategoryList } from "./CategoryList.js";
+import { AgentFilter, CallsByAgent, SubagentRuns } from "./SubagentParts.js";
 import "./audit.css";
 
 // U4 for one session. Commands and tool names are logged text: rendered as
 // text in the table, never sent to the host's model (§6).
 
-export function SessionAuditBody({ vm }: { vm: SessionAuditViewModel }) {
-  const { recovery } = vm;
+export function SessionAuditBody({ vm, onScope }: { vm: SessionAuditViewModel; onScope: (scope: AgentScope) => void }) {
+  const { recovery, subagents } = vm;
+  const showRuns = subagents?.scopes.find((scope) => scope.selected)?.value !== "main"; // the runs belong to All and Subagents
   return (
     <>
       <div className="stat-tiles view-tiles">
@@ -25,6 +27,15 @@ export function SessionAuditBody({ vm }: { vm: SessionAuditViewModel }) {
         </p>
       ) : (
         <>
+          {vm.canceledText !== undefined && <p className="au-note text-muted">{vm.canceledText}</p>}
+          {subagents !== undefined && (
+            <>
+              <AgentFilter scopes={subagents.scopes} onScope={onScope} />
+              {vm.scopeNote !== undefined && <p className="au-note text-muted">{vm.scopeNote}</p>}
+              <CallsByAgent split={subagents.split} />
+              {showRuns && <SubagentRuns subagents={subagents} />}
+            </>
+          )}
           <section className="view-section" aria-label="Why calls failed">
             <div className="view-section-head">
               <h2>Why calls failed</h2>
