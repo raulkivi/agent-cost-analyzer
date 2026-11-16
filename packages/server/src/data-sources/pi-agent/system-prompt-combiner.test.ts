@@ -17,6 +17,7 @@ function state(sections: Array<[string, string]>, baseContent = "", tools: PiSys
     text: [baseContent, ...secs.map((s) => s.text)].filter(Boolean).join("\n\n"),
     tools,
     declaredToolNames: tools.map((t) => t.name),
+    toolHistory: tools.map((t) => ({ name: t.name, definition: t, loadedRequests: 0 })),
   };
 }
 function sidecar(systemPrompt: string): PiSystemPromptSidecarRecord {

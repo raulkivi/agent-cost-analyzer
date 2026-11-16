@@ -217,29 +217,21 @@ describe("UnusedToolsDetector: Not analysed (never 0)", () => {
   const agentHost = session("ah", { providerId: "vscode", copilotHarness: "agent-host" });
   const noInventory = session("ni", { providerId: "pi-agent" });
   const noRounds = session("nr", { turns: [{ ...withRounds([1])[0]!, usage: { ...withRounds([1])[0]!.usage, roundsCount: undefined as never } }], toolInventory: linear() });
-  const unknownChannel = session("uc", { turns: withRounds([2]), toolInventory: linear() });
 
-  it("lists sessions with no inventory, no request count or an unknown channel, with reasons, per provider", () => {
+  it("lists sessions with no inventory or no request count, with reasons, per provider", () => {
     const { opportunities, notAnalysed } = detector.detect(
-      savingsInput([
-        sessionInput(agentHost, { channel: COPILOT }),
-        sessionInput(noInventory),
-        sessionInput(noRounds),
-        sessionInput(unknownChannel, { channel: { known: false, reason: "No channel." } }),
-        sessionInput(s1),
-      ]),
+      savingsInput([sessionInput(agentHost, { channel: COPILOT }), sessionInput(noInventory), sessionInput(noRounds), sessionInput(s1)]),
     );
 
     expect(notAnalysed).toEqual([
-      { kind: "unused-tools", providerId: "claude-code", reason: "No channel.", sessions: 1 },
       { kind: "unused-tools", providerId: "claude-code", reason: "The log records no request count for this session, so tool tokens can't be multiplied by requests.", sessions: 1 },
       { kind: "unused-tools", providerId: "pi-agent", reason: "The log records no tool inventory for this session.", sessions: 1 },
       { kind: "unused-tools", providerId: "vscode", reason: "VS Code's Agent Host records the total tool-definition tokens only, not each tool, so unused tools can't be found.", sessions: 1 },
     ]);
     // The analysable session still yields its opportunity, with honest coverage.
     expect(opportunities.map((opportunity) => opportunity.subject)).toEqual(["linear"]);
-    expect(opportunities[0]!.coverage).toMatchObject({ sessionsInWindow: 5, sessionsAnalysed: 1 });
-    expect(opportunities[0]!.coverage.notAnalysed).toHaveLength(4);
+    expect(opportunities[0]!.coverage).toMatchObject({ sessionsInWindow: 4, sessionsAnalysed: 1 });
+    expect(opportunities[0]!.coverage.notAnalysed).toHaveLength(3);
   });
 
   it("lists a group whose tokens are unknown under Not analysed with the reason, never as 0 tokens", () => {
@@ -323,5 +315,117 @@ describe("UnusedToolsDetector: golden report", () => {
     );
 
     await expect(`${JSON.stringify(result, null, 2)}\n`).toMatchFileSnapshot("../__golden__/savings-unused-tools-report.json");
+  });
+});
+
+// V27 (savings-increment-3.md §7.1): a session whose model has no known price
+// channel (pi on a local model) still has its tool tokens and requests; only
+// the money is unknown, with the channel's reason, never 0 and never dropped.
+describe("UnusedToolsDetector: unpriced sessions", () => {
+  const UNPRICED = "This provider calls the model vendor's own API, but the vendor is unknown: no profile lists the model.";
+  const unpriced = { known: false, reason: UNPRICED } as const;
+  const local = (id: string, rounds: readonly number[], inventory = linear()) => session(id, { providerId: "pi-agent", model: "local-model", turns: withRounds(rounds, "local-model"), toolInventory: inventory });
+
+  it("gives a row with its tokens, requests and per-tool list, and the amount Not priced with the channel's reason", () => {
+    const { opportunities, notAnalysed } = detector.detect(savingsInput([sessionInput(local("p1", [4, 6]), { channel: unpriced }), sessionInput(local("p2", [20]), { channel: unpriced })]));
+
+    expect(notAnalysed).toEqual([]);
+    expect(opportunities).toHaveLength(1);
+    expect(opportunities[0]).toMatchObject({
+      key: "unused-tools:linear:unpriced",
+      kind: "unused-tools",
+      subject: "linear",
+      evidence: { sessions: 2, requests: 30, tokens: { known: true, value: 800, estimated: true } },
+      perWindow: { known: false, reason: UNPRICED },
+      perWeek: { known: false, reason: UNPRICED },
+      coverage: { sessionsInWindow: 2, sessionsAnalysed: 2, notAnalysed: [] },
+      tools: [
+        { name: "get_issue", tokens: { known: true, value: 500, estimated: true }, sessions: 2 },
+        { name: "save_issue", tokens: { known: true, value: 300, estimated: true }, sessions: 2 },
+      ],
+      toolsTotal: 2,
+    });
+    expect(opportunities[0]!.sessions.map((ref) => ref.perWindow)).toEqual([unknown(UNPRICED), unknown(UNPRICED)]);
+    expect(savingsOpportunitySchema.safeParse(opportunities[0]).success).toBe(true);
+  });
+
+  it("keeps the priced and the unpriced sessions of one group in their own rows", () => {
+    const { opportunities } = detector.detect(savingsInput([sessionInput(s1), sessionInput(local("p1", [4]), { channel: unpriced })]));
+
+    expect(opportunities.map((row) => [row.key, row.evidence.sessions])).toEqual([
+      ["unused-tools:linear:USD", 1],
+      ["unused-tools:linear:unpriced", 1],
+    ]);
+  });
+
+  it("still lists a session whose tool sizes are unknown under Not analysed, priced or not", () => { // codespell:ignore analysed
+    const broken = local("p3", [3], [tool("mcp__jira__find", null)]);
+
+    const { opportunities, notAnalysed } = detector.detect(savingsInput([sessionInput(broken, { channel: unpriced })]));
+
+    expect(opportunities).toEqual([]);
+    expect(notAnalysed).toEqual([{ kind: "unused-tools", providerId: "pi-agent", reason: "The tools file is missing.", sessions: 1 }]);
+  });
+});
+
+function unknown(reason: string) {
+  return { known: false, reason };
+}
+
+// V27 (§7.1): a tool declared for part of a session costs only those requests.
+describe("UnusedToolsDetector: loadedRequests", () => {
+  const withLoaded = (name: string, tokens: number, loadedRequests: number) => ({ ...tool(name, tokens), loadedRequests });
+
+  it("multiplies a tool's tokens by the requests it was declared for, not by the session's request count", () => {
+    const partial = session("lr", { turns: withRounds([4, 6]), toolInventory: [withLoaded("write", 100, 4), withLoaded("read", 50, 10)] });
+
+    const row = detector.detect(savingsInput([sessionInput(partial)])).opportunities.find((opportunity) => opportunity.subject === "write")!;
+
+    // 100 tokens × 4 requests = 400 tokens: × 0.2 and × 2 USD per million.
+    expect(row.evidence).toMatchObject({ requests: 10, tokens: { known: true, value: 100, estimated: true } });
+    const window = row.perWindow;
+    expect(window.known).toBe(true);
+    if (window.known) {
+      expect(window.low).toBeCloseTo(0.00008, 12);
+      expect(window.high).toBeCloseTo(0.0008, 12);
+    }
+  });
+
+  it("falls back to the session's requests for a tool with no loadedRequests", () => {
+    const whole = session("lr2", { turns: withRounds([4, 6]), toolInventory: [tool("write", 100)] });
+
+    const [row] = detector.detect(savingsInput([sessionInput(whole)])).opportunities;
+
+    if (row!.perWindow.known) expect(row!.perWindow.high).toBeCloseTo(0.002, 12);
+  });
+});
+
+// V27 (D27): a later branch of a forked pi file counts only its own requests.
+describe("UnusedToolsDetector: forked branches", () => {
+  it("leaves the shared prefix's requests to the earlier branch, in the row's requests and its money", () => {
+    const own = session("own", { turns: withRounds([3, 2]), toolInventory: linear() });
+    const branch = session("branch", { turns: withRounds([3, 2]), toolInventory: linear(), sharedPrefixRequests: 4 });
+
+    const [row] = detector.detect(savingsInput([sessionInput(own), sessionInput(branch)])).opportunities;
+
+    // 5 requests for the first branch, 5 - 4 = 1 for the second.
+    expect(row!.evidence).toMatchObject({ sessions: 2, requests: 6 });
+    if (row!.perWindow.known) expect(row!.perWindow.high).toBeCloseTo((800 * 6 * 2) / 1e6, 12);
+  });
+
+  it("gives a branch with no request of its own no row, and lists it nowhere as unreadable", () => {
+    const contained = session("contained", { turns: withRounds([2]), toolInventory: linear(), sharedPrefixRequests: 2 });
+
+    const { opportunities, notAnalysed } = detector.detect(savingsInput([sessionInput(contained)]));
+
+    expect(notAnalysed).toEqual([]);
+    expect(opportunities).toEqual([]);
+  });
+
+  it("still counts the tools a fully shared branch ran, so a tool used there is not reported unused", () => {
+    const contained = session("contained", { turns: withRounds([2]), toolInventory: [tool("mcp__linear__get_issue", 500, [0])], sharedPrefixRequests: 2 });
+    const other = session("other", { turns: withRounds([2]), toolInventory: [tool("mcp__linear__get_issue", 500)] });
+
+    expect(detector.detect(savingsInput([sessionInput(contained), sessionInput(other)])).opportunities).toEqual([]);
   });
 });

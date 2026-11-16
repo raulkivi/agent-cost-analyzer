@@ -58,6 +58,10 @@ export const sessionSchema = z.object({
   systemPromptNote: z.string().optional(),
   toolInventory: z.array(toolInventoryEntrySchema).optional(), // Analyze mode only
   usageDataAvailable: z.boolean(),
+  // pi branches only (D27): the leading requests this branch shares with an
+  // earlier branch of the same file (leaf order); detectors count them once,
+  // under that earlier branch. Absent: none shared.
+  sharedPrefixRequests: z.number().int().nonnegative().optional(),
   category: z.string().optional(), // Learn mode only — authored per fixture
   startedAt: z.string().optional(), // Analyze mode only — ISO date from sessions.created_at
   copilotHarness: copilotHarnessSchema.optional(), // VS Code (Copilot) sessions only

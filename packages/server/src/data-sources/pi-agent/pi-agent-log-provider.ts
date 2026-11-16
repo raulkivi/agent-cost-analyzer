@@ -19,6 +19,7 @@ import { listPiAgentSessionFiles } from "../../platform/pi-agent-paths/resolve-p
 import { assistantMessageOf, messageOf } from "./pi-message.js";
 import { readPiSessionFile, type PiRawEntry, type PiSessionHeader } from "./pi-jsonl-reader.js";
 import { findLeafEntryIds, walkBranch } from "./session-tree.js";
+import { sharedPrefixRequests } from "./shared-prefix.js";
 import { groupBranchEntriesByUserMessage, type PiTurnGroup } from "./turn-grouper.js";
 import { extractToolCalls, extractTurnUsage } from "./usage-extractor.js";
 import { buildTurnInspectorDetail } from "./turn-inspector-builder.js";
@@ -31,10 +32,10 @@ import { readSystemPromptSidecarIndex, type SidecarIndex } from "./system-prompt
 import { describeTurnUsage } from "../../services/turn-usage-sentence.js";
 
 // Phase 16 SR2: pi persists each declared tool's description and parameters in
-// the session file; a tool removed before the branch's end keeps no definition.
+// the session file, and a tool removed mid-session keeps its last one (V27).
 const PI_TOOL_DEFINITION_REASONS: ToolDefinitionTokenReasons = {
   unreadable: "pi's session file holds no tool declarations, so this tool's definition size is unknown.",
-  absent: "This tool is no longer declared at the end of the session, so its definition size is unknown (pi keeps no definition for a removed tool).",
+  absent: "pi's session file holds no declaration for this tool, so its definition size is unknown.",
 };
 
 const PROVIDER_ID = "pi-agent";
@@ -190,15 +191,24 @@ export class PiAgentLogProvider implements LogProvider, SystemPromptTextReader {
     const knownUsageTurns = turns.filter((turn) => turn.usage.output.known);
     const model = knownUsageTurns.length > 0 ? knownUsageTurns[knownUsageTurns.length - 1].usage.model : "unknown";
     const id = leafCount > 1 ? computeBranchSessionId(filePath, leafId) : computePiFileHash(filePath);
+    const earlierBranches = findLeafEntryIds(allEntries).slice(0, leafIndex).map((earlierLeafId) => walkBranch(allEntries, earlierLeafId));
+    const sharedRequests = sharedPrefixRequests(branch, earlierBranches);
     const { components: systemPrompt, note: systemPromptNote, state: inFileSystemPrompt } = resolvePiSystemPrompt(
       branch,
       sidecarIndex.get(path.resolve(filePath)),
+      sharedRequests,
     );
+    // V27: every declared tool keeps its last definition, so one removed
+    // mid-session is not unknown; `loadedRequests` is the requests it was declared for.
     const toolInventory = inFileSystemPrompt
       ? buildToolInventory(
           inFileSystemPrompt.declaredToolNames,
           turns.map((turn) => turn.toolCalls.map((call) => call.name)),
-          toolDefinitionTokenLookup(inFileSystemPrompt.tools, PI_TOOL_DEFINITION_REASONS),
+          toolDefinitionTokenLookup(
+            inFileSystemPrompt.toolHistory.map((entry) => entry.definition),
+            PI_TOOL_DEFINITION_REASONS,
+          ),
+          (name) => inFileSystemPrompt.toolHistory.find((entry) => entry.name === name)?.loadedRequests,
         )
       : undefined;
 
@@ -212,6 +222,7 @@ export class PiAgentLogProvider implements LogProvider, SystemPromptTextReader {
       turnCount: turns.length,
       costAiCredits: unavailableTokenCount(NO_AI_CREDITS_REASON),
       usageDataAvailable: knownUsageTurns.length > 0,
+      ...(sharedRequests > 0 ? { sharedPrefixRequests: sharedRequests } : {}),
       ...(header ? { startedAt: header.timestamp } : {}),
       workspace: knownWorkspace(header?.cwd) ?? unknownWorkspace(PI_NO_FOLDER_REASON),
       ...(systemPrompt ? { systemPrompt } : {}),

@@ -14,6 +14,8 @@ import {
   loadBundledTables,
   modelTablesFrom,
   parseJsonl,
+  piBranchesOf,
+  piUnusedToolRowOf,
   requestsOf,
   toolSessionFactsOf,
   unusedToolRowOf,
@@ -322,10 +324,140 @@ describe("loadBundledTables", () => {
   });
 });
 
+// ---- pi (V27): hand-made pi lines, every figure worked out in the test ----------
+
+const piTool = (name: string, description = `${name} tool`) => ({ name, description, parameters: { type: "object", properties: {} } });
+const tokensOf = (tool: object) => countTokens(JSON.stringify(tool));
+const piHeader: RawLine = { type: "session", version: 3, id: "hdr", timestamp: "2026-10-20T10:00:00.000Z", cwd: "/w" };
+const piSystem = (id: string, parentId: string | null, message: Record<string, unknown>): RawLine => ({ type: "message", id, parentId, message: { role: "system", content: "", ...message } });
+const piUser = (id: string, parentId: string): RawLine => ({ type: "message", id, parentId, message: { role: "user", content: "hi" } });
+const piAssistant = (id: string, parentId: string, model = "claude-sonnet-5-5-20261001"): RawLine => ({ type: "message", id, parentId, message: { role: "assistant", model, content: [] } });
+const piResult = (id: string, parentId: string, toolName: string): RawLine => ({ type: "message", id, parentId, message: { role: "toolResult", toolName, content: [] } });
+
+describe("piBranchesOf", () => {
+  const read = piTool("read");
+  const write = piTool("write");
+  const grepTool = piTool("grep");
+  const lines = [
+    piHeader,
+    piSystem("s0", null, { toolsAdded: [read, write] }),
+    piUser("u1", "s0"),
+    piAssistant("a1", "u1"),
+    piResult("r1", "a1", "read"),
+    piAssistant("a2", "r1"),
+    piSystem("s1", "a2", { toolsRemoved: [{ name: "write" }], toolsAdded: [grepTool] }),
+    piAssistant("a3", "s1"),
+  ];
+
+  it("counts the requests each tool was declared for and keeps a removed tool's last definition", () => {
+    const [branch] = piBranchesOf(lines);
+
+    expect(branch!.ownRequests).toBe(3);
+    expect(branch!.declared).toEqual(
+      new Map([
+        ["read", { tokens: tokensOf(read), loadedRequests: 3 }],
+        ["write", { tokens: tokensOf(write), loadedRequests: 2 }],
+        ["grep", { tokens: tokensOf(grepTool), loadedRequests: 1 }],
+      ]),
+    );
+    expect([...branch!.invoked]).toEqual(["read"]);
+    expect(branch!.startedAt).toBe("2026-10-20T10:00:00.000Z");
+  });
+
+  it("leaves a branch with no system message without an inventory (D29)", () => {
+    const [branch] = piBranchesOf([piHeader, piUser("u1", "hdr"), piAssistant("a1", "u1")]);
+
+    expect(branch!.declared).toBeUndefined();
+    expect(branch!.ownRequests).toBe(1);
+  });
+
+  it("a compaction's system message starts the tool list afresh", () => {
+    const compaction: RawLine = { type: "compaction", id: "c1", parentId: "a1", systemMessage: { role: "system", content: "", toolsAdded: [read] } };
+    const [branch] = piBranchesOf([piHeader, piSystem("s0", null, { toolsAdded: [read, write] }), piUser("u1", "s0"), piAssistant("a1", "u1"), compaction, piAssistant("a2", "c1")]);
+
+    expect([...branch!.declared!].map(([name, { loadedRequests }]) => [name, loadedRequests])).toEqual([
+      ["read", 2],
+      ["write", 1],
+    ]);
+  });
+
+  it("gives a later leaf of a forked file only its own requests (D27)", () => {
+    const fork = [
+      piHeader,
+      piSystem("s0", null, { toolsAdded: [read] }),
+      piUser("u1", "s0"),
+      piAssistant("a1", "u1"),
+      piUser("u2a", "a1"),
+      piAssistant("a2a", "u2a"),
+      piUser("u2b", "a1"),
+      piAssistant("a2b", "u2b"),
+    ];
+
+    const [first, second] = piBranchesOf(fork);
+
+    expect([first!.leafId, first!.leafIndex, first!.leafCount, first!.ownRequests, first!.sharedPrefixRequests]).toEqual(["a2a", 0, 2, 2, 0]);
+    expect([second!.leafId, second!.leafIndex, second!.ownRequests, second!.sharedPrefixRequests]).toEqual(["a2b", 1, 1, 1]);
+    expect(second!.declared!.get("read")!.loadedRequests).toBe(1);
+  });
+
+  it("attributes a turn's requests to the model of its last assistant message", () => {
+    const [branch] = piBranchesOf([piHeader, piSystem("s0", null, { toolsAdded: [read] }), piUser("u1", "s0"), piAssistant("a1", "u1", "m-a"), piAssistant("a2", "a1", "m-b"), piUser("u2", "a2"), piAssistant("a3", "u2", "m-a")]);
+
+    expect(branch!.requestsByModel).toEqual(new Map([["m-b", 2], ["m-a", 1]]));
+  });
+});
+
+describe("piUnusedToolRowOf", () => {
+  const write = piTool("write");
+  const read = piTool("read");
+  const model = "claude-sonnet-5-5-20261001";
+  const branches = (m: string) =>
+    piBranchesOf([
+      piHeader,
+      piSystem("s0", null, { toolsAdded: [read, write] }),
+      piUser("u1", "s0"),
+      piAssistant("a1", "u1", m),
+      piResult("r1", "a1", "read"),
+      piAssistant("a2", "r1", m),
+      piSystem("s1", "a2", { toolsRemoved: [{ name: "write" }] }),
+      piAssistant("a3", "s1", m),
+    ]);
+
+  it("prices a priced model's tool by the share of requests it was declared for, from the price book", () => {
+    const row = piUnusedToolRowOf("write", branches(model), tables, "priced");
+
+    // write: declared for 2 of 3 requests; the 10 Oct 2026 version has input 2 and cache read 0.1 USD per million.
+    const t = tokensOf(write);
+    expect(row).toMatchObject({ sessions: 1, requests: 3, tokensPerSession: t, ran: false, pricedSessions: 1 });
+    expect(row.low).toBeCloseTo((t * (2 / 3) * 3 * 0.1) / 1e6, 15);
+    expect(row.high).toBeCloseTo((t * (2 / 3) * 3 * 2) / 1e6, 15);
+    expect(row.perTool).toEqual([{ rawName: "write", name: "write", tokens: t, sessions: 1 }]);
+  });
+
+  it("a tool that ran is not unused", () => {
+    expect(piUnusedToolRowOf("read", branches(model), tables, "priced").ran).toBe(true);
+  });
+
+  it("puts a model with no price in the unpriced bucket: tokens and requests, no money", () => {
+    const local = branches("qwen3.8-27b:setup3");
+
+    expect(piUnusedToolRowOf("write", local, tables, "priced").sessions).toBe(0);
+    expect(piUnusedToolRowOf("write", local, tables, "unpriced")).toMatchObject({ sessions: 1, requests: 3, low: 0, high: 0, pricedSessions: 0 });
+  });
+});
+
 describe("independence", () => {
   it("imports nothing from the product's sources", () => {
     const source = readFileSync(new URL("./savings-oracle.mts", import.meta.url), "utf-8");
     const imports = [...source.matchAll(/from\s+"([^"]+)"/g)].map((m) => m[1]!);
     expect(imports.filter((specifier) => specifier.startsWith(".") || specifier.includes("@agent-cost-analyzer"))).toEqual([]);
+  });
+
+  it("the pi reader names no provider, trace builder, detector or pricer module", () => {
+    const source = readFileSync(new URL("./savings-oracle.mts", import.meta.url), "utf-8");
+    const piPart = source.slice(source.indexOf("O1 for pi (V27"));
+
+    expect(piPart.length).toBeGreaterThan(0);
+    expect(piPart).not.toMatch(/data-sources|PiAgentLogProvider|replaySystemMessages|findLeafEntryIds|walkBranch|UnusedToolsDetector|counterfactual|savings-service/);
   });
 });

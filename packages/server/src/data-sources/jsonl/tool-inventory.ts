@@ -30,12 +30,21 @@ export function extractInvokedToolNamesByTurn(
 //
 // `definitionTokensFor` (Phase 16 SR2), when given, sets each entry's
 // `definitionTokens`; without it the entries stay as they were.
+//
+// `loadedRequestsFor` (V27), when given, sets each entry's `loadedRequests`
+// (undefined: the entry gets none, so every request counts).
 export function buildToolInventory(
   loadedToolNames: string[] | null,
   invokedNamesByTurn: string[][],
   definitionTokensFor?: ToolDefinitionTokenLookup,
+  loadedRequestsFor?: (toolName: string) => number | undefined,
 ): ToolInventoryEntry[] {
-  return withDefinitionTokens(buildEntries(loadedToolNames, invokedNamesByTurn), definitionTokensFor);
+  const entries = withDefinitionTokens(buildEntries(loadedToolNames, invokedNamesByTurn), definitionTokensFor);
+  if (!loadedRequestsFor) return entries;
+  return entries.map((entry) => {
+    const loadedRequests = loadedRequestsFor(entry.name);
+    return loadedRequests === undefined ? entry : { ...entry, loadedRequests };
+  });
 }
 
 function withDefinitionTokens(

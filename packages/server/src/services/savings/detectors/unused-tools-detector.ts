@@ -44,28 +44,42 @@ function toolNameOf(rawName: string): string {
 }
 
 // Requests of a session by model: from the request trace, else the turns'
-// round counts. Null: the log gives no count.
+// round counts, less the leading requests a forked pi branch shares with an
+// earlier branch (D27: counted once, under that one). Null: the log gives no
+// count; an empty map: the session has no request of its own.
 function requestsByModel(input: SavingsSessionInput): Map<string, number> | null {
   const counts = new Map<string, number>();
-  const bump = (model: string, by: number) => counts.set(model, (counts.get(model) ?? 0) + by);
+  let shared = input.session.sharedPrefixRequests ?? 0;
+  const bump = (model: string, by: number) => {
+    const skipped = Math.min(shared, by);
+    shared -= skipped;
+    if (by > skipped) counts.set(model, (counts.get(model) ?? 0) + by - skipped);
+  };
   if (input.trace && input.trace.requests.length > 0) {
     input.trace.requests.forEach((request) => bump(request.model, 1));
     return counts;
   }
+  if (input.session.turns.length === 0) return null;
   for (const turn of input.session.turns) {
     if (turn.usage.roundsCount === undefined) return null;
     bump(turn.usage.model || input.session.model, turn.usage.roundsCount);
   }
-  return counts.size > 0 ? counts : null;
+  return counts;
 }
 
 const total = (counts: Map<string, number>): number => [...counts.values()].reduce((sum, count) => sum + count, 0);
+
+// The currency bucket of a session whose model has no known price channel
+// (a local model): its tokens and requests count, its money is unknown.
+const UNPRICED = "unpriced";
 
 interface Usable {
   input: SavingsSessionInput;
   inventory: readonly ToolInventoryEntry[];
   requests: Map<string, number>;
-  channel: string;
+  // Null: no known channel, so nothing in the session can be priced.
+  channel: string | null;
+  unpricedReason?: string;
 }
 
 interface Candidate {
@@ -98,12 +112,17 @@ export class UnusedToolsDetector implements SavingsDetector {
       }
       if (inventory === undefined) {
         unusable.add(session, session.session.copilotHarness === "agent-host" ? AGENT_HOST : NO_INVENTORY);
-      } else if (!session.channel.known) {
-        unusable.add(session, session.channel.reason);
       } else {
         const requests = requestsByModel(session);
         if (requests === null) unusable.add(session, NO_REQUESTS);
-        else usable.push({ input: session, inventory, requests, channel: session.channel.channel });
+        // A forked branch with no request of its own adds nothing (D27).
+        else if (total(requests) > 0) {
+          usable.push(
+            session.channel.known
+              ? { input: session, inventory, requests, channel: session.channel.channel }
+              : { input: session, inventory, requests, channel: null, unpricedReason: session.channel.reason },
+          );
+        }
       }
     }
 
@@ -121,17 +140,17 @@ export class UnusedToolsDetector implements SavingsDetector {
   private opportunitiesOf(candidate: Candidate, loaded: Usable[], input: SavingsInput, unusable: NotAnalysedLedger, groupFailures: NotAnalysedLedger): SavingsOpportunity[] {
     const byCurrency = new Map<string, Usable[]>();
     for (const entry of loaded) {
-      const currency = currencyOf(entry.channel);
+      const currency = entry.channel === null ? UNPRICED : currencyOf(entry.channel);
       byCurrency.set(currency, [...(byCurrency.get(currency) ?? []), entry]);
     }
     const result: SavingsOpportunity[] = [];
     for (const [currency, entries] of byCurrency) {
       const extra = new Map<string, Set<SavingsSessionInput>>();
       const addExtra = (reason: string, session: SavingsSessionInput) => extra.set(reason, (extra.get(reason) ?? new Set()).add(session));
-      const rows: { entry: Usable; tokens: number; byTool: Map<string, number> }[] = [];
+      const rows: { entry: Usable; tokens: number; priced: number; byTool: Map<string, number> }[] = [];
       for (const entry of entries) {
-        const tokens = this.groupTokens(candidate, entry.inventory);
-        if (tokens.known) rows.push({ entry, tokens: tokens.value, byTool: tokens.byTool });
+        const tokens = this.groupTokens(candidate, entry.inventory, total(entry.requests));
+        if (tokens.known) rows.push({ entry, tokens: tokens.value, priced: tokens.pricedTokens, byTool: tokens.byTool });
         else {
           addExtra(tokens.reason, entry.input);
           groupFailures.add(entry.input, tokens.reason);
@@ -141,8 +160,14 @@ export class UnusedToolsDetector implements SavingsDetector {
 
       const parts: PricedPart[] = [];
       const refs: SavingsSessionRef[] = [];
-      for (const { entry, tokens } of rows) {
-        const part = this.price(input, entry, tokens, currency);
+      for (const { entry, priced } of rows) {
+        // Not priced is the amount's own state, with the channel's reason: the
+        // session's tokens and requests were counted, so it stays in the row.
+        if (entry.channel === null) {
+          refs.push(sessionRefOf(entry.input, unknownAmount(entry.unpricedReason!)));
+          continue;
+        }
+        const part = this.price(input, entry, priced, currency);
         if (part.known) {
           parts.push(part);
           refs.push(sessionRefOf(entry.input, sumAmount(currency as "USD", [part], "range")));
@@ -152,7 +177,8 @@ export class UnusedToolsDetector implements SavingsDetector {
           refs.push(sessionRefOf(entry.input, unknownAmount(part.reason)));
         }
       }
-      const window: SavingsAmount = parts.length > 0 ? sumAmount(currency as "USD", parts, "range") : unknownAmount([...extra.keys()].sort()[0]!);
+      const unpricedReasons = rows.flatMap(({ entry }) => (entry.channel === null ? [entry.unpricedReason!] : [])).sort();
+      const window: SavingsAmount = parts.length > 0 ? sumAmount(currency as "USD", parts, "range") : unknownAmount([...extra.keys()].sort()[0] ?? unpricedReasons[0]!);
       const requests = rows.reduce((sum, { entry }) => sum + total(entry.requests), 0);
       const averageTokens = Math.round(rows.reduce((sum, row) => sum + row.tokens, 0) / rows.length);
       result.push({
@@ -191,8 +217,12 @@ export class UnusedToolsDetector implements SavingsDetector {
   }
 
   // The group's definition tokens in one session, and each tool's; unknown when any loaded tool's are.
-  private groupTokens(candidate: Candidate, inventory: readonly ToolInventoryEntry[]): { known: true; value: number; byTool: Map<string, number> } | { known: false; reason: string } {
+  // `pricedTokens` weighs each tool by the share of the session's requests it was
+  // declared for (`loadedRequests`, V27), so a tool added or dropped mid-session
+  // is not charged for requests that never carried it.
+  private groupTokens(candidate: Candidate, inventory: readonly ToolInventoryEntry[], sessionRequests: number): { known: true; value: number; pricedTokens: number; byTool: Map<string, number> } | { known: false; reason: string } {
     let value = 0;
+    let pricedTokens = 0;
     const byTool = new Map<string, number>();
     for (const entry of inventory) {
       if (!entry.loaded || !candidate.names.has(entry.name)) continue;
@@ -200,9 +230,10 @@ export class UnusedToolsDetector implements SavingsDetector {
       if (tokens === undefined) return { known: false, reason: "The log records no definition size for these tools." };
       if (!tokens.known) return { known: false, reason: tokens.reason };
       value += tokens.value;
+      pricedTokens += tokens.value * (entry.loadedRequests === undefined || sessionRequests === 0 ? 1 : Math.min(1, entry.loadedRequests / sessionRequests));
       byTool.set(entry.name, (byTool.get(entry.name) ?? 0) + tokens.value);
     }
-    return { known: true, value, byTool };
+    return { known: true, value, pricedTokens, byTool };
   }
 
   // The tokens resent on every request: from cache to uncached input, per model.

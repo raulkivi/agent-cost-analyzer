@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { messageOf } from "./pi-message.js";
+import { isUserMessage, messageOf } from "./pi-message.js";
 import type { PiRawEntry } from "./pi-jsonl-reader.js";
 
 // pi-ai's `Tool` declaration (dist/types.d.ts) as persisted in a system
@@ -24,6 +24,16 @@ export interface PiSystemPromptState {
   // Every tool declared anywhere on the branch, in first-declaration order —
   // a tool can be removed mid-session after being available (and used).
   declaredToolNames: string[];
+  // V27: the same tools with the definition each last had (a removed tool
+  // keeps its own) and the assistant requests it was declared for, in
+  // first-declaration order.
+  toolHistory: PiToolHistoryEntry[];
+}
+
+export interface PiToolHistoryEntry {
+  name: string;
+  definition: PiToolDeclaration;
+  loadedRequests: number;
 }
 
 interface MutableState {
@@ -59,7 +69,7 @@ function toolsIn(value: unknown): PiToolDeclaration[] {
     : [];
 }
 
-function applySystemMessage(state: MutableState, message: Record<string, unknown>, declared: Set<string>): void {
+function applySystemMessage(state: MutableState, message: Record<string, unknown>, history: Map<string, PiToolHistoryEntry>): void {
   const text = contentText(message.content);
   if (text.length > 0) {
     state.content.push(text);
@@ -78,7 +88,7 @@ function applySystemMessage(state: MutableState, message: Record<string, unknown
   }
   for (const tool of toolsIn(message.toolsAdded)) {
     state.tools.set(tool.name, tool);
-    declared.add(tool.name);
+    history.set(tool.name, { name: tool.name, definition: tool, loadedRequests: history.get(tool.name)?.loadedRequests ?? 0 });
   }
 }
 
@@ -104,11 +114,24 @@ function systemMessageOf(entry: PiRawEntry): { message: Record<string, unknown>;
 // `replace: true` message or a compaction checkpoint resets to a new
 // baseline. Returns null when the branch has no system message at all
 // (sessions recorded before pi persisted them).
-export function replaySystemMessages(branch: PiRawEntry[]): PiSystemPromptState | null {
+//
+// Each assistant request after the first user message counts for the tools
+// declared at that point (`toolHistory`), except the first `skipRequests`
+// requests (a forked branch's prefix shared with an earlier branch, D27).
+export function replaySystemMessages(branch: PiRawEntry[], skipRequests = 0): PiSystemPromptState | null {
   let state: MutableState | null = null;
-  const declared = new Set<string>();
+  const history = new Map<string, PiToolHistoryEntry>();
+  let inTurns = false;
+  let requests = 0;
 
   for (const entry of branch) {
+    inTurns ||= isUserMessage(entry);
+    if (inTurns && messageOf(entry)?.role === "assistant") {
+      requests += 1;
+      if (requests > skipRequests && state) {
+        for (const name of state.tools.keys()) history.get(name)!.loadedRequests += 1;
+      }
+    }
     const systemMessage = systemMessageOf(entry);
     if (!systemMessage) {
       continue;
@@ -116,7 +139,7 @@ export function replaySystemMessages(branch: PiRawEntry[]): PiSystemPromptState 
     if (state === null || systemMessage.isBaseline) {
       state = emptyState();
     }
-    applySystemMessage(state, systemMessage.message, declared);
+    applySystemMessage(state, systemMessage.message, history);
   }
 
   if (state === null) {
@@ -130,6 +153,7 @@ export function replaySystemMessages(branch: PiRawEntry[]): PiSystemPromptState 
     sections,
     text: [baseContent, ...sections.map((section) => section.text)].filter((part) => part.length > 0).join("\n\n"),
     tools: [...state.tools.values()],
-    declaredToolNames: [...declared],
+    declaredToolNames: [...history.keys()],
+    toolHistory: [...history.values()],
   };
 }
