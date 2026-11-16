@@ -399,6 +399,36 @@ ids, dates, counts, sums and model names only.
   sessions.
 - **If D9 is accepted:** `list_tool_calls` count per session = the
   oracle's `tool_use` blocks on the branch plus in linked runs.
+- **As built (CS16):** `npm run test:real-data:claude-code-subagents`.
+  - The oracle is `claude-code-subagent-spend-lib.mts` (pure) and
+    `claude-code-subagent-spend-scan.mts` (folder reads), each with unit tests.
+  - The products read a hard-linked mirror of the stable sessions, so a live
+    session (written in the last 15 minutes) never enters it and both sides
+    read the same files. The mirror sits under `REAL_DATA_VIEW_PARENT`
+    (default `~/.cache`), which must share a file system with
+    `~/.claude/projects`, and is removed afterwards.
+  - The actual side is the standalone app over real HTTP and its MCP server
+    over an in-memory client, over a temporary settings folder, so the price
+    book is the bundled one the oracle uses.
+  - It also checks off-branch runs (not counted, D17), the tool-call audit by
+    origin (a call id once; `byOrigin.main + subagents = totals`), privacy (no
+    subagent prompt or Agent-call argument in any MCP answer) and that no log
+    file changed.
+  - The priced cost is compared on the turns the oracle can price, which are
+    the product's known turns: a turn with no request has no model, and a
+    several-request line on a tiered price is priced only when the summed
+    prompt is in the first tier.
+  - A repository's cost series equals the sum of its sessions only where no
+    session ran a turn in another folder (a turn belongs to the repository of
+    its folder). The check asserts that each series equals the rollup's group
+    and that the groups add up to the rollup, and counts how many equal their
+    sessions' sum.
+  - Privacy leaves out the main agent's own text and the bounded arguments of
+    ordinary tool calls, which the audit shows by design; a call of kind
+    `subagent` (the prompt) must keep no argument summary.
+  - The read-only check fails on a vanished file or a changed file whose write
+    time is not after the run began; a session that Claude Code itself writes
+    while the check runs is counted, not failed.
 
 ## 11. Tasks
 

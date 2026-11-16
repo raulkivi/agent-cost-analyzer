@@ -228,9 +228,15 @@ describe("turnUsageSchema subagents", () => {
     expect(turnUsageSchema.safeParse({ ...knownUsage, subagents: [], ownUsage: own }).success).toBe(true);
   });
 
-  it("rejects runs without ownUsage and ownUsage without runs", () => {
+  it("rejects runs without ownUsage", () => {
     expect(turnUsageSchema.safeParse({ ...knownUsage, subagents: [run] }).success).toBe(false);
-    expect(turnUsageSchema.safeParse({ ...knownUsage, ownUsage: own }).success).toBe(false);
+  });
+
+  // CS16: a Claude Code session-level unknown (a run nothing links to a turn)
+  // makes the first turn's figures unknown and keeps the main agent's own
+  // figures in ownUsage, though that turn started no run.
+  it("accepts ownUsage without a runs list (the carrier of a session-level unknown)", () => {
+    expect(turnUsageSchema.safeParse({ ...knownUsage, ownUsage: own }).success).toBe(true);
   });
 
   it("rejects a hostile run label inside a turn", () => {
