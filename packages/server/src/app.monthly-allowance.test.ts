@@ -173,6 +173,23 @@ describe("monthly allowance API", () => {
       expect(readFileSync(settingsFile(), "utf8")).toBe(before);
     });
 
+    it("413 and writes nothing for a body over the 100 kB limit", async () => {
+      const response = await put(buildApp(), { ...valid, padding: "x".repeat(150_000) });
+      expect(response.status).toBe(413);
+      expect(existsSync(settingsFile())).toBe(false);
+    });
+
+    it("reads a body just under the limit and rejects it in validation (400, not 413)", async () => {
+      const response = await put(buildApp(), { ...valid, padding: "x".repeat(90_000) });
+      expect(response.status).toBe(400);
+    });
+
+    it("400 and writes nothing for malformed JSON", async () => {
+      const response = await request(buildApp()).put("/api/config/monthly-allowance").set("Content-Type", "application/json").send('{"aiCredits": 5,');
+      expect(response.status).toBe(400);
+      expect(existsSync(settingsFile())).toBe(false);
+    });
+
     it("names the field in the 400 message", async () => {
       const response = await put(buildApp(), { ...valid, resetDay: 29 });
       expect(response.body.error).toMatch(/resetDay/);
