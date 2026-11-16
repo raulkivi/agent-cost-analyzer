@@ -21,4 +21,4 @@ Coverage: 4 of 4 turns have a known cost.
 - claude-code:cc-1 Session cc-1
 - vscode:cp-1 Session cp-1
 
-Analyzer 0.0.0-test · price book d09a4526c69b · projects file b1e3876edce6
+Analyzer 0.0.0-test · price book 1d3d79a33bb5 · projects file b1e3876edce6

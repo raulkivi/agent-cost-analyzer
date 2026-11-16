@@ -4,7 +4,7 @@
   "defaultModelId": "gemini-4-argon",
   "caching": {
     "kind": "best-effort",
-    "note": "Implicit prefix caching, on by default for Gemini 2.5 and newer; Copilot uses Google's Durable Caching, a storage tier of implicit caching. No cache lifetime is documented: GitHub holds cached data for up to 24 hours, and Google deletes it no later than 24 hours after it's written, often sooner, which bounds retention but promises no hit window. Gemini 4 Argon and Gemini 3.8 Flash cache prompts of at least 4,096 input tokens. Copilot lists no cache-write charge."
+    "note": "Implicit prefix caching, on by default for Gemini 2.5 and newer; Copilot uses Google's Durable Caching, a storage tier of implicit caching. No cache lifetime is documented: GitHub holds cached data for up to 24 hours, and Google deletes it no later than 24 hours after it's written, often sooner, which bounds retention but promises no hit window. Gemini 4 Carbon, Gemini 4 Argon, Gemini 4 Hydrogen and Gemini 3.8 Flash cache prompts of at least 4,096 input tokens. Copilot lists no cache-write charge."
   },
   "invalidation": [
     {
@@ -73,6 +73,26 @@
         "gh-models-pricing-argon-promo",
         "google-caching-min-tokens"
       ]
+    },
+    {
+      "modelId": "gemini-4-carbon",
+      "displayName": "Gemini 4 Carbon",
+      "vendorId": "google",
+      "releaseStatus": "GA",
+      "cheaperSiblingId": "gemini-4-hydrogen",
+      "sourceIds": [
+        "gh-pricing-table",
+        "gh-models-pricing-carbon-promo",
+        "google-caching-min-tokens"
+      ]
+    },
+    {
+      "modelId": "gemini-4-hydrogen",
+      "displayName": "Gemini 4 Hydrogen",
+      "vendorId": "google",
+      "releaseStatus": "GA",
+      "cheaperSiblingId": "gemini-3.8-flash",
+      "sourceIds": ["gh-pricing-table", "google-caching-min-tokens"]
     }
   ],
   "assumptions": [
@@ -89,7 +109,7 @@
       "confidence": "unknown"
     },
     {
-      "text": "Gemini 4 Argon and Gemini 3.8 Flash cache only prompts of at least 4,096 input tokens (Gemini API figure).",
+      "text": "Gemini 4 Carbon, Gemini 4 Argon, Gemini 4 Hydrogen and Gemini 3.8 Flash cache only prompts of at least 4,096 input tokens (Gemini API figure).",
       "confidence": "documented",
       "sourceIds": ["google-caching-min-tokens"]
     },
@@ -99,11 +119,12 @@
       "sourceIds": ["google-caching-multi-turn"]
     },
     {
-      "text": "Copilot's Gemini prices are promotional: Gemini 3.8 Flash through December 31, 2026, and Gemini 4 Argon until December 1, 2026 (the table: 'Promotional pricing expires 2026-12-01'). promoEndsAt keeps those dates as GitHub states them. Post-promo Copilot prices are unknown.",
+      "text": "Copilot's Gemini prices are promotional: Gemini 3.8 Flash through December 31, 2026, and Gemini 4 Argon and Gemini 4 Carbon until December 1, 2026 (the table: 'Promotional pricing expires 2026-12-01'). promoEndsAt keeps those dates as GitHub states them. Post-promo Copilot prices are unknown for Gemini 3.8 Flash and Gemini 4 Argon. For Gemini 4 Carbon GitHub states $4.00 input, $0.20 cached input and $20.00 output per 1M tokens from December 1, 2026; the price book adds that version on that date.",
       "confidence": "documented",
       "sourceIds": [
         "gh-models-pricing-gemini-flash-promo",
         "gh-models-pricing-argon-promo",
+        "gh-models-pricing-carbon-promo",
         "gh-pricing-table"
       ]
     }
@@ -112,9 +133,9 @@
     {
       "id": "gh-pricing-table",
       "title": "GitHub Copilot price table (github/docs models-and-pricing.yml)",
-      "url": "https://github.com/github/docs/blob/cc0c29a040c251c48ed65198f108a484c33406fa/data/tables/copilot/models-and-pricing.yml",
+      "url": "https://github.com/github/docs/blob/63ea423926305be335413f4cbafb72766f1e6100/data/tables/copilot/models-and-pricing.yml",
       "quote": "Promotional pricing expires 2026-12-01. Google hasn't shared post-promo pricing yet.",
-      "checkedAt": "2026-11-05"
+      "checkedAt": "2026-11-16"
     },
     {
       "id": "gh-models-pricing-gemini-flash-promo",
@@ -129,6 +150,13 @@
       "url": "https://docs.github.com/en/copilot/reference/copilot-billing/models-and-pricing",
       "quote": "Gemini 4 Argon is available at the promotional pricing of $2.00 per 1M input tokens, $0.10 per 1M cached input tokens, and $10.00 per 1M output tokens until December 1, 2026.",
       "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-models-pricing-carbon-promo",
+      "title": "GitHub Docs: Models and pricing for GitHub Copilot (Gemini 4 Carbon promotion)",
+      "url": "https://github.com/github/docs/blob/63ea423926305be335413f4cbafb72766f1e6100/content/copilot/reference/copilot-billing/models-and-pricing.md",
+      "quote": "is available at the promotional pricing of $2.00 per 1M input tokens, $0.10 per 1M cached input tokens, and $10.00 per 1M output tokens until December 1, 2026. Starting December 1, 2026, pricing is $4.00 per 1M input tokens, $0.20 per 1M cached input tokens, and $20.00 per 1M output tokens.",
+      "checkedAt": "2026-11-16"
     },
     {
       "id": "gh-model-hosting-gemini-caching",

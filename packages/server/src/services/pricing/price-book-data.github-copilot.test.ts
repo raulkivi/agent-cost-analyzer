@@ -20,7 +20,8 @@ function versionAt(modelId: string, at: string) {
 }
 
 // Models added to the table after 2026-10-01, with the commit date that added them.
-const ADDED = { "claude-haiku-5.5": "2026-10-07", "gemini-4-argon": "2026-10-13", "gpt-6.1-terra": "2026-10-26" } as const;
+const ADDED = { "claude-haiku-5.5": "2026-10-07", "gemini-4-argon": "2026-10-13", "gpt-6.1-terra": "2026-10-26",
+  "claude-fable-5.2": "2026-11-09", "gemini-4-carbon": "2026-11-10", "gemini-4-hydrogen": "2026-11-13" } as const;
 
 // Models in the table on 2026-10-01 that GitHub removed later in October,
 // with the date of the commit that removed them (9c7da1a, 4dd188c). They
@@ -40,7 +41,7 @@ const REMOVED = {
 describe("GitHub Copilot price history (step 15.5, D8 from 2026-10-01)", () => {
   it("prices every model listed on 2026-10-01 from that day", () => {
     const models = [...new Set(copilot.map((version) => version.modelId))];
-    expect(models.length).toBe(38);
+    expect(models.length).toBe(41);
     for (const modelId of models.filter((id) => !(id in ADDED))) {
       expect(versionAt(modelId, "2026-10-01T00:00:00Z")?.effectiveFrom, modelId).toBe("2026-10-01");
       expect(book.priceFor("github-copilot", modelId, "2026-09-30T23:59:59Z").known, modelId).toBe(false);
@@ -60,6 +61,23 @@ describe("GitHub Copilot price history (step 15.5, D8 from 2026-10-01)", () => {
       expect(book.priceFor("github-copilot", modelId, previousDay).known, modelId).toBe(false);
       expect(versionAt(modelId, `${added}T00:00:00Z`)?.id, modelId).toBe(`github-copilot:${modelId}:${added}`);
     }
+  });
+
+  it("prices the three models added in November from the day their rows were added", () => {
+    expect(versionAt("claude-fable-5.2", "2026-11-09")).toMatchObject({
+      kind: "list",
+      tiers: [{ inputUsdPerM: 8, cachedInputUsdPerM: 0.2, cacheWriteUsdPerM: 10, extendedCacheWriteUsdPerM: 16, outputUsdPerM: 40 }],
+    });
+    expect(versionAt("gemini-4-carbon", "2026-11-10")).toMatchObject({
+      kind: "promo",
+      promoEndsAt: "2026-12-01",
+      effectiveTo: "2026-12-01",
+      tiers: [{ inputUsdPerM: 2, cachedInputUsdPerM: 0.1, cacheWriteUsdPerM: null, outputUsdPerM: 10 }],
+    });
+    expect(versionAt("gemini-4-hydrogen", "2026-11-13")).toMatchObject({
+      kind: "list",
+      tiers: [{ inputUsdPerM: 1.5, cachedInputUsdPerM: 0.075, cacheWriteUsdPerM: null, outputUsdPerM: 7.5 }],
+    });
   });
 
   it("halves Claude Sonnet 5.5's cached input price on 2026-10-07 (eb975b9)", () => {
@@ -114,13 +132,16 @@ describe("GitHub Copilot price history (step 15.5, D8 from 2026-10-01)", () => {
       "2026-10-07": "eb975b9c497b7f4bd04a020afe730565a1e33921",
       "2026-10-13": "924579599358cb4235d5d40975ae6d905bc24554",
       "2026-10-26": "cc0c29a040c251c48ed65198f108a484c33406fa",
+      "2026-11-09": "0b4f88436db837e6e125efaaf953a8496d165ad1",
+      "2026-11-10": "d8541d452854274e2d37ddaba9613dc8c4fa524d",
+      "2026-11-13": "63ea423926305be335413f4cbafb72766f1e6100",
     };
     for (const version of copilot) {
       const first = byId.get(version.sourceIds[0]!);
       expect(first?.url, version.id).toBe(
         `https://github.com/github/docs/blob/${proving[version.effectiveFrom]}/data/tables/copilot/models-and-pricing.yml`,
       );
-      expect(first?.checkedAt, version.id).toBe("2026-11-05");
+      expect(first?.checkedAt, version.id).toBe(version.effectiveFrom >= "2026-11-09" ? "2026-11-16" : "2026-11-05");
       expect(first?.quote ?? "", version.id).not.toBe("");
       // A version still in force also cites the table as of its last commit (cc0c29a).
       if (!(version.modelId in REMOVED) && (version.effectiveTo === undefined || version.kind === "promo")) expect(version.sourceIds, version.id).toContain("gh-pricing-table");

@@ -4,9 +4,9 @@
     {
       "id": "gh-pricing-table",
       "title": "GitHub Copilot price table (github/docs models-and-pricing.yml)",
-      "url": "https://github.com/github/docs/blob/cc0c29a040c251c48ed65198f108a484c33406fa/data/tables/copilot/models-and-pricing.yml",
+      "url": "https://github.com/github/docs/blob/63ea423926305be335413f4cbafb72766f1e6100/data/tables/copilot/models-and-pricing.yml",
       "quote": "This file defines per-token pricing for AI models available in GitHub Copilot.",
-      "checkedAt": "2026-11-05"
+      "checkedAt": "2026-11-16"
     },
     {
       "id": "anthropic-pc-pricing-1h",
@@ -399,6 +399,48 @@
       "url": "https://github.com/github/docs/blob/4dd188c2c92f0b57e7f7ec863fd9cca1e093b09b/data/tables/copilot/models-and-pricing.yml",
       "quote": "The table at this commit has no entry for Gemini 3.7 Flash; the one before it does.",
       "checkedAt": "2026-11-05"
+    },
+    {
+      "id": "gh-pricing-table-0b4f884-claude-fable-5.2",
+      "title": "GitHub Copilot price table at github/docs 0b4f884 (2026-11-09): Claude Fable 5.2 (entry lines joined by '; ')",
+      "url": "https://github.com/github/docs/blob/0b4f88436db837e6e125efaaf953a8496d165ad1/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Claude Fable 5.2; input: $8.00; cached_input: $0.20; cache_write: $10.00; output: $40.00",
+      "checkedAt": "2026-11-16"
+    },
+    {
+      "id": "gh-pricing-table-d8541d4-gemini-4-carbon",
+      "title": "GitHub Copilot price table at github/docs d8541d4 (2026-11-10): Gemini 4 Carbon (entry lines joined by '; ')",
+      "url": "https://github.com/github/docs/blob/d8541d452854274e2d37ddaba9613dc8c4fa524d/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Gemini 4 Carbon[^gemini-4-carbon-promo]; input: $2.00; cached_input: $0.10; output: $10.00",
+      "checkedAt": "2026-11-16"
+    },
+    {
+      "id": "gh-pricing-page-d8541d4-carbon-promo",
+      "title": "GitHub Docs: Models and pricing for GitHub Copilot at github/docs d8541d4 (2026-11-10), Gemini 4 Carbon promotion footnote",
+      "url": "https://github.com/github/docs/blob/d8541d452854274e2d37ddaba9613dc8c4fa524d/content/copilot/reference/copilot-billing/models-and-pricing.md",
+      "quote": "is available at the promotional pricing of $2.00 per 1M input tokens, $0.10 per 1M cached input tokens, and $10.00 per 1M output tokens until December 1, 2026. Starting December 1, 2026, pricing is $4.00 per 1M input tokens, $0.20 per 1M cached input tokens, and $20.00 per 1M output tokens.",
+      "checkedAt": "2026-11-16"
+    },
+    {
+      "id": "gh-models-pricing-carbon-promo",
+      "title": "GitHub Docs: Models and pricing for GitHub Copilot at github/docs 63ea423 (2026-11-13), Gemini 4 Carbon promotion footnote",
+      "url": "https://github.com/github/docs/blob/63ea423926305be335413f4cbafb72766f1e6100/content/copilot/reference/copilot-billing/models-and-pricing.md",
+      "quote": "is available at the promotional pricing of $2.00 per 1M input tokens, $0.10 per 1M cached input tokens, and $10.00 per 1M output tokens until December 1, 2026. Starting December 1, 2026, pricing is $4.00 per 1M input tokens, $0.20 per 1M cached input tokens, and $20.00 per 1M output tokens.",
+      "checkedAt": "2026-11-16"
+    },
+    {
+      "id": "gh-pricing-table-63ea423-gemini-4-hydrogen",
+      "title": "GitHub Copilot price table at github/docs 63ea423 (2026-11-13): Gemini 4 Hydrogen (entry lines joined by '; ')",
+      "url": "https://github.com/github/docs/blob/63ea423926305be335413f4cbafb72766f1e6100/data/tables/copilot/models-and-pricing.yml",
+      "quote": "model: Gemini 4 Hydrogen; input: $1.50; cached_input: $0.075; output: $7.50",
+      "checkedAt": "2026-11-16"
+    },
+    {
+      "id": "anthropic-pc-pricing-fable-5.2",
+      "title": "Anthropic: Prompt caching, pricing table (Claude Fable 5.2)",
+      "url": "https://platform.claude.com/docs/en/build-with-claude/prompt-caching#pricing",
+      "quote": "Claude Fable 5.2 | $8 / MTok | $40 / MTok | $10 / MTok | $16 / MTok | $0.20 / MTok (input, output, 5m writes, 1h writes, hits and refreshes)",
+      "checkedAt": "2026-11-16"
     }
   ],
   "versions": [
@@ -1397,6 +1439,77 @@
         "gh-models-pricing-gemini-flash-promo"
       ],
       "note": "In force on 2026-10-01: the github/docs price table at 7f63f3a (2026-09-29), unchanged until 9c7da1a (2026-10-02), lists it. Removed from the table in 4dd188c (2026-10-19); no price is known after that, and the model's actual retirement date is not in the table. Promotional price; GitHub states the promotion's end as 2026-12-31, after the model's removal."
+    },
+    {
+      "id": "github-copilot:claude-fable-5.2:2026-11-09",
+      "channel": "github-copilot",
+      "modelId": "claude-fable-5.2",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-09",
+      "tiers": [
+        {
+          "inputUsdPerM": 8.0,
+          "cachedInputUsdPerM": 0.2,
+          "cacheWriteUsdPerM": 10.0,
+          "extendedCacheWriteUsdPerM": 16.0,
+          "outputUsdPerM": 40.0
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "gh-pricing-table-0b4f884-claude-fable-5.2",
+        "gh-pricing-table",
+        "gh-models-pricing-anthropic",
+        "anthropic-pc-pricing-fable-5.2",
+        "anthropic-pc-pricing-1h"
+      ],
+      "note": "Added to the github/docs price table in 0b4f884 (2026-11-09). Unchanged through 63ea423 (2026-11-13), the last commit to the table as of 2026-11-16. extendedCacheWriteUsdPerM (1-hour cache write) is $16 from Anthropic's prompt-caching pricing table (2x the input price); GitHub's table has no 1-hour column."
+    },
+    {
+      "id": "github-copilot:gemini-4-carbon:2026-11-10",
+      "channel": "github-copilot",
+      "modelId": "gemini-4-carbon",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-10",
+      "effectiveTo": "2026-12-01",
+      "tiers": [
+        {
+          "inputUsdPerM": 2.0,
+          "cachedInputUsdPerM": 0.1,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 10.0
+        }
+      ],
+      "kind": "promo",
+      "promoEndsAt": "2026-12-01",
+      "sourceIds": [
+        "gh-pricing-table-d8541d4-gemini-4-carbon",
+        "gh-pricing-table",
+        "gh-pricing-page-d8541d4-carbon-promo",
+        "gh-models-pricing-carbon-promo"
+      ],
+      "note": "Added to the github/docs price table in d8541d4 (2026-11-10). Unchanged through 63ea423 (2026-11-13), the last commit to the table as of 2026-11-16. Promotional price until 2026-12-01. GitHub states the price from 2026-12-01 as $4.00 input, $0.20 cached input and $20.00 output per 1M tokens. That version is not in the book yet, because the newest version drives the vendor profile; add it on 2026-12-01."
+    },
+    {
+      "id": "github-copilot:gemini-4-hydrogen:2026-11-13",
+      "channel": "github-copilot",
+      "modelId": "gemini-4-hydrogen",
+      "currency": "USD",
+      "effectiveFrom": "2026-11-13",
+      "tiers": [
+        {
+          "inputUsdPerM": 1.5,
+          "cachedInputUsdPerM": 0.075,
+          "cacheWriteUsdPerM": null,
+          "outputUsdPerM": 7.5
+        }
+      ],
+      "kind": "list",
+      "sourceIds": [
+        "gh-pricing-table-63ea423-gemini-4-hydrogen",
+        "gh-pricing-table"
+      ],
+      "note": "Added to the github/docs price table in 63ea423 (2026-11-13). Unchanged through 63ea423 (2026-11-13), the last commit to the table as of 2026-11-16."
     }
   ]
 }

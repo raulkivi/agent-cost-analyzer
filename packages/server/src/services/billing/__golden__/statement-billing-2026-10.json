@@ -120,7 +120,7 @@
     },
     "provenance": {
       "appVersion": "0.0.0-test",
-      "priceBookHash": "d09a4526c69b",
+      "priceBookHash": "1d3d79a33bb5",
       "projectsFileHash": "b1e3876edce6",
       "priceVersionIds": [
         "openai-api:gpt-6.1-sol:2026-10-20"
