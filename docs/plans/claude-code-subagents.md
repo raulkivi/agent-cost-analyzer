@@ -1,8 +1,8 @@
 # Claude Code subagent usage
 
-**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **plan approved** (2026-11-14): the owner accepted every recommendation, D1–D16 (§8). A 1.0 criterion, C15 in
+Status: **Building: CS0 to CS15 done 2026-11-16; next CS16, the real-data check and the owner's sign-off.** Plan approved (2026-11-14): the owner accepted every recommendation, D1–D16 (§8). A 1.0 criterion, C15 in
 [implementation-plan.md](../implementation-plan.md#100-release) (tasks V32
 plan, V33 build). Spike CS0 done read-only on the owner's machine (§4).
 Built on the patterns of step 10.19
@@ -418,13 +418,13 @@ model in this repo. Specs and the real-data suite are TDD exceptions as in
 | CS6 | **Done 2026-11-15 (PR #339).** `subagent-meta.ts` allow-list | Tests: dropped keys, caps, malformed JSON, oversize | low | Sonnet | CS3 |
 | CS7 | **Done 2026-11-16 (PR #366).** `round-usage.ts` extracted; `subagent-run-usage.ts` | Existing usage tests unchanged; run tests: sums, 1-hour split, fork copies skipped, `<synthetic>`, missing field, partial line | medium | Sonnet | CS4, CS6 |
 | CS8 | **Done 2026-11-16 (PR #373).** `subagent-attribution.ts` (§5.4, §6) | Every row of §6 and D1–D8 is a test; none yields a known total that leaves a round out | high | Opus | CS5, CS7 |
-| CS9 | Merge and cost lines: reuse or generalise `mergeSubagentUsage`; `turnLinesOf` with `extendedCacheWrite`; property test (lines sum to the row, no `requestId` twice) | Tests pass; Copilot golden tests unchanged | high | Opus | CS8 |
-| CS10 | Provider wiring, shared for list and detail; run-summary cache; budget test | Contract test "list equals detail" on a session with runs; budget test with 2.5 × the session bytes in runs | medium | Sonnet | CS9, D16 |
-| CS11 | Session summaries, replay coverage and savings coverage (D10, D13) | `session-cost-builder`, `session-replay-service`, `savings-service` tests | medium | Sonnet | CS10 |
-| CS12 | MCP text: server instructions, `get_turn`, `get_session_cost`, `replay_session` descriptions; tool-list snapshots | `mcp/security.test.ts` passes; snapshots updated on purpose | low | Sonnet | CS11 |
-| CS13 | Web and MCP App U1 per CS2; Playwright spec `packages/web/e2e/specs/claude-code-subagents.spec.ts` and one in `packages/mcp-apps/e2e/specs/` | Component tests with axe; `web-e2e` and `mcp-apps-e2e` pass | medium | Sonnet | CS2, CS11 |
-| CS14 | Tool audit increment (D9): subagent tool calls in the audit and security findings, one shape with step 10.20 | Audit tests; threat-model residual closed | high | Opus | V21 approved, CS10 |
-| CS15 | Docs (§12); D17: say off-branch runs are not counted | Docs match the code; Gantt updated | medium | Sonnet | CS10–CS14 |
+| CS9 | **Done 2026-11-16 (PR #375).** Merge and cost lines: reuse or generalize `mergeSubagentUsage`; `turnLinesOf` with `extendedCacheWrite`; property test (lines sum to the row, no `requestId` twice) | Tests pass; Copilot golden tests unchanged | high | Opus | CS8 |
+| CS10 | **Done 2026-11-16 (PR #378).** Provider wiring, shared for list and detail; run-summary cache; budget test | Contract test "list equals detail" on a session with runs; budget test with 2.5 × the session bytes in runs | medium | Sonnet | CS9, D16 |
+| CS11 | **Done 2026-11-16 (PR #381).** Session summaries, replay coverage and savings coverage (D10, D13) | `session-cost-builder`, `session-replay-service`, `savings-service` tests | medium | Sonnet | CS10 |
+| CS12 | **Done 2026-11-16 (PR #385).** MCP text: server instructions, `get_turn`, `get_session_cost`, `replay_session` descriptions; tool-list snapshots | `mcp/security.test.ts` passes; snapshots updated on purpose | low | Sonnet | CS11 |
+| CS13 | **Done 2026-11-16 (PR #389).** Web and MCP App U1 per CS2; Playwright spec `packages/web/e2e/specs/claude-code-subagents.spec.ts` and one in `packages/mcp-apps/e2e/specs/` | Component tests with axe; `web-e2e` and `mcp-apps-e2e` pass | medium | Sonnet | CS2, CS11 |
+| CS14 | **Done 2026-11-16 (PR #382).** Tool audit increment (D9): subagent tool calls in the audit and security findings, one shape with step 10.20 | Audit tests; threat-model residual closed | high | Opus | V21 approved, CS10 |
+| CS15 | **Done 2026-11-16 (PR #387).** Docs (§12); D17: say off-branch runs are not counted | Docs match the code; Gantt updated | medium | Sonnet | CS10–CS14 |
 | CS16 | Real-data suite and oracle (§10); owner run and sign-off | §10 passes; owner signs off | medium | Opus (suite), owner | CS15 |
 
 Critical path: CS0b → CS3 → CS5/CS6 → CS7 → CS8 → CS9 → CS10 → CS11 →
