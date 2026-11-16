@@ -304,3 +304,70 @@ describe("mergeSubagentUsage properties", () => {
     );
   });
 });
+
+// CS9: the merge is shared with Claude Code, whose turns and runs record the
+// 1-hour part of cacheWrite. Copilot records none, so its turns never get it.
+describe("mergeSubagentUsage, extendedCacheWrite (CS9)", () => {
+  const noSplit = unavailableTokenCount("the log does not split cache writes by lifetime");
+
+  it("sums the turn's and each run's extendedCacheWrite", () => {
+    const [merged] = mergeSubagentUsage(
+      [turn({ extendedCacheWrite: known(50) })],
+      new Map([[0, [run({ extendedCacheWrite: known(5) }), run({ id: "toolu_run2", extendedCacheWrite: known(0) })]]]),
+      none,
+    );
+
+    expect(merged?.extendedCacheWrite).toEqual(known(55));
+  });
+
+  it("keeps the main agent's own extendedCacheWrite in ownUsage", () => {
+    const [merged] = mergeSubagentUsage(
+      [turn({ extendedCacheWrite: known(50) })],
+      new Map([[0, [run({ extendedCacheWrite: known(5) })]]]),
+      none,
+    );
+
+    expect(merged?.ownUsage?.extendedCacheWrite).toEqual(known(50));
+  });
+
+  it("makes extendedCacheWrite unknown, with the unknown part's reason, when a part is", () => {
+    const [merged] = mergeSubagentUsage(
+      [turn({ extendedCacheWrite: known(50) })],
+      new Map([[0, [run({ extendedCacheWrite: noSplit })]]]),
+      none,
+    );
+
+    expect(merged?.extendedCacheWrite).toEqual(noSplit);
+    expect(merged?.cacheWrite).toEqual(known(220));
+  });
+
+  it("makes extendedCacheWrite unknown when a run records none but the turn does (not recorded is not 0)", () => {
+    const [merged] = mergeSubagentUsage([turn({ extendedCacheWrite: known(50) })], new Map([[0, [run()]]]), none);
+
+    expect(merged?.extendedCacheWrite?.known).toBe(false);
+  });
+
+  it("makes extendedCacheWrite unknown when a run records it but the turn does not", () => {
+    const [merged] = mergeSubagentUsage([turn()], new Map([[0, [run({ extendedCacheWrite: known(5) })]]]), none);
+
+    expect(merged?.extendedCacheWrite?.known).toBe(false);
+    expect(merged?.ownUsage).not.toHaveProperty("extendedCacheWrite");
+  });
+
+  it("leaves extendedCacheWrite absent when neither the turn nor a run records it (Copilot)", () => {
+    const [merged] = mergeSubagentUsage([turn()], new Map([[0, [run()]]]), none);
+
+    expect(merged).not.toHaveProperty("extendedCacheWrite");
+    expect(merged?.ownUsage).not.toHaveProperty("extendedCacheWrite");
+  });
+
+  it("makes extendedCacheWrite unknown when a run could not be read", () => {
+    const [merged] = mergeSubagentUsage(
+      [turn({ extendedCacheWrite: known(50) })],
+      new Map(),
+      new Map([[0, SUBAGENT_LOG_MISSING_REASON]]),
+    );
+
+    expect(merged?.extendedCacheWrite).toEqual(unavailableTokenCount(SUBAGENT_LOG_MISSING_REASON));
+  });
+});
