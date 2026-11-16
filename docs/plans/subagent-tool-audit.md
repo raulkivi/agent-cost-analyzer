@@ -1,8 +1,8 @@
 # Subagent tool calls in the tool-call audit (step 10.20)
 
-**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **Plan approved 2026-11-14** (D1–D11 accepted). A 1.0 criterion, C10 in
+Status: **Done 2026-11-16 (ST0 to ST15; §11 exit criterion met: the owner signed off the real-data check, 12 of 12 pass).** Plan approved 2026-11-14 (D1–D11 accepted). A 1.0 criterion, C10 in
 [implementation-plan.md](../implementation-plan.md#100-release) (tasks V21
 plan, V22 build). Spike ST0 done read-only on the owner's machine (§4).
 Follows step 10.19 D3
@@ -507,15 +507,15 @@ model in this repo. Specs and the real-data suite are TDD exceptions as in
 | ST4 | **Done 2026-11-15** (fixtures in `packages/server/fixtures/jsonl/subagent-audit/` and `agent-host/subagent-audit/`; integrity test `subagent-audit-fixtures.test.ts`). Fixtures: classic child logs with `ok`/`error` spans (an error text per failure category, a shell call), missing and unreadable log, nested ref, `searchSubagent` without parent call, `explore_subagent` linked to its `searchSubagent` log by time window (§14.1) and one without a log, an id in parent and child; Agent Host log with `task` and `search_code_subagent` runs, depth 2, a canceled run, a refused permission | A test reads each and finds the expected counts | medium | Sonnet | ST0b |
 | ST5 | **Done 2026-11-15.** `tool-kind-resolver.ts`: `searchsubagent`, `search_code_subagent`, `explore_subagent` → `subagent` | Resolver tests | low | Haiku | — |
 | ST6 | **Done 2026-11-16 (PR #367).** `audit-attrs-projector.ts`, `tool-call-spans.ts`; `buildToolCalls` from spans (D3) | Tests: status mapping (D14: "Canceled" text → `canceled`), unknown status, `dur`, args bound (50 KB `args` → summary ≤ 300 chars), `result` never kept, list path unchanged | medium | Sonnet | ST3, ST4, D3 |
-| ST7 | `subagent-tool-calls.ts` (§5.2, §5.4, §6) wired into `readClassicSession` | Every classic row of §6 is a test; dedupe property test; no known run with a call left out | high | Opus | ST5, ST6 |
+| ST7 | **Done 2026-11-16 (PR #377).** `subagent-tool-calls.ts` (§5.2, §5.4, §6) wired into `readClassicSession` | Every classic row of §6 is a test; dedupe property test; no known run with a call left out | high | Opus | ST5, ST6 |
 | ST8 | **Done 2026-11-16 (PR #369).** Agent Host `originOf` and order (§5.3); `subagent.started` kept by the cache | Tests: main, depth 1 and 2, label sources, broken chain, cycle, order | medium | Sonnet | ST3, ST4, D2 |
 | ST9 | **Done 2026-11-16 (PR #368).** Builders and queries (§5.5) | `byOrigin` property test; runs table incl. unread; retries per origin; rollup counter; filters | high | Opus | ST3, D4, D6 |
 | ST10 | **Done 2026-11-16 (PR #372).** Findings and savings (§5.6) | D13 rules, each with its observed wording as test; D14 `canceled` excluded from failure rates and findings but visible in the audit. Scanner, dataset, behaviour-change and savings tests; finding keys checked unstored | medium | Sonnet | ST9, D7 |
-| ST11 | HTTP and MCP (§5.8): inputs, outputs, descriptions, instructions, snapshots | `mcp/security.test.ts`; route tests; snapshots updated on purpose | medium | Sonnet | ST9, ST10, D9 |
-| ST12 | Web and extension webview per ST2; Playwright and wdio specs (§11); UI fixture sessions gain child-log tool calls | Component tests with axe, keyboard, hostile text; `web-e2e`, `extension-ui` pass | medium | Sonnet | ST2, ST11 |
-| ST13 | MCP App U4 and findings view per ST2; Playwright spec | View-model and view tests; `mcp-apps-e2e` passes | medium | Sonnet | ST2, ST11 |
-| ST14 | Docs (§13); threat-model rows rewritten as verified, residual closed | Docs match the code; Gantt updated by the main session | medium | Sonnet | ST7–ST13 |
-| ST15 | Real-data suite and oracle (§11); owner run and sign-off | §11 passes; owner signs off | medium | Opus (suite), owner | ST14 |
+| ST11 | **Done 2026-11-16 (PR #376).** HTTP and MCP (§5.8): inputs, outputs, descriptions, instructions, snapshots | `mcp/security.test.ts`; route tests; snapshots updated on purpose | medium | Sonnet | ST9, ST10, D9 |
+| ST12 | **Done 2026-11-16 (PR #383).** Web and extension webview per ST2; Playwright and wdio specs (§11); UI fixture sessions gain child-log tool calls | Component tests with axe, keyboard, hostile text; `web-e2e`, `extension-ui` pass | medium | Sonnet | ST2, ST11 |
+| ST13 | **Done 2026-11-16 (PR #379; matched-by-time follow-up PR #386).** MCP App U4 and findings view per ST2; Playwright spec | View-model and view tests; `mcp-apps-e2e` passes | medium | Sonnet | ST2, ST11 |
+| ST14 | **Done 2026-11-16 (PR #388).** Docs (§13); threat-model rows rewritten as verified, residual closed | Docs match the code; Gantt updated by the main session | medium | Sonnet | ST7–ST13 |
+| ST15 | **Done 2026-11-16 (PR #390; owner sign-off 2026-11-16, 12 of 12 pass).** Real-data suite and oracle (§11); owner run and sign-off | §11 passes; owner signs off | medium | Opus (suite), owner | ST14 |
 
 Critical path: ST0b → ST4 → ST6 → ST7 → ST9 → ST11 → ST12 → ST14 → ST15.
 ST1, ST2, ST3 and ST5 run beside ST0b–ST4; ST8 beside ST6–ST7; ST13 beside
