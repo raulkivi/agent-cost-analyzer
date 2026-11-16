@@ -1,6 +1,14 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { costBasisTotals, splitByModel, type Session, type SessionCost, type TokenCount } from "@agent-cost-analyzer/domain";
+import {
+  costBasisTotals,
+  splitByModel,
+  type InsightTurnRow,
+  type Session,
+  type SessionCost,
+  type SubagentSpend,
+  type TokenCount,
+} from "@agent-cost-analyzer/domain";
 import { attributionRowFields, buildInsightRows, type RowAttributor } from "../insights/insights-dataset-builder.js";
 import type { TurnPricer } from "../pricing/turn-cost-figures.js";
 import { excerptOf } from "../tool-audit/output-redactor.js";
@@ -15,6 +23,7 @@ import {
   rankingFor,
 } from "./cost-aggregation.js";
 import { sessionActivity } from "./session-activity.js";
+import { subagentSpendCost } from "./subagent-spend-cost.js";
 
 // Phase 9.12 (docs/plans/mcp-tools-v2.md §4): Session → SessionCost. Pure.
 
@@ -80,14 +89,34 @@ function contextOverhead(session: Session): SessionCost["contextOverhead"] {
   return overhead;
 }
 
-function subagentSummary(session: Session): Pick<SessionCost, "subagents"> {
+const tokenFigureOf = (count: TokenCount): number | null => (count.known ? count.value : null);
+
+// Step CS11 (claude-code-subagents.md D13): the runs' tokens and priced cost,
+// for a provider without AI Credits; the cost sums the runs' cost lines, each
+// priced on its own model.
+function subagentTokensAndCost(spend: SubagentSpend, rows: InsightTurnRow[]): Pick<NonNullable<SessionCost["subagents"]>, "tokens" | "cost"> {
+  const { tokens } = spend;
+  if (!tokens) return {};
+  const figures = {
+    uncachedInput: tokenFigureOf(tokens.uncachedInput),
+    cacheWrite: tokenFigureOf(tokens.cacheWrite),
+    cacheRead: tokenFigureOf(tokens.cacheRead),
+    output: tokenFigureOf(tokens.output),
+  };
+  const runLines = rows.flatMap((row) => row.lines ?? []).filter((line) => line.subagent);
+  return { tokens: figures, cost: spend.cost ?? subagentSpendCost(tokens, runLines.map((line) => line.cost)) };
+}
+
+function subagentSummary(session: Session, rows: InsightTurnRow[]): Pick<SessionCost, "subagents"> {
   const spend = session.subagentSpend;
   if (!spend) return {};
   const { costAiCredits } = spend;
   return {
-    subagents: costAiCredits.known
-      ? { runs: spend.runs, aiCredits: costAiCredits.value }
-      : { runs: spend.runs, aiCredits: null, unavailableReason: costAiCredits.reason },
+    subagents: {
+      runs: spend.runs,
+      ...(costAiCredits.known ? { aiCredits: costAiCredits.value } : { aiCredits: null, unavailableReason: costAiCredits.reason }),
+      ...subagentTokensAndCost(spend, rows),
+    },
   };
 }
 
@@ -141,7 +170,7 @@ export function buildSessionCost(session: Session, options: SessionCostOptions =
     topTurns,
     events: session.turns.flatMap((turn) => (turn.triggeredEvent ? [{ turnIndex: turn.index, event: turn.triggeredEvent }] : [])),
     contextOverhead: contextOverhead(session),
-    ...subagentSummary(session),
+    ...subagentSummary(session, rows),
     unavailableReasons: unavailableReasons(session),
   };
 }

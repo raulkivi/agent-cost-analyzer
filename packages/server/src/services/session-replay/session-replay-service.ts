@@ -18,6 +18,7 @@ import {
   type SessionReplayComparison,
   type SimulatedCost,
   type Turn,
+  type TurnCostFigures,
   type VendorProfile,
   sumTokenCounts,
 } from "@agent-cost-analyzer/domain";
@@ -40,6 +41,8 @@ import {
   type PricedFigureSource,
   type TurnPricer,
 } from "../pricing/turn-cost-figures.js";
+import { subagentSpendCost } from "../cost/subagent-spend-cost.js";
+import { turnLinesOf } from "../pricing/turn-cost-lines.js";
 import type { ProviderLookup } from "../tool-audit/audit-query-service.js";
 import { alignReplay, type SimulatedRequest } from "./replay-aligner.js";
 import {
@@ -244,21 +247,38 @@ function inCurrency(figure: CostFigure, currency: Currency): MeasuredCost {
 
 // D11: the trace is the main chain, so a turn that folds in subagent runs is
 // compared on its own usage (the folded figures would include requests the
-// replay leaves out).
+// replay leaves out). A turn that holds only a session-level unknown reason
+// (Claude Code, CS10) has `ownUsage` and no run: its own figures stand too.
 function mainAgentTurn(turn: Turn): Turn {
-  const { subagents, ownUsage, ...main } = turn.usage;
-  if (subagents === undefined || ownUsage === undefined) return turn;
-  // The log records no extended write or own cost for classic turns, so the
-  // spread keeps nothing folded that the own figures should replace.
+  const { ownUsage } = turn.usage;
+  if (ownUsage === undefined) return turn;
+  // The 1-hour cache writes are the own line's, or none: the folded sum
+  // counts the runs' writes too.
+  const main = { ...turn.usage };
+  delete main.subagents;
+  delete main.ownUsage;
+  delete main.extendedCacheWrite;
   return { ...turn, usage: { ...main, ...ownUsage } };
 }
 
 const RUN_COST_UNKNOWN_REASON =
   "At least one subagent run's AI Credits are unknown.";
 
-// The runs the replay leaves out, for the coverage line.
-function subagentRunsOutside(turns: Turn[]): ReplayCoverage["subagentRuns"] {
-  const runs = turns.flatMap((turn) => turn.usage.subagents ?? []);
+// The runs the replay leaves out, for the coverage line. Step CS11 (D13): a
+// session whose provider records tokens for its runs (Claude Code) names them
+// and their priced cost beside the unknown AI Credits.
+function subagentRunsOutside(loaded: Loaded): ReplayCoverage["subagentRuns"] {
+  const { session } = loaded;
+  const spend = session.subagentSpend;
+  if (spend?.tokens !== undefined) {
+    return {
+      runs: spend.runs,
+      costAiCredits: spend.costAiCredits,
+      tokens: spend.tokens,
+      cost: subagentSpendCost(spend.tokens, runLineCostsOf(loaded)),
+    };
+  }
+  const runs = session.turns.flatMap((turn) => turn.usage.subagents ?? []);
   if (runs.length === 0) return undefined;
   return {
     runs: runs.length,
@@ -269,14 +289,27 @@ function subagentRunsOutside(turns: Turn[]): ReplayCoverage["subagentRuns"] {
   };
 }
 
+// Each run's cost line priced on its own model, in the turn's channel and
+// scope, as the session summary does.
+function runLineCostsOf({ provider, session, attributor, turnPricer }: Loaded): TurnCostFigures[] {
+  return session.turns.flatMap((turn) =>
+    (turnLinesOf(turn.usage) ?? [])
+      .filter((line) => line.subagent)
+      .map(({ usage }) => {
+        const lineTurn: Turn = { ...turn, usage };
+        return turnPricer.figuresFor(provider.id, session, lineTurn, attributor.turn(provider.id, session, lineTurn));
+      }),
+  );
+}
+
 // The requests the replay leaves out of the main chain: subagent runs (D11)
 // and Copilot's helper agents' requests (plan §13, finding 1).
 function withLeftOut(
   coverage: ReplayCoverage,
-  turns: Turn[],
+  loaded: Loaded,
   trace: RequestTrace,
 ): ReplayCoverage {
-  const subagentRuns = subagentRunsOutside(turns);
+  const subagentRuns = subagentRunsOutside(loaded);
   return {
     ...coverage,
     ...(subagentRuns === undefined ? {} : { subagentRuns }),
@@ -512,7 +545,7 @@ export class SessionReplayService implements SessionReplayQueries {
         },
         currency,
         ...aligned,
-        coverage: withLeftOut(aligned.coverage, session.turns, trace),
+        coverage: withLeftOut(aligned.coverage, loaded, trace),
         selfCheck: loaded.selfCheck(),
         assumptions: loaded.assumptions,
       },

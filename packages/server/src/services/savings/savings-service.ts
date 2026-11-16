@@ -13,6 +13,7 @@ import type { DetectorResult, SavingsDetector, SavingsInput, SavingsSessionInput
 import { SavingsRanker } from "./savings-ranker.js";
 import { SavingsSessionLoader } from "./savings-session-loader.js";
 import { savingsWindowOf } from "./savings-window.js";
+import { withSubagentRunsNote } from "./subagent-runs-note.js";
 
 // Phase 16 SR10 (docs/plans/savings-report.md §5.2, §11, D3–D5, D8): the
 // savings report on request. Loads the window's most recent sessions, one at
@@ -111,7 +112,7 @@ export class SavingsService implements SavingsQueries {
     // One at a time: the cheaper-model detector replays sessions.
     for (const { detector } of registered) {
       signal?.throwIfAborted();
-      results.push(await detector.detect(input));
+      results.push(withSubagentRunsNote(await detector.detect(input), sessions));
     }
     signal?.throwIfAborted();
     return this.ranker.rank({ window, pricing, results, leftOut: leftOut.entries() });

@@ -51,6 +51,28 @@ describe("ClaudeCodeLogProvider with subagent runs", () => {
     expect(counted?.usage.ownUsage?.output).toEqual({ known: true, value: 120 });
   });
 
+  it("summarizes the runs, with their tokens, the same in the list and the detail (step CS11)", async () => {
+    const root = tempDir();
+    copySubagentFixtureCase("linked-run", root);
+    const provider = new ClaudeCodeLogProvider({ projectsDirPath: root });
+
+    const [summary] = await provider.listSessions();
+    const detail = (await provider.readSession(summary!.id))!;
+
+    expect(summary!.subagentSpend).toEqual(detail.subagentSpend);
+    expect(detail.subagentSpend).toMatchObject({ runs: 1, costAiCredits: { known: false }, tokens: { output: { known: true } } });
+    const run = detail.turns.flatMap((turn) => turn.usage.subagents ?? [])[0]!;
+    expect(detail.subagentSpend?.tokens?.output).toEqual(run.output);
+  });
+
+  it("leaves the summary out when the only launch failed (step CS11)", async () => {
+    const root = tempDir();
+    copySubagentFixtureCase("failed-launch", root);
+    const [summary] = await new ClaudeCodeLogProvider({ projectsDirPath: root }).listSessions();
+
+    expect(summary).not.toHaveProperty("subagentSpend");
+  });
+
   it("gives the same turns from a list and a detail built in either order", async () => {
     const root = tempDir();
     copySubagentFixtureCase("nested-run", root);

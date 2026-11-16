@@ -304,3 +304,71 @@ describe("SavingsService simulated detectors", () => {
     expect(simulated.inputs).toHaveLength(1);
   });
 });
+
+// Step CS11 (docs/plans/claude-code-subagents.md D10): the savings read the
+// main agent only, so each row says how many subagent runs its sessions held.
+describe("SavingsService: subagent runs not analyzed (step CS11)", () => {
+  const ct = (value: number) => ({ known: true as const, value });
+  const noCredits = { known: false as const, reason: "Claude Code logs record no AI Credits." };
+  const spendOf = (runs: number) => ({
+    runs,
+    costAiCredits: noCredits,
+    tokens: { uncachedInput: ct(10), cacheWrite: ct(10), cacheRead: ct(10), output: ct(10) },
+  });
+  const failing = () => [turn(0, { toolCalls: [shell("foo", "error")] }), turn(1, { toolCalls: [shell("foo", "error")] })];
+  const detectors: RegisteredDetector[] = [{ detector: new UnusedToolsDetector() }, { detector: new FailedCallsDetector() }];
+  const inventory = [tool("mcp__github__create_issue", 800), tool("Bash", 300, [0, 1])];
+  const noteOf = (runs: number) => ({ reason: `${runs} subagent ${runs === 1 ? "run" : "runs"} not analyzed: this saving reads main-agent usage only.`, sessions: 1 });
+
+  async function reportOf(...sessions: Session[]) {
+    const report = await serviceOver([new FakeProvider("claude-code", sessions)], detectors).report();
+    expect(savingsReportSchema.parse(report)).toEqual(report);
+    return report;
+  }
+
+  it("adds the run count of a row's sessions to its coverage, beside the main-agent figures", async () => {
+    const report = await reportOf(session("busy", { startedAt: day(15), turns: failing(), toolInventory: inventory, subagentSpend: spendOf(3) }));
+
+    expect(report.opportunities.length).toBeGreaterThan(0);
+    for (const opportunity of report.opportunities) {
+      expect(opportunity.coverage.notAnalysed).toContainEqual(noteOf(3));
+      expect(opportunity.coverage.sessionsAnalysed).toBe(1);
+    }
+  });
+
+  it("says 1 subagent run, in the singular", async () => {
+    const report = await reportOf(session("busy", { startedAt: day(15), turns: failing(), toolInventory: inventory, subagentSpend: spendOf(1) }));
+
+    expect(report.opportunities[0]?.coverage.notAnalysed).toContainEqual(noteOf(1));
+  });
+
+  it("adds no note for a session that started no run", async () => {
+    const report = await reportOf(session("busy", { startedAt: day(15), turns: failing(), toolInventory: inventory }));
+
+    expect(report.opportunities.length).toBeGreaterThan(0);
+    for (const opportunity of report.opportunities) {
+      expect(opportunity.coverage.notAnalysed.some(({ reason }) => reason.includes("subagent runs"))).toBe(false);
+    }
+  });
+
+  it("leaves a Copilot-style spend, which records no tokens, as it was", async () => {
+    const report = await reportOf(
+      session("busy", { startedAt: day(15), turns: failing(), toolInventory: inventory, subagentSpend: { runs: 2, costAiCredits: ct(4) } }),
+    );
+
+    for (const opportunity of report.opportunities) {
+      expect(opportunity.coverage.notAnalysed.some(({ reason }) => reason.includes("subagent run"))).toBe(false);
+    }
+  });
+
+  it("counts the session in a row only when the row names it", async () => {
+    const withRuns = session("busy", { startedAt: day(15), turns: failing(), toolInventory: inventory, subagentSpend: spendOf(2) });
+    const plain = session("plain", { startedAt: day(14), turns: failing(), toolInventory: inventory });
+
+    const report = await reportOf(withRuns, plain);
+
+    const unused = report.opportunities.find((o) => o.kind === "unused-tools")!;
+    expect(unused.sessions.map((ref) => ref.sessionId).sort()).toEqual(["busy", "plain"]);
+    expect(unused.coverage.notAnalysed).toContainEqual(noteOf(2));
+  });
+});

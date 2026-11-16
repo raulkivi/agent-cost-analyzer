@@ -1125,3 +1125,151 @@ describe("SessionReplayService, helper agents' requests outside the replay", () 
     expect(result.value.coverage.helperRequests).toBeUndefined();
   });
 });
+
+// Step CS11 (docs/plans/claude-code-subagents.md D10, D13): Claude Code's runs
+// sit outside the replay as Copilot's do; with no AI Credits, the coverage
+// names their tokens and priced cost instead.
+describe("SessionReplayService.replay: Claude Code subagent runs (step CS11)", () => {
+  const NO_CREDITS = unavailableTokenCount("AI Credits are GitHub Copilot's own billing unit.");
+  const run = (id: string) => ({
+    id,
+    label: "Agent-Explore" as const,
+    model: "claude-haiku-4.5",
+    roundsCount: 3,
+    uncachedInput: k(10),
+    cacheWrite: k(5),
+    cacheRead: k(900),
+    reasoning: unavailableTokenCount("n/a"),
+    output: k(50),
+    costAiCredits: NO_CREDITS,
+    attribution: "tool-use-id" as const,
+  });
+  const runTokens = { uncachedInput: k(20), cacheWrite: k(10), cacheRead: k(1800), output: k(100) };
+  const own = (turn: Turn) => ({
+    uncachedInput: turn.usage.uncachedInput,
+    cacheWrite: turn.usage.cacheWrite,
+    cacheRead: turn.usage.cacheRead,
+    tool: turn.usage.tool,
+    vision: turn.usage.vision,
+    reasoning: turn.usage.reasoning,
+    output: turn.usage.output,
+    costAiCredits: turn.usage.costAiCredits,
+    model: turn.usage.model,
+  });
+
+  // Turn 1 folds two runs into its totals; its own cacheRead stays 100.
+  function withRuns(spend?: Session["subagentSpend"]): Session {
+    const session = claudeCodeSession(FOUR_SONNET);
+    const turn = session.turns[1]!;
+    const ownUsage = own(turn);
+    turn.usage = { ...turn.usage, cacheRead: k(1900), subagents: [run("toolu_1"), run("toolu_2")], ownUsage };
+    return { ...session, subagentSpend: spend ?? { runs: 2, costAiCredits: NO_CREDITS, tokens: runTokens } };
+  }
+
+  const replayOf = async (session: Session, costs: SessionCostSources = costSources) => {
+    const provider = new TraceProvider("claude-code", [session], [traceOf("claude-code", "claude-code", FOUR_SONNET)]);
+    const result = await serviceOf([provider], { costs }).replay({ sessionId: "s-1", model: "gpt-6.1-sol" });
+    if (result.status !== "ok") throw new Error(result.status);
+    return result.value;
+  };
+
+  it("measures the main agent only and keeps its cost", async () => {
+    const replay = await replayOf(withRuns());
+
+    expect(replay.turns[1]!.measured).toEqual({
+      cacheRead: 100,
+      cost: { known: true, value: 0.5, currency: "USD", basis: "priced" },
+    });
+    expect(replay.totals.measured).toEqual({ value: 2, knownTurns: 4, turns: 4 });
+    expect(sessionReplaySchema.safeParse(replay).success).toBe(true);
+  });
+
+  it("names the runs left out with their tokens and priced cost, AI Credits unknown", async () => {
+    const { coverage } = await replayOf(withRuns());
+
+    expect(coverage.subagentRuns).toMatchObject({
+      runs: 2,
+      costAiCredits: NO_CREDITS,
+      tokens: runTokens,
+      // Each run line is priced once by the fake: 0.5 + 0.5.
+      cost: { priced: { known: true, amount: 1, currency: "USD" } },
+    });
+  });
+
+  it("keeps the tokens and cost unknown, with the reason, when the session is (constraint 6)", async () => {
+    const reason = "A subagent transcript in this session's folder could not be matched to a turn.";
+    const unknown = unavailableTokenCount(reason);
+    const session = withRuns({
+      runs: 2,
+      costAiCredits: NO_CREDITS,
+      tokens: { uncachedInput: unknown, cacheWrite: unknown, cacheRead: unknown, output: unknown },
+    });
+
+    const { coverage } = await replayOf(session);
+
+    expect(coverage.subagentRuns?.tokens?.output).toEqual({ known: false, reason });
+    expect(coverage.subagentRuns?.cost?.priced).toEqual({ known: false, reason });
+  });
+
+  it("still measures a turn that holds the session's unknown reason on its own figures", async () => {
+    const session = claudeCodeSession(FOUR_SONNET);
+    const turn = session.turns[0]!;
+    const reason = "A subagent transcript in this session's folder could not be matched to a turn.";
+    const unknown = unavailableTokenCount(reason);
+    // As markSessionUsageUnknown leaves it: folded figures unknown, ownUsage set, no run.
+    turn.usage = { ...turn.usage, uncachedInput: unknown, cacheWrite: unknown, cacheRead: unknown, output: unknown, ownUsage: own(turn) };
+
+    const replay = await replayOf({
+      ...session,
+      subagentSpend: { runs: 0, costAiCredits: NO_CREDITS, tokens: { uncachedInput: unknown, cacheWrite: unknown, cacheRead: unknown, output: unknown } },
+    });
+
+    expect(replay.turns[0]!.measured).toMatchObject({ cacheRead: 0, cost: { known: true } });
+    expect(replay.coverage.subagentRuns?.runs).toBe(0);
+  });
+
+  it("prices the main agent's own turn without the folded 1-hour cache writes", async () => {
+    const seen: Turn[] = [];
+    const spying: SessionCostSources = {
+      ...costSources,
+      pricer: {
+        snapshot: () => ({
+          figuresFor: (providerId, session, turn, attribution) => {
+            seen.push(turn);
+            return costSources.pricer!.snapshot().figuresFor(providerId, session, turn, attribution);
+          },
+        }),
+      },
+    };
+    const session = withRuns();
+    // The runs record 1-hour writes; the main agent's own usage doesn't.
+    session.turns[1]!.usage = { ...session.turns[1]!.usage, extendedCacheWrite: k(15) };
+
+    await replayOf(session, spying);
+
+    const main = seen.filter((turn) => turn.index === 1 && turn.usage.cacheRead.known && turn.usage.cacheRead.value === 100);
+    expect(main.length).toBeGreaterThan(0);
+    expect(main.every((turn) => turn.usage.extendedCacheWrite === undefined)).toBe(true);
+  });
+
+  it("carries the runs and their figures into a comparison", async () => {
+    const provider = new TraceProvider("claude-code", [withRuns()], [traceOf("claude-code", "claude-code", FOUR_SONNET)]);
+    const result = await serviceOf([provider]).compare({ sessionId: "s-1", models: ["gpt-6.1-sol"] });
+    if (result.status !== "ok") throw new Error(result.status);
+
+    expect(result.value.subagentRuns).toMatchObject({ runs: 2, tokens: runTokens });
+    expect(sessionReplayComparisonSchema.safeParse(result.value).success).toBe(true);
+  });
+
+  it("leaves the Copilot coverage without tokens or cost", async () => {
+    const session = copilotSession(FOUR_SONNET);
+    const turn = session.turns[1]!;
+    turn.usage = { ...turn.usage, subagents: [{ ...run("call_1"), costAiCredits: k(40), attribution: "child-session-ref" }], ownUsage: own(turn) };
+    const provider = new TraceProvider("vscode", [session], [traceOf("vscode", "vscode-local", FOUR_SONNET)]);
+
+    const result = await serviceOf([provider]).replay({ sessionId: "s-1", model: "gpt-6.1-sol" });
+    if (result.status !== "ok") throw new Error(result.status);
+
+    expect(result.value.coverage.subagentRuns).toEqual({ runs: 1, costAiCredits: { known: true, value: 40 } });
+  });
+});

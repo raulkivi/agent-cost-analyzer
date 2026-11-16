@@ -292,6 +292,78 @@ describe("buildSessionCost", () => {
     it("leaves the summary out when no run was read", () => {
       expect(buildSessionCost(session([turn(0)]))).not.toHaveProperty("subagents");
     });
+
+    // Step CS11 (claude-code-subagents.md D13): a provider without AI Credits
+    // shows the runs' tokens and priced cost beside the unknown AI Credits.
+    describe("Claude Code runs (step CS11, D13)", () => {
+      const portal: Attribution = {
+        repository: { attributed: true, repository: { key: "github.com/acme/portal", source: "git-remote" } },
+        projectId: "portal",
+        vendor: { known: true, vendorId: "anthropic", basis: "profile" },
+        channel: { known: true, channel: "anthropic-api" },
+      };
+      const attributor = { session: () => portal, turn: () => portal };
+      // One cent per output token, so a line's price shows which line it is.
+      const pricer: TurnPricer = {
+        figuresFor: (_providerId, _session, t) => ({
+          billed: { known: false, reason: "no billed figure" },
+          reported: { known: false, reason: "no reported figure" },
+          priced: t.usage.output.known
+            ? { known: true, amount: t.usage.output.value / 100, currency: "USD", basis: "priced" }
+            : { known: false, reason: "no price" },
+        }),
+      };
+      const noCredits = unavailableTokenCount(NO_CREDITS);
+      const run = (id: string) =>
+        subagentRun({ id, label: "Agent-Explore", model: "model-b", costAiCredits: noCredits, attribution: "tool-use-id" });
+      const own = mainUsage({ model: "model-a", costAiCredits: noCredits, output: k(400) });
+      const tokens = { uncachedInput: k(200), cacheWrite: k(40), cacheRead: k(1800), output: k(120) };
+      const spendOf = (overrides = {}) => ({ runs: 2, costAiCredits: noCredits, tokens, ...overrides });
+      const twoRuns = () => [turn(0, { usage: foldRuns(own, [run("r1"), run("r2")]) })];
+
+      it("adds the runs' tokens and priced cost, with AI Credits unknown and its reason", () => {
+        const cost = buildSessionCost(session(twoRuns(), { subagentSpend: spendOf() }), {}, { providerId: "claude-code", attributor, pricer });
+
+        expect(sessionCostSchema.parse(cost)).toEqual(cost);
+        expect(cost.subagents).toMatchObject({
+          runs: 2,
+          aiCredits: null,
+          unavailableReason: NO_CREDITS,
+          tokens: { uncachedInput: 200, cacheWrite: 40, cacheRead: 1800, output: 120 },
+        });
+        // Two runs of 60 output tokens each: 0.6 + 0.6 USD, the main agent's 4 USD left out.
+        expect(cost.subagents?.cost?.priced).toMatchObject({ known: true, amount: 1.2, currency: "USD" });
+      });
+
+      it("keeps the priced cost unknown, with a reason, when no pricer is configured", () => {
+        const cost = buildSessionCost(session(twoRuns(), { subagentSpend: spendOf() }));
+
+        expect(cost.subagents?.tokens?.output).toBe(120);
+        expect(cost.subagents?.cost?.priced.known).toBe(false);
+      });
+
+      it("keeps an unknown token sum null, and the cost unknown, never 0 (constraint 6)", () => {
+        const reason = "A subagent transcript in this session's folder could not be matched to a turn.";
+        const unknown = unavailableTokenCount(reason);
+        const unknownTokens = { uncachedInput: unknown, cacheWrite: unknown, cacheRead: unknown, output: unknown };
+        const cost = buildSessionCost(
+          session(twoRuns(), { subagentSpend: spendOf({ tokens: unknownTokens }) }),
+          {},
+          { providerId: "claude-code", attributor, pricer },
+        );
+
+        expect(cost.subagents?.tokens).toEqual({ uncachedInput: null, cacheWrite: null, cacheRead: null, output: null });
+        expect(cost.subagents?.cost?.priced).toMatchObject({ known: false });
+        expect(sessionCostSchema.parse(cost)).toEqual(cost);
+      });
+
+      it("leaves a Copilot session's summary as it was, without tokens or cost", () => {
+        const copilot = session([turn(0, { usage: mainUsage() })], { providerId: "vscode", subagentSpend: { runs: 3, costAiCredits: k(54.65) } });
+        const cost = buildSessionCost(copilot, {}, { providerId: "vscode", attributor, pricer });
+
+        expect(cost.subagents).toEqual({ runs: 3, aiCredits: 54.65 });
+      });
+    });
   });
 });
 
