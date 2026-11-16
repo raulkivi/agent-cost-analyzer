@@ -3,7 +3,8 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { makeAuditRollup } from "../test-support/audit-fixture.js";
+import { axeViolations } from "../test-support/axe.js";
+import { HOSTILE_LABEL, makeAuditRollup, makeSubagentRollup } from "../test-support/audit-fixture.js";
 import { AuditRollupPanel } from "./AuditRollupPanel.js";
 
 const NOW = new Date("2026-09-27T12:00:00.000Z");
@@ -163,5 +164,53 @@ describe("AuditRollupPanel", () => {
 
     expect(await screen.findByRole("group", { name: "Sessions" })).toBeInTheDocument();
     expect(loadRollup).toHaveBeenCalledTimes(2);
+  });
+
+  describe("subagent runs (step 10.20)", () => {
+    const renderSubagents = () => renderPanel(vi.fn().mockResolvedValue(makeSubagentRollup()));
+
+    it("splits the totals into main agent and subagent runs", async () => {
+      renderSubagents();
+      expect(await screen.findByRole("group", { name: "Tool calls" })).toHaveTextContent("incl. 3 from subagent runs");
+      expect(screen.getByRole("group", { name: "Calls by agent" })).toBeInTheDocument();
+    });
+
+    it("says how many sessions have unread runs, never as 0 subagent calls", async () => {
+      renderSubagents();
+      const tile = await screen.findByRole("group", { name: "Sessions with unread runs" });
+      expect(tile).toHaveTextContent("1 of 2");
+      expect(screen.getByText(/subagent calls are unknown, not 0/)).toBeInTheDocument();
+    });
+
+    it("shows no unread tile when every run was read", async () => {
+      renderPanel(vi.fn().mockResolvedValue(makeSubagentRollup({ sessionsWithUnreadSubagentRuns: 0 })));
+      await screen.findByRole("group", { name: "Sessions" });
+      expect(screen.queryByRole("group", { name: "Sessions with unread runs" })).not.toBeInTheDocument();
+    });
+
+    it("adds a Subagent calls column: a count, the unread note, or n/a without the concept", async () => {
+      renderSubagents();
+      const table = await screen.findByRole("table", { name: "Sessions" });
+      expect(within(table).getByRole("columnheader", { name: "Subagent calls" })).toBeInTheDocument();
+      const rows = within(table).getAllByRole("row").slice(1);
+      expect(rows[0]).toHaveTextContent("Fix the build");
+      expect(rows[0]).toHaveTextContent("1 run unread");
+      expect(rows[2]).toHaveTextContent("n/a");
+    });
+
+    it("leaves the column and split out when no session has a run", async () => {
+      renderPanel();
+      await screen.findByRole("table", { name: "Sessions" });
+      expect(screen.queryByRole("columnheader", { name: "Subagent calls" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("group", { name: "Sessions with unread runs" })).not.toBeInTheDocument();
+    });
+
+    it("renders a hostile session title as text and has no axe violations", async () => {
+      renderSubagents();
+      await screen.findByRole("table", { name: "Sessions" });
+      expect(screen.getByText(HOSTILE_LABEL)).toBeInTheDocument();
+      expect(document.querySelector("img[src]")).toBeNull();
+      expect(await axeViolations(document.body)).toEqual([]);
+    });
   });
 });

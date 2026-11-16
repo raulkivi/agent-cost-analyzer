@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: MIT
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { makeSessionAudit } from "../test-support/audit-fixture.js";
+import userEvent from "@testing-library/user-event";
+import { axeViolations } from "../test-support/axe.js";
+import { HOSTILE_LABEL, makeSessionAudit, makeSubagentAudit } from "../test-support/audit-fixture.js";
 import { SessionAuditPanel } from "./SessionAuditPanel.js";
 
 function renderPanel(overrides: Partial<Parameters<typeof SessionAuditPanel>[0]> = {}) {
@@ -189,5 +191,90 @@ describe("SessionAuditPanel", () => {
       <SessionAuditPanel sessionId="s2" selectedTurnIndex={0} onSelectTurn={vi.fn()} onInspectTurn={vi.fn()} loadAudit={loadAudit} />,
     );
     await waitFor(() => expect(loadAudit).toHaveBeenCalledWith("s2"));
+  });
+
+  describe("subagent runs (step 10.20)", () => {
+    const renderSubagents = () => renderPanel({ loadAudit: vi.fn().mockResolvedValue(makeSubagentAudit()) });
+    const callRows = () => within(screen.getByRole("table", { name: "Tool calls" })).getAllByRole("row").slice(1);
+
+    it("says how many calls came from subagent runs, naming the unread ones", async () => {
+      renderSubagents();
+      expect(await screen.findByRole("group", { name: "Tool calls" })).toHaveTextContent("incl. 3 calls from 2 of 3 subagent runs");
+    });
+
+    it("leaves the sub-line out when no run exists", async () => {
+      renderPanel();
+      expect(await screen.findByRole("group", { name: "Tool calls" })).not.toHaveTextContent("subagent");
+      expect(screen.queryByRole("group", { name: "Agent" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("table", { name: "Subagent runs" })).not.toBeInTheDocument();
+    });
+
+    it("filters the calls table by agent: All, Main agent, Subagents", async () => {
+      renderSubagents();
+      const group = await screen.findByRole("group", { name: "Agent" });
+      fireEvent.click(screen.getByRole("button", { name: /^Succeeded/, pressed: false }));
+      fireEvent.click(screen.getByRole("button", { name: /^Canceled/, pressed: false }));
+      expect(within(group).getByRole("button", { name: /^All/ })).toHaveAttribute("aria-pressed", "true");
+      expect(callRows()).toHaveLength(7);
+
+      fireEvent.click(within(group).getByRole("button", { name: /^Main agent/ }));
+      expect(callRows()).toHaveLength(4);
+      fireEvent.click(within(group).getByRole("button", { name: /^Subagents/ }));
+      expect(callRows()).toHaveLength(3);
+    });
+
+    it("shows Main or the run label with its depth in the Agent column", async () => {
+      renderSubagents();
+      await screen.findByRole("table", { name: "Tool calls" });
+      const rows = callRows();
+      expect(rows[0]).toHaveTextContent("Main");
+      const nested = rows.find((row) => row.textContent?.includes("cat missing.txt"));
+      expect(nested).toHaveTextContent("searchSubagent");
+      expect(nested).toHaveTextContent("depth 2");
+    });
+
+    it("lists runs: known totals, an unread run with its reason and never 0, and a flagged run with totals plus a flag", async () => {
+      renderSubagents();
+      const table = await screen.findByRole("table", { name: "Subagent runs" });
+      const [known, flagged, flagLine, unread] = within(table).getAllByRole("row").slice(1);
+      expect(known).toHaveTextContent("2");
+      expect(flagged).toHaveTextContent("depth 2");
+      expect(flagged).toHaveTextContent("100%");
+      expect(flagLine).toHaveTextContent("The run's start call is missing from the log.");
+      expect(unread).toHaveTextContent("Review");
+      expect(unread).toHaveTextContent("The subagent log is missing.");
+      expect(unread).toHaveTextContent("—");
+      // Agent, turn, and one merged cell: no calls, failed or rate figure that could read 0.
+      expect(within(unread).getAllByRole("cell")).toHaveLength(3);
+    });
+
+    it("counts canceled calls apart from failures (D14)", async () => {
+      renderSubagents();
+      const tile = await screen.findByRole("group", { name: "Canceled" });
+      expect(tile).toHaveTextContent("1");
+      expect(tile).toHaveTextContent("not failures");
+    });
+
+    it("renders a hostile run label as text, never markup", async () => {
+      renderSubagents();
+      const table = await screen.findByRole("table", { name: "Subagent runs" });
+      expect(within(table).getAllByText(HOSTILE_LABEL).length).toBeGreaterThan(0);
+      expect(document.querySelector("img")).toBeNull();
+    });
+
+    it("is operable by keyboard and has no axe violations", async () => {
+      const user = userEvent.setup();
+      renderSubagents();
+      const group = await screen.findByRole("group", { name: "Agent" });
+      const main = within(group).getByRole("button", { name: /^Main agent/ });
+      main.focus();
+      await user.keyboard("{Enter}");
+      expect(main).toHaveAttribute("aria-pressed", "true");
+      await user.tab();
+      expect(within(group).getByRole("button", { name: /^Subagents/ })).toHaveFocus();
+      await user.keyboard(" ");
+      expect(within(group).getByRole("button", { name: /^Subagents/ })).toHaveAttribute("aria-pressed", "true");
+      expect(await axeViolations(document.body)).toEqual([]);
+    });
   });
 });

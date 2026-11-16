@@ -61,14 +61,14 @@ suite("Classic subagent runs (step 10.19)", () => {
       await browser.waitUntil(async () => (await view.subagentBlock()) !== null, { timeout: 30_000, timeoutMsg: "the Explanation panel shows no subagent block for turn 1" });
       const first = (await view.subagentBlock())!;
       expect(first.runs).toHaveLength(1);
-      expect(first.runs[0]).toMatch(/^Explore .*2 requests 1\.10 AI Credits$/);
+      expect(first.runs[0]).toMatch(/^Explore .*2 requests(?: .*)? 1\.10 AI Credits$/);
       expect(first.totals).toBe("Main agent 2.00 Subagent runs 1.10 Turn 3.10");
 
       // D8: a run that recorded no AI Credits is listed at 0.00, not hidden.
       await view.selectTurn(1);
       await browser.waitUntil(async () => ((await view.subagentBlock())?.runs[0] ?? "").startsWith("searchSubagent"), { timeout: 30_000, timeoutMsg: "the Explanation panel did not switch to turn 2" });
       const second = (await view.subagentBlock())!;
-      expect(second.runs[0]).toMatch(/^searchSubagent .*1 request 0\.00 AI Credits$/);
+      expect(second.runs[0]).toMatch(/^searchSubagent .*1 request(?: .*)? 0\.00 AI Credits$/);
       expect(second.totals).toBe("Main agent 2.00 Subagent runs 0.00 Turn 2.00");
     });
   });

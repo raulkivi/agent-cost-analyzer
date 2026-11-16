@@ -50,6 +50,12 @@ export function FindingsTable({ findings, sessionTitle, onSelectSession }: Findi
                   </td>
                   <td>
                     {finding.title}
+                    {finding.origin?.kind === "subagent" && (
+                      <div className="text-muted findings-run">
+                        by subagent run {finding.origin.label}
+                        {finding.turnIndex !== undefined ? ` (turn ${finding.turnIndex})` : ""}
+                      </div>
+                    )}
                     <span className="findings-kind text-muted">
                       {" "}· {FINDING_KIND_LABELS[finding.kind]} · {findingCategoryLabel(finding.category)}
                     </span>

@@ -13,11 +13,20 @@ import {
   formatCompact,
   formatFailureRate,
 } from "../lib/audit-format.js";
+import {
+  AGENT_FILTER_LABELS,
+  canceledOf,
+  depthText,
+  matchesAgentFilter,
+  subagentSubLine,
+  type AgentFilter,
+} from "../lib/audit-origin.js";
 import { AUDIT_UNAVAILABLE_NOTE, AUDIT_UNAVAILABLE_TITLE } from "../lib/agent-host-unavailable.js";
 import { Blueprint } from "./ui/Blueprint.js";
 import { StatTile } from "./ui/StatTile.js";
 import { AsyncView } from "./ui/AsyncView.js";
 import { StatusTag } from "./ui/StatusTag.js";
+import { SubagentRunsTable } from "./SubagentRunsTable.js";
 
 interface SessionAuditPanelProps {
   sessionId: string;
@@ -51,6 +60,20 @@ function affectedTurnsTokens(audit: SessionAudit): { value: string; note: string
     value: output.known ? formatCompact(output.value) : "—",
     note: input.known ? `+${formatCompact(input.value)} input incl. cache` : "input unknown",
   };
+}
+
+// The Agent column: Main, or the run's label (text only) with its depth.
+function AgentCell({ call }: { call: AuditedToolCall["call"] }) {
+  if (call.origin?.kind !== "subagent") {
+    return <>Main</>;
+  }
+  const depth = depthText(call.origin.depth);
+  return (
+    <span className="agent-cell" title={call.origin.label}>
+      <span className="agent-cell-label">{call.origin.label}</span>
+      {depth && <span className="text-muted"> {depth}</span>}
+    </span>
+  );
 }
 
 function statusOf(audited: AuditedToolCall): ToolCallStatus {
@@ -139,6 +162,7 @@ function SessionAuditBody({
   const [statusFilter, setStatusFilter] = useState<ToolCallStatus[]>(DEFAULT_STATUS_FILTER);
   const [categoryFilter, setCategoryFilter] = useState<FailureCategory | null>(null);
   const [programFilter, setProgramFilter] = useState<string | null>(null);
+  const [agentFilter, setAgentFilter] = useState<AgentFilter>("all");
   // Turn.index → array position, for callbacks into the app's turn selection.
   const positionOfTurn = useMemo(
     () => new Map(data.perTurn.map((row, position) => [row.turnIndex, position])),
@@ -148,10 +172,13 @@ function SessionAuditBody({
   const knownOutcomes = data.outcomeCoverage.known;
   const failed = failedCountOf(data.totals);
   const shellCalls = data.byShellProgram.reduce((sum, row) => sum + row.calls, 0);
-  const statusCounts = new Map(STATUS_ORDER.map((status) => [status, data.calls.filter((c) => statusOf(c) === status).length]));
+  const statusCounts = new Map<ToolCallStatus, number>([...STATUS_ORDER, "canceled" as const].map((status) => [status, data.calls.filter((c) => statusOf(c) === status).length]));
+  const canceled = canceledOf(data.totals);
+  const { byOrigin, subagentRuns } = data;
   const filtered = data.calls.filter(
     (audited) =>
       statusFilter.includes(statusOf(audited)) &&
+      matchesAgentFilter(audited.call.origin, agentFilter) &&
       (!categoryFilter || audited.call.outcome?.failureCategory === categoryFilter) &&
       (!programFilter || audited.call.shell?.program === programFilter),
   );
@@ -164,13 +191,25 @@ function SessionAuditBody({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
       <div className="stat-tiles">
-        <StatTile label="Tool calls" value={formatCompact(data.totals.toolCalls)} note={`${data.byTool.length} distinct tools`} />
+        <StatTile label="Tool calls" value={formatCompact(data.totals.toolCalls)} note={
+            byOrigin && subagentRuns ? (
+              <>
+                {data.byTool.length} distinct tools
+                <br />
+                {subagentSubLine(byOrigin.subagents.toolCalls, subagentRuns)}
+              </>
+            ) : (
+              `${data.byTool.length} distinct tools`
+            )
+          }
+        />
         <StatTile
           label="Failure rate"
           value={formatFailureRate(data.failureRate)}
           note={knownOutcomes > 0 ? `${failed} of ${knownOutcomes} with a known outcome` : "no outcome recorded"}
           alert={failed > 0}
         />
+        {canceled > 0 && <StatTile label="Canceled" value={String(canceled)} note="stopped by the user, not failures" />}
         <StatTile label="Shell commands" value={formatCompact(shellCalls)} note={`${data.byShellProgram.length} programs`} />
         <StatTile label="Retried commands" value={String(data.retries.length)} note="same command re-run after a failure" />
         <StatTile
@@ -196,6 +235,25 @@ function SessionAuditBody({
           emptyText="This session has no turns."
         />
       </Blueprint>
+
+      {byOrigin && subagentRuns && (
+        <Blueprint className="audit-section">
+          <div className="card-kicker">Calls by agent</div>
+          <HorizontalBars
+            ariaLabel="Calls by agent"
+            series={PROGRAM_SERIES}
+            rows={[
+              { key: "main", label: "Main agent", values: { succeeded: byOrigin.main.succeeded, failed: failedCountOf(byOrigin.main) } },
+              {
+                key: "subagents",
+                label: "Subagent runs",
+                values: { succeeded: byOrigin.subagents.succeeded, failed: failedCountOf(byOrigin.subagents) },
+              },
+            ]}
+            emptyText="No calls."
+          />
+        </Blueprint>
+      )}
 
       <div className="audit-grid-2">
         <Blueprint className="audit-section">
@@ -245,6 +303,32 @@ function SessionAuditBody({
               {STATUS_META[status].label} {statusCounts.get(status)}
             </button>
           ))}
+          {canceled > 0 && (
+            <button
+              type="button"
+              className="filter-chip"
+              aria-pressed={statusFilter.includes("canceled")}
+              onClick={() => toggleStatus("canceled")}
+            >
+              <span aria-hidden="true">{STATUS_META.canceled.icon} </span>
+              {STATUS_META.canceled.label} {statusCounts.get("canceled")}
+            </button>
+          )}
+          {byOrigin && (
+            <div className="filter-chips filter-chips--group" role="group" aria-label="Agent">
+              {(Object.keys(AGENT_FILTER_LABELS) as AgentFilter[]).map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className="filter-chip"
+                  aria-pressed={agentFilter === value}
+                  onClick={() => setAgentFilter(value)}
+                >
+                  {AGENT_FILTER_LABELS[value]}
+                </button>
+              ))}
+            </div>
+          )}
           {categoryFilter && (
             <button
               type="button"
@@ -273,6 +357,7 @@ function SessionAuditBody({
             <thead>
               <tr>
                 <th>Turn</th>
+                {byOrigin && <th>Agent</th>}
                 <th>Tool</th>
                 <th>Command / input</th>
                 <th>Outcome</th>
@@ -292,6 +377,11 @@ function SessionAuditBody({
                     onClick={() => onSelectTurn(position)}
                   >
                     <td>{audited.turnIndex}</td>
+                    {byOrigin && (
+                      <td>
+                        <AgentCell call={call} />
+                      </td>
+                    )}
                     <td className="mono">{call.name}</td>
                     <td className="mono truncate" style={{ maxWidth: 260 }} title={call.shell?.command ?? call.argsSummary}>
                       {call.shell?.command ?? call.argsSummary}
@@ -338,6 +428,8 @@ function SessionAuditBody({
           )}
         </div>
       </Blueprint>
+
+      {subagentRuns && subagentRuns.length > 0 && <SubagentRunsTable runs={subagentRuns} />}
 
       <Blueprint className="audit-section">
         <div className="card-kicker">Retried commands</div>

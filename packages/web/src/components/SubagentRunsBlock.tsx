@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { useId } from "react";
+import { isFailedStatus } from "@agent-cost-analyzer/domain";
 import type { SubagentRunUsage, Turn } from "@agent-cost-analyzer/domain";
 import { formatAiCredits } from "../lib/format-ai-credits.js";
 import { runDisplayName, subagentSummary } from "../lib/subagent-runs.js";
@@ -12,7 +13,19 @@ const UNREAD_MODEL = "unknown";
 
 const requests = (count: number) => `${count} ${count === 1 ? "request" : "requests"}`;
 
-function RunRow({ run }: { run: SubagentRunUsage }) {
+// What the turn's tool calls say about a run (step 10.20). A run with no call
+// is known to have made none only when the reader read its log in full;
+// otherwise its calls are unknown, never 0.
+function callsText(turn: Turn, runId: string): string {
+  const calls = turn.toolCalls.filter((call) => call.origin?.kind === "subagent" && call.origin.runId === runId);
+  if (calls.length === 0) {
+    return turn.subagentRunsRead?.includes(runId) ? "0 calls" : "calls unknown";
+  }
+  const failed = calls.filter((call) => call.outcome && isFailedStatus(call.outcome.status)).length;
+  return `${calls.length} ${calls.length === 1 ? "call" : "calls"}, ${failed} failed`;
+}
+
+function RunRow({ run, calls }: { run: SubagentRunUsage; calls: string }) {
   const unknown = !run.costAiCredits.known;
   return (
     <li className={unknown ? "subagent-run subagent-run--unknown" : "subagent-run"}>
@@ -20,6 +33,7 @@ function RunRow({ run }: { run: SubagentRunUsage }) {
       {run.attribution === "timestamp" && <Tag variant="outline">matched by time</Tag>}
       {run.model !== UNREAD_MODEL && <span className="text-muted">{run.model}</span>}
       <span className="text-muted">{requests(run.roundsCount)}</span>
+      <span className="text-muted">{calls}</span>
       <span className="subagent-run-credits">
         {formatAiCredits(run.costAiCredits)} <span className="text-muted">AI Credits</span>
       </span>
@@ -49,6 +63,7 @@ export function SubagentRunsBlock({ turn }: { turn: Turn }) {
   if (!summary) return null;
   const own = turn.usage.ownUsage?.costAiCredits;
   const unknownText = "unknown";
+  const showsUnreadRow = summary.unreadRun && !summary.total.known;
   return (
     <section aria-labelledby={headingId} className="subagent-block">
       <div id={headingId} className="subagent-block-title">
@@ -56,7 +71,14 @@ export function SubagentRunsBlock({ turn }: { turn: Turn }) {
       </div>
       <ul className="subagent-runs">
         {summary.runs.map((run) => (
-          <RunRow key={run.id} run={run} />
+          <RunRow key={run.id} run={run} calls={callsText(turn, run.id)} />
+        ))}
+        {/* The unread row above already gives the turn's reason; a gap row adds the tool-call reason of a run the cost side read. */}
+        {(showsUnreadRow ? [] : (turn.subagentRunGaps ?? [])).map((gap) => (
+          <li key={gap.runId} className="subagent-run subagent-run--unknown">
+            <span className="subagent-run-name">{gap.label}</span>
+            <span className="subagent-run-reason text-muted">{gap.reason}</span>
+          </li>
         ))}
         {summary.unreadRun && !summary.total.known && <UnreadRunRow reason={summary.total.reason} />}
       </ul>

@@ -59,4 +59,21 @@ describe("FindingsTable", () => {
     expect(kind!.parentElement).toHaveTextContent("Downloaded script piped straight into an interpreter");
     expect(kind!.parentElement!.tagName).toBe("TD");
   });
+
+  it("names the subagent run behind a finding, with its turn, and says nothing for the main agent", () => {
+    const hostile = "<img src=x onerror=alert(1)>";
+    const bySubagent = findingRow("cc:s1", {
+      key: "sub",
+      turnIndex: 4,
+      origin: { kind: "subagent", runId: "r1", label: hostile, depth: 1 },
+    });
+    const byMain = findingRow("cc:s1", { key: "main", turnIndex: 2 });
+    const { table } = renderTable([bySubagent, byMain]);
+
+    const rows = within(table!).getAllByRole("row").slice(1);
+    const sub = rows.find((row) => row.textContent?.includes("by subagent run"))!;
+    expect(sub).toHaveTextContent(`by subagent run ${hostile} (turn 4)`);
+    expect(sub.querySelector("img")).toBeNull();
+    expect(rows.filter((row) => row.textContent?.includes("by subagent run"))).toHaveLength(1);
+  });
 });

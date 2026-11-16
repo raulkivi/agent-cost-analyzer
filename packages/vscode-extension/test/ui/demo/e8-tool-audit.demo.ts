@@ -49,7 +49,7 @@ const scene: DemoScene = {
       beatMs: 1_800,
       action: async (driver) => {
         await fromContextMenu(driver, "Show Tool Audit");
-        await panel.inside((view) => view.waitForText("Outcome unknown for"));
+        await panel.inside((view) => view.waitForText("Retried commands"));
       },
     },
     {

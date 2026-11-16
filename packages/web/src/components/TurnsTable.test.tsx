@@ -450,3 +450,27 @@ describe("TurnsTable subagent marker", () => {
     expect(screen.getByRole("table")).toHaveClass("turns-table");
   });
 });
+
+describe("TurnsTable calls cell with subagent calls (step 10.20)", () => {
+  const call = (status: "success" | "error", runId?: string) => ({
+    name: "Bash",
+    kind: "shell" as const,
+    argsSummary: "ls",
+    outcome: { status },
+    ...(runId ? { origin: { kind: "subagent" as const, runId, label: "Explore", depth: 1 } } : {}),
+  });
+
+  it("counts the runs' calls and says how many came from them in a tooltip", () => {
+    const turn = makeTurn({ toolCalls: [call("success"), call("error", "r1"), call("success", "r1")] });
+    render(<TurnsTable turns={[turn]} selectedTurnIndex={0} onSelectTurn={() => {}} />);
+
+    const cell = screen.getByTitle("incl. 2 from subagent runs");
+    expect(cell).toHaveTextContent("3");
+    expect(screen.getByLabelText("1 of 3 tool calls failed")).toBeInTheDocument();
+  });
+
+  it("adds no tooltip when no call came from a run", () => {
+    render(<TurnsTable turns={[makeTurn({ toolCalls: [call("success")] })]} selectedTurnIndex={0} onSelectTurn={() => {}} />);
+    expect(screen.queryByTitle(/from subagent runs/)).not.toBeInTheDocument();
+  });
+});

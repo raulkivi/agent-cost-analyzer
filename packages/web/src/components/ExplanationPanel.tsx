@@ -62,6 +62,7 @@ function ToolCallsThisTurn({
                 {toolCall.name}
               </Tag>
               {toolCall.outcome && <StatusTag outcome={toolCall.outcome} />}
+              {toolCall.origin?.kind === "subagent" && <span className="text-muted">by {toolCall.origin.label}</span>}
               {toolCall.shell && (
                 <span title={toolCall.shell.command} className="mono truncate tool-call-command">
                   {toolCall.shell.command}
