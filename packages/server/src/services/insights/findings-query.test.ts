@@ -61,6 +61,17 @@ describe("queryFindings", () => {
     expect(queryFindings(sample, { sessionId: "b" }).findings.map((f) => f.key)).toEqual(["crit"]);
   });
 
+  it("filters by origin: main agent (a finding without origin counts as main) or subagent, default both (step 10.20)", () => {
+    const sub = { kind: "subagent" as const, runId: "run-1", label: "searchSubagent", depth: 1 };
+    const withRuns = dataset([finding("m"), finding("m2", { origin: { kind: "main" } }), finding("s", { origin: sub })]);
+
+    expect(queryFindings(withRuns, {}).total).toBe(3);
+    expect(queryFindings(withRuns, { origin: ["main"] }).findings.map((f) => f.key).sort()).toEqual(["m", "m2"]);
+    expect(queryFindings(withRuns, { origin: ["subagent"] }).findings.map((f) => f.key)).toEqual(["s"]);
+    expect(queryFindings(withRuns, { origin: ["main", "subagent"] }).total).toBe(3);
+    expect(queryFindings(withRuns, { origin: ["subagent"] }).findings[0]?.origin).toEqual(sub);
+  });
+
   it("bounds the returned findings by maxResults but reports the full total and severity counts", () => {
     const result = queryFindings(sample, { maxResults: 2 });
 

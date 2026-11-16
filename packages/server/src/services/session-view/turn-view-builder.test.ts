@@ -114,6 +114,15 @@ describe("buildTurnView", () => {
     ]);
   });
 
+  it("carries a call's origin and never its arguments beyond the bounded command (step 10.20)", () => {
+    const origin = { kind: "subagent" as const, runId: "run-1", label: "searchSubagent", depth: 1 };
+    const view = buildTurnView(session([{ toolCalls: [{ name: "Bash", kind: "shell", argsSummary: "ls", origin }, { name: "Read", argsSummary: "a.ts" }] }]), 0);
+
+    expect(view && turnViewSchema.parse(view)).toEqual(view);
+    expect(view!.toolCalls[0]!.origin).toEqual(origin);
+    expect(view!.toolCalls[1]).not.toHaveProperty("origin");
+  });
+
   it("redacts secrets and truncates long text to maxTextChars", () => {
     const view = buildTurnView(
       session([{ userMessage: "use api_key=abcd1234efgh please", assistantResponse: "x".repeat(50), explanation: "y".repeat(50) }]),

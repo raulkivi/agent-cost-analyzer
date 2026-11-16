@@ -27,17 +27,20 @@ function bounded(text: string, maxChars: number): { text: string; truncated: boo
 }
 
 function compactCall(call: ToolCallRecord): TurnView["toolCalls"][number] {
-  const commandText = call.shell?.command ?? call.argsSummary;
+  // A subagent-kind call's input is the subagent's prompt: never shown (step 10.20).
+  const kind = call.kind ?? resolveToolKind(call.name);
+  const commandText = call.shell?.command ?? (kind === "subagent" ? "" : call.argsSummary);
   const command = commandText ? excerptOf(commandText, MAX_EVIDENCE_EXCERPT_LENGTH) : "";
   const { failureCategory, exitCode } = call.outcome ?? {};
   return {
     name: call.name,
-    kind: call.kind ?? resolveToolKind(call.name),
+    kind,
     status: statusOf(call),
     ...(failureCategory ? { failureCategory } : {}),
     ...(exitCode !== undefined ? { exitCode } : {}),
     ...(command ? { command } : {}),
     ...(call.durationMs !== undefined ? { durationMs: call.durationMs } : {}),
+    ...(call.origin ? { origin: call.origin } : {}),
   };
 }
 

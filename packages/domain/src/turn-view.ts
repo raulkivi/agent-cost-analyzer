@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
 import { failureCategorySchema, toolCallStatusSchema } from "./tool-call-outcome.js";
+import { toolCallOriginSchema } from "./tool-call-origin.js";
 import { toolKindSchema } from "./tool-call-record.js";
 import { triggeredEventSchema } from "./turn.js";
 import { turnUsageSchema } from "./turn-usage.js";
@@ -18,6 +19,7 @@ export const turnViewToolCallSchema = z.object({
   exitCode: z.number().int().optional(),
   command: z.string().optional(),
   durationMs: z.number().optional(),
+  origin: toolCallOriginSchema.optional(), // absent = main agent (step 10.20)
 });
 
 export const turnViewSchema = z.object({

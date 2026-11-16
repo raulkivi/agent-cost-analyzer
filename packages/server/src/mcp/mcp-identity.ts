@@ -40,7 +40,7 @@ export const REPLAY_INSTRUCTIONS =
 
 // Step 10.19: classic Copilot Chat subagent runs, the same for both products.
 export const SUBAGENT_INSTRUCTIONS =
-  "Subagent runs: in a VS Code Copilot Chat session, a turn's tokens and AI Credits include the subagent runs it started. get_turn lists them in usage.subagents and gives the main agent's own figures in usage.ownUsage; get_session_cost's `subagents` totals the runs. Replay covers the main agent only: coverage.subagentRuns counts the runs it leaves out.";
+  "Subagent runs: in a VS Code Copilot Chat session, a turn's tokens and AI Credits include the subagent runs it started. get_turn lists them in usage.subagents and gives the main agent's own figures in usage.ownUsage; get_session_cost's `subagents` totals the runs. Replay covers the main agent only: coverage.subagentRuns counts the runs it leaves out. The tool-call audit and findings include subagent tool calls, each marked with its run (`origin`).";
 
 export const STANDALONE_MCP_IDENTITY: McpIdentity = {
   name: "agent-cost-analyzer",
