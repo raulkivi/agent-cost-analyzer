@@ -111,13 +111,18 @@ function partialNote(rollup: AuditRollup): string | undefined {
 
 function RollupBody({ rollup, onOpenSession }: { rollup: AuditRollup; onOpenSession: (id: string) => void }) {
   const failed = failedCountOf(rollup.totals);
+  const { byOrigin } = rollup;
   const worstProgram = [...rollup.byShellProgram].sort((a, b) => b.failed - a.failed)[0];
 
   return (
     <>
       <div className="stat-tiles">
         <StatTile label="Sessions" value={String(rollup.sessionCount)} />
-        <StatTile label="Tool calls" value={formatCompact(rollup.totals.toolCalls)} />
+        <StatTile
+          label="Tool calls"
+          value={formatCompact(rollup.totals.toolCalls)}
+          note={byOrigin ? `incl. ${formatCompact(byOrigin.subagents.toolCalls)} from subagent runs` : undefined}
+        />
         <StatTile
           label="Failure rate"
           value={formatFailureRate(rollup.failureRate)}
@@ -129,7 +134,44 @@ function RollupBody({ rollup, onOpenSession }: { rollup: AuditRollup; onOpenSess
           value={worstProgram && worstProgram.failed > 0 ? worstProgram.program : "—"}
           note={worstProgram && worstProgram.failed > 0 ? `${worstProgram.failed} of ${worstProgram.calls} calls failed` : undefined}
         />
+        {byOrigin && rollup.sessionsWithUnreadSubagentRuns > 0 && (
+          <StatTile
+            label="Sessions with unread runs"
+            value={`${rollup.sessionsWithUnreadSubagentRuns} of ${rollup.sessionCount}`}
+            note="their main-agent calls are counted"
+          />
+        )}
       </div>
+
+      {byOrigin && rollup.sessionsWithUnreadSubagentRuns > 0 && (
+        <p className="audit-unread-note" role="note" style={{ margin: 0, fontSize: 13 }}>
+          <strong>
+            {rollup.sessionsWithUnreadSubagentRuns === 1
+              ? "1 session has subagent runs the analyzer could not read."
+              : `${rollup.sessionsWithUnreadSubagentRuns} sessions have subagent runs the analyzer could not read.`}
+          </strong>{" "}
+          Their subagent calls are unknown, not 0. Open a session to see each run&apos;s reason.
+        </p>
+      )}
+
+      {byOrigin && (
+        <Blueprint className="audit-section">
+          <div className="card-kicker">Calls by agent</div>
+          <HorizontalBars
+            ariaLabel="Calls by agent"
+            series={PROGRAM_SERIES}
+            rows={[
+              { key: "main", label: "Main agent", values: { succeeded: byOrigin.main.succeeded, failed: failedCountOf(byOrigin.main) } },
+              {
+                key: "subagents",
+                label: "Subagent runs",
+                values: { succeeded: byOrigin.subagents.succeeded, failed: failedCountOf(byOrigin.subagents) },
+              },
+            ]}
+            emptyText="No calls."
+          />
+        </Blueprint>
+      )}
 
       <Blueprint className="audit-section">
         <div className="card-kicker">Tool-call outcomes per day</div>
@@ -210,6 +252,7 @@ function RollupBody({ rollup, onOpenSession }: { rollup: AuditRollup; onOpenSess
                 <th>Session</th>
                 <th>Started</th>
                 <th>Tool calls</th>
+                {byOrigin && <th>Subagent calls</th>}
                 <th>Failed</th>
                 <th>Failure rate</th>
               </tr>
@@ -231,6 +274,20 @@ function RollupBody({ rollup, onOpenSession }: { rollup: AuditRollup; onOpenSess
                     </td>
                     <td>{row.startedAt ? row.startedAt.slice(0, 16).replace("T", " ") : "—"}</td>
                     <td>{row.toolCalls}</td>
+                    {byOrigin && (
+                      <td>
+                        {row.subagentCalls === undefined ? (
+                          <span className="text-muted" title="This session's provider has no subagent runs.">n/a</span>
+                        ) : (
+                          row.subagentCalls
+                        )}
+                        {(row.unreadSubagentRuns ?? 0) > 0 && (
+                          <div className="text-muted" style={{ fontSize: 12 }}>
+                            {row.unreadSubagentRuns} {row.unreadSubagentRuns === 1 ? "run" : "runs"} unread
+                          </div>
+                        )}
+                      </td>
+                    )}
                     <td>{row.failed}</td>
                     <td>{formatFailureRate(row.toolCalls - row.unknown > 0 ? row.failed / (row.toolCalls - row.unknown) : null)}</td>
                   </tr>

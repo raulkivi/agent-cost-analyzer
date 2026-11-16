@@ -26,15 +26,16 @@ function formatTokenCount(tokenCount: TokenCount): string {
 // accessible label, so a failed turn stands out without relying on colour.
 function ToolCallsCell({ turn }: { turn: Turn }) {
   const failed = turn.toolCalls.filter((call) => call.outcome && isFailedStatus(call.outcome.status)).length;
+  const fromRuns = turn.toolCalls.filter((call) => call.origin?.kind === "subagent").length;
   return (
-    <>
+    <span title={fromRuns > 0 ? `incl. ${fromRuns} from subagent runs` : undefined}>
       {turn.toolCalls.length}
       {failed > 0 && (
         <span className="failure-badge" role="img" aria-label={`${failed} of ${turn.toolCalls.length} tool calls failed`}>
           <span aria-hidden="true">✕{failed}</span>
         </span>
       )}
-    </>
+    </span>
   );
 }
 

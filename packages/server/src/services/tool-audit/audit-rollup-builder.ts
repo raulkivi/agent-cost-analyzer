@@ -146,6 +146,13 @@ export function buildAuditRollup(allAudits: SessionAudit[], options: RollupOptio
       toolCalls: audit.totals.toolCalls,
       failed: audit.totals.failed + audit.totals.interrupted + audit.totals.denied,
       unknown: audit.totals.unknown,
+      // Absent = the session has no subagent runs (shown "n/a", never 0).
+      ...(audit.byOrigin
+        ? {
+            subagentCalls: audit.byOrigin.subagents.toolCalls,
+            unreadSubagentRuns: (audit.subagentRuns ?? []).filter((run) => run.totals === null).length,
+          }
+        : {}),
     })),
     outcomeCoverage: {
       known: totals.toolCalls - totals.unknown,

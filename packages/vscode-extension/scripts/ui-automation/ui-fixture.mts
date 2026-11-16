@@ -8,7 +8,7 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { pathToFileURL } from "node:url";
 import { COPILOT_CLI_FIXTURE_HOME, COPILOT_CLI_FIXTURE_SESSION_IDS, writeCopilotCliAgentHostStores } from "../../../server/src/test-support/copilot-cli-fixtures.ts";
-import { USAGE_LOG_USER_MESSAGE, USAGE_MAIN_JSONL, USAGE_SESSION_ID, seedSubagentFixtureSession } from "../../../server/src/test-support/copilot-session-store.ts";
+import { USAGE_LOG_USER_MESSAGE, USAGE_MAIN_JSONL, USAGE_SESSION_ID, seedSubagentAuditFixtureSession, seedSubagentFixtureSession } from "../../../server/src/test-support/copilot-session-store.ts";
 import { SAVINGS_AGENT_HOST_SESSION_ID, SAVINGS_VSCODE_SESSION_ID, writeSavingsAgentHostSession, writeSavingsVscodeSession } from "../../../server/src/test-support/savings-fixtures.ts";
 import { createIntegrationFixture, USER_SETTINGS } from "../integration-fixture.mts";
 import { todayScale, todayStartBefore } from "./today-squeeze.mts";
@@ -50,6 +50,17 @@ export const DANGLING_SESSION = {
   title: "Dangling subagent session",
   caseName: "dangling-ref",
   agoMs: 45_000,
+};
+
+// Step 10.20 (ST12): a classic session from the server's audit fixtures
+// (explore-linked). Turn 1 has two explore_subagent calls: one run read (a
+// searchSubagent log with three tool calls, one failed) and one with no log
+// (an unread run, with its reason). Two main-agent calls.
+export const AUDIT_RUNS_SESSION = {
+  id: "00000000-0000-4000-9000-0000000000a3",
+  title: "Subagent tool audit session",
+  caseName: "explore-linked",
+  agoMs: 50_000,
 };
 
 // Every session dated before `now` is a "today" session; the largest offset is the savings session's 30 minutes.
@@ -142,9 +153,9 @@ export function createUiFixture(rootDir: string, options: UiFixtureOptions = {})
       failedCallsCount: 3,
       agentHostSessionId: SAVINGS_AGENT_HOST_SESSION_ID,
     },
-    // The large and empty-window sessions, the two classic subagent sessions,
-    // the Copilot CLI fixtures and the two savings sessions.
-    listedSessionCount: base.sessionCount + 2 + 2 + Object.keys(COPILOT_CLI_FIXTURE_SESSION_IDS).length + 2,
+    // The large and empty-window sessions, the two classic subagent sessions and the
+    // subagent tool audit session, the Copilot CLI fixtures and the two savings sessions.
+    listedSessionCount: base.sessionCount + 2 + 3 + Object.keys(COPILOT_CLI_FIXTURE_SESSION_IDS).length + 2,
   };
 }
 
@@ -191,9 +202,10 @@ function seedEmptyWindowSession(userDir: string, now: Date): void {
 function seedSubagentSessions(userDir: string, now: Date): void {
   const dbPath = path.join(userDir, "globalStorage", "github.copilot-chat", "session-store.db");
   const debugLogsDir = path.join(userDir, "workspaceStorage", WORKSPACE_STORAGE_ID, "GitHub.copilot-chat", "debug-logs");
-  for (const session of [SUBAGENT_SESSION, DANGLING_SESSION]) {
+  for (const session of [SUBAGENT_SESSION, DANGLING_SESSION, AUDIT_RUNS_SESSION]) {
     const startedAt = todayStartBefore(now, session.agoMs, TODAY_SPAN_MS).toISOString();
-    seedSubagentFixtureSession(dbPath, debugLogsDir, session.caseName, startedAt, session.id);
+    const seed = session === AUDIT_RUNS_SESSION ? seedSubagentAuditFixtureSession : seedSubagentFixtureSession;
+    seed(dbPath, debugLogsDir, session.caseName, startedAt, session.id);
     const db = new DatabaseSync(dbPath);
     try {
       db.prepare("UPDATE sessions SET summary = ? WHERE id = ?").run(session.title, session.id);

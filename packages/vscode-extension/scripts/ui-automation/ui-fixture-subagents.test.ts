@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { createExtensionApiService } from "@agent-cost-analyzer/server/src/composition/create-extension-api-service";
 import { InMemoryAppSettingsStore } from "@agent-cost-analyzer/server/src/test-support/in-memory-app-settings-store";
 import { copilotLogPathsFromUserDataDir } from "../../src/platform/copilot-log-paths.js";
-import { createUiFixture, DANGLING_SESSION, SUBAGENT_SESSION } from "./ui-fixture.mts";
+import { AUDIT_RUNS_SESSION, createUiFixture, DANGLING_SESSION, SUBAGENT_SESSION } from "./ui-fixture.mts";
 
 // Step 10.19 (SA15): the UI fixture's two classic sessions, one with a
 // runSubagent and a searchSubagent run, one with a dangling child-session ref,
@@ -69,5 +69,19 @@ describe("the UI fixture's classic subagent sessions (step 10.19)", () => {
     expect(listed.costAiCredits).toEqual(detail.costAiCredits);
     expect(detail.costAiCredits.known).toBe(false);
     expect(listed.subagentSpend?.costAiCredits.known).toBe(false);
+  });
+
+  // Step 10.20 (ST12): the session the extension UI's Tool audit checks read.
+  it("has an audit with a read run's tool calls and an unread run with its reason", async () => {
+    const api = apiOver(new Date());
+
+    const audit = await api.getSessionAudit(AUDIT_RUNS_SESSION.id);
+
+    expect(audit.byOrigin?.main.toolCalls).toBe(2);
+    expect(audit.byOrigin?.subagents).toMatchObject({ toolCalls: 3, failed: 1, runs: 2 });
+    const [read, unread] = audit.subagentRuns ?? [];
+    expect(read?.totals?.toolCalls).toBe(3);
+    expect(unread?.totals).toBeNull();
+    expect(unread?.unreadReason).toMatch(/writes no log/);
   });
 });

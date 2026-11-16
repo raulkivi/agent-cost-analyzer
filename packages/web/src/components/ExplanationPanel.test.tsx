@@ -3,6 +3,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { makeTurn } from "../test-support/turn-fixture.js";
+import type { Turn } from "@agent-cost-analyzer/domain";
 import { makeRun, makeTurnWithRuns } from "../test-support/subagent-fixture.js";
 import { ExplanationPanel } from "./ExplanationPanel.js";
 
@@ -250,5 +251,49 @@ describe("ExplanationPanel subagent runs", () => {
     const text = screen.getByText("why this happened");
     expect(text).toHaveClass("explanation-text");
     expect(text.getAttribute("style")).toBeNull();
+  });
+
+  describe("tool calls by run (step 10.20)", () => {
+    const sub = (name: string, status: "success" | "error", runId = "call_1", label = "Explore") => ({
+      name,
+      kind: "shell" as const,
+      argsSummary: name,
+      outcome: { status },
+      origin: { kind: "subagent" as const, runId, label, depth: 1 },
+    });
+    const withCalls = (turn: Turn, toolCalls: Turn["toolCalls"], extra: Partial<Turn> = {}): Turn => ({ ...turn, toolCalls, ...extra });
+
+    it("gives each run row its calls and failed count", () => {
+      const turn = withCalls(makeTurnWithRuns([makeRun()]), [sub("grep", "success"), sub("cat", "error")]);
+      render(<ExplanationPanel turn={turn} mode="analyze" toolCallsAvailable />);
+      expect(within(block()).getByRole("listitem")).toHaveTextContent("2 calls, 1 failed");
+    });
+
+    it("says 0 calls only for a run the reader read in full, otherwise calls unknown", () => {
+      const read = withCalls(makeTurnWithRuns([makeRun()]), [], { subagentRunsRead: ["call_1"] });
+      const { unmount } = render(<ExplanationPanel turn={read} mode="analyze" toolCallsAvailable />);
+      expect(within(block()).getByRole("listitem")).toHaveTextContent("0 calls");
+      unmount();
+      render(<ExplanationPanel turn={withCalls(makeTurnWithRuns([makeRun()]), [])} mode="analyze" toolCallsAvailable />);
+      expect(within(block()).getByRole("listitem")).toHaveTextContent("calls unknown");
+      expect(within(block()).getByRole("listitem")).not.toHaveTextContent("0 calls");
+    });
+
+    it("lists a run gap with its label and reason as text", () => {
+      const hostile = "<img src=x onerror=alert(1)>";
+      const turn = withCalls(makeTurnWithRuns([makeRun()]), [], {
+        subagentRunGaps: [{ runId: "call_9", label: hostile, depth: 1, reason: "The subagent log is missing." }],
+      });
+      const { container } = render(<ExplanationPanel turn={turn} mode="analyze" toolCallsAvailable />);
+      expect(within(block()).getByText(/The subagent log is missing\./)).toBeInTheDocument();
+      expect(within(block()).getByText((text) => text.includes(hostile))).toBeInTheDocument();
+      expect(container.querySelector("img")).toBeNull();
+    });
+
+    it("names the run on a subagent tool call", () => {
+      const turn = withCalls(makeTurnWithRuns([makeRun()]), [sub("grep", "success")]);
+      render(<ExplanationPanel turn={turn} mode="analyze" toolCallsAvailable />);
+      expect(screen.getByText("by Explore")).toBeInTheDocument();
+    });
   });
 });

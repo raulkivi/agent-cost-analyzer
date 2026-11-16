@@ -19,9 +19,9 @@ const sidebar = new SidebarViews();
 const THEME_SETTING = "workbench.colorTheme";
 const FIND_MODE_SETTING = "workbench.list.defaultFindMode";
 const WARN_AT_PERCENT = 80;
-// The usage session, the empty-window session, the classic session with subagent runs (step 10.19) and the Copilot CLI sessions of the fixture.
+// The usage session, the empty-window session, the classic session with subagent runs (step 10.19), the subagent tool audit session (step 10.20) and the Copilot CLI sessions of the fixture.
 // Plus the savings fixture's Agent Host session (Phase 16 SR13); its local session has no cost data.
-const KNOWN_SESSIONS = 3 + Object.keys(COPILOT_CLI_FIXTURE_SESSION_IDS).length + 1;
+const KNOWN_SESSIONS = 4 + Object.keys(COPILOT_CLI_FIXTURE_SESSION_IDS).length + 1;
 const MONTH_ROW = /^This month: /;
 
 interface TreeNode {

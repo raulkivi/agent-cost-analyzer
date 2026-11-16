@@ -76,6 +76,72 @@ export function makeSessionAudit(overrides: Partial<SessionAudit> = {}): Session
   };
 }
 
+export const HOSTILE_LABEL = "<img src=x onerror=alert(1)>Explore";
+
+function subagentCall(runId: string, label: string, depth: number, name: string, command: string, outcome: ToolCallRecord["outcome"]) {
+  return {
+    ...bash(command, name, outcome),
+    origin: { kind: "subagent" as const, runId, label, depth, ...(depth > 1 ? { parentRunId: "run-a" } : {}) },
+  };
+}
+
+const totalsOf = (toolCalls: number, failed: number) => ({
+  toolCalls,
+  succeeded: toolCalls - failed,
+  failed,
+  interrupted: 0,
+  denied: 0,
+  unknown: 0,
+});
+
+// Step 10.20: main-agent calls plus a read run (hostile label), a nested run
+// flagged with known totals (D12), and an unread run with its reason.
+export function makeSubagentAudit(overrides: Partial<SessionAudit> = {}): SessionAudit {
+  const base = makeSessionAudit();
+  return {
+    ...base,
+    totals: { ...totalsOf(7, 3), interrupted: 1, failed: 2, succeeded: 4, canceled: 1 },
+    calls: [
+      ...base.calls,
+      { turnIndex: 1, call: subagentCall("run-a", HOSTILE_LABEL, 1, "grep", "grep -rn foo .", { status: "success" }) },
+      {
+        turnIndex: 1,
+        call: subagentCall("run-b", "searchSubagent", 2, "cat", "cat missing.txt", {
+          status: "error",
+          exitCode: 1,
+          failureCategory: "file-not-found",
+          classificationEvidence: { ruleId: "text.file-not-found", excerpt: "No such file" },
+        }),
+      },
+      { turnIndex: 1, call: subagentCall("run-a", HOSTILE_LABEL, 1, "ls", "ls", { status: "canceled" }) },
+    ],
+    byOrigin: { main: totalsOf(4, 3), subagents: { ...totalsOf(3, 1), runs: 3 } },
+    subagentRuns: [
+      { runId: "run-a", label: HOSTILE_LABEL, depth: 1, turnIndex: 1, totals: totalsOf(2, 0), failureRate: 0 },
+      {
+        runId: "run-b",
+        label: "searchSubagent",
+        depth: 2,
+        parentRunId: "run-a",
+        turnIndex: 1,
+        totals: totalsOf(1, 1),
+        failureRate: 1,
+        unreadReason: "The run's start call is missing from the log.",
+      },
+      {
+        runId: "run-c",
+        label: "Review",
+        depth: 1,
+        turnIndex: 0,
+        totals: null,
+        failureRate: null,
+        unreadReason: "The subagent log is missing.",
+      },
+    ],
+    ...overrides,
+  };
+}
+
 export function makeAuditRollup(overrides: Partial<AuditRollup> = {}): AuditRollup {
   return {
     providerId: "claude-code",
@@ -106,6 +172,23 @@ export function makeAuditRollup(overrides: Partial<AuditRollup> = {}): AuditRoll
       { sessionId: "b", title: "Push release", startedAt: "2026-09-26T08:00:00.000Z", toolCalls: 4, failed: 1, unknown: 0 },
     ],
     outcomeCoverage: { known: 10, unknown: 0, unknownReasons: [] },
+    ...overrides,
+  };
+}
+
+// Step 10.20: session "a" has read and unread subagent runs, "b" read runs
+// only, "c" is from a provider with no subagent concept.
+export function makeSubagentRollup(overrides: Partial<AuditRollup> = {}): AuditRollup {
+  const base = makeAuditRollup();
+  return {
+    ...base,
+    sessionsWithUnreadSubagentRuns: 1,
+    byOrigin: { main: totalsOf(7, 3), subagents: { ...totalsOf(3, 1), runs: 3 } },
+    sessions: [
+      { sessionId: "a", title: "Fix the build", startedAt: "2026-09-27T08:00:00.000Z", toolCalls: 6, failed: 3, unknown: 0, subagentCalls: 2, unreadSubagentRuns: 1 },
+      { sessionId: "b", title: HOSTILE_LABEL, startedAt: "2026-09-26T08:00:00.000Z", toolCalls: 4, failed: 1, unknown: 0, subagentCalls: 1, unreadSubagentRuns: 0 },
+      { sessionId: "c", title: "A pi session", startedAt: "2026-09-25T08:00:00.000Z", toolCalls: 1, failed: 0, unknown: 0 },
+    ],
     ...overrides,
   };
 }

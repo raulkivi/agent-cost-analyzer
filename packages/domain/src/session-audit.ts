@@ -158,6 +158,9 @@ export const auditRollupSchema = z.object({
       toolCalls: z.number(),
       failed: z.number(), // error + interrupted + denied
       unknown: z.number(),
+      // Step 10.20: absent = the session has no subagent runs.
+      subagentCalls: z.number().optional(),
+      unreadSubagentRuns: z.number().optional(),
     }),
   ),
   outcomeCoverage: outcomeCoverageSchema,

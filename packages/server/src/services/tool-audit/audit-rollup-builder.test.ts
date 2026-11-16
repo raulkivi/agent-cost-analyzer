@@ -177,6 +177,15 @@ describe("buildAuditRollup", () => {
       expect(rollup.outcomeCoverage.unknownReasons).toContain("The subagent log is missing.");
     });
 
+    it("carries each session's subagent calls and unread runs, and leaves them out where there is no subagent concept", () => {
+      const rollup = buildAuditRollup([withRuns("a", [readRun], 3, 2), withRuns("b", [readRun, unreadRun], 1, 2), audit("c", [])], {});
+      const row = (id: string) => rollup.sessions.find((s) => s.sessionId === id);
+
+      expect(row("a")).toMatchObject({ subagentCalls: 2, unreadSubagentRuns: 0 });
+      expect(row("b")).toMatchObject({ subagentCalls: 2, unreadSubagentRuns: 1 });
+      expect(row("c")?.subagentCalls).toBeUndefined();
+    });
+
     it("counts a run flagged but with known totals as read (D12)", () => {
       const flagged = { ...readRun, unreadReason: "start call missing" };
       expect(buildAuditRollup([withRuns("a", [flagged], 1, 2)], {}).sessionsWithUnreadSubagentRuns).toBe(0);

@@ -24,7 +24,7 @@ if (!home.includes("aca-e2e-")) {
 }
 // MS8: a test's allowance (a JSON object) goes into the fixture's settings.json.
 const allowance = process.env.AGENT_COST_E2E_ALLOWANCE ? (JSON.parse(process.env.AGENT_COST_E2E_ALLOWANCE) as FixtureOptions["allowance"]) : undefined;
-const fixture = createFixtureHome(home, { projects: process.env.AGENT_COST_E2E_NO_PROJECTS !== "1", allowance, allowanceSessions: process.env.AGENT_COST_E2E_ALLOWANCE_SESSIONS === "1" });
+const fixture = createFixtureHome(home, { projects: process.env.AGENT_COST_E2E_NO_PROJECTS !== "1", allowance, allowanceSessions: process.env.AGENT_COST_E2E_ALLOWANCE_SESSIONS === "1", auditSessions: process.env.AGENT_COST_E2E_AUDIT_SESSIONS === "1" });
 
 // Step 15.11: statements bill in UTC here, whatever the machine's zone.
 const app = createApp({ appSettingsDir: fixture.appSettingsDir, now: clockFromEnv(), timeZone: "UTC" });

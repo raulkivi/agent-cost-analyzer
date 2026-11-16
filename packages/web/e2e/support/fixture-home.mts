@@ -22,6 +22,7 @@ import { writeSavingsClaudeCodeSession } from "../../../server/src/test-support/
 import { writeCopilotCliAgentHostStores } from "../../../server/src/test-support/copilot-cli-fixtures.ts";
 import {
   seedCopilotSessionStore,
+  seedSubagentAuditFixtureSession,
   seedSubagentFixtureSession,
   USAGE_SESSION_ID,
   writeUsageDebugLog,
@@ -177,6 +178,36 @@ function copilotAllowanceSessions(home: string, cwd: string): void {
   writeCopilotCliAgentHostStores(path.join(home, ".config", "Code"), new Date("2026-11-02T12:00:00.000Z"));
 }
 
+// Step 10.20 (ST12): two classic sessions from the server's audit fixtures,
+// inside the default 30-day window to FIXTURE_NOW. Opt-in (`auditSessions`):
+// in every spec they would change the sessions list and the rollups other
+// specs count. They sit in the local scratch repository.
+//   explore-linked        two explore_subagent calls: one read run with child-log
+//                         tool calls, one with no log (an unread run)
+//   shell-calls           a child log of shell calls, one a pipe into a shell
+//                         (a security finding that names its run)
+export const AUDIT_READ_SESSION_ID = "00000000-0000-4000-9000-0000000000c1";
+export const AUDIT_READ_SESSION_TITLE = "Subagent audit session";
+export const AUDIT_SHELL_SESSION_ID = "00000000-0000-4000-9000-0000000000c2";
+export const AUDIT_SHELL_SESSION_TITLE = "Subagent audit shell session";
+
+function copilotAuditSessions(home: string, cwd: string): void {
+  const userDir = path.join(home, ".config", "Code", "User");
+  const dbPath = path.join(userDir, "globalStorage", "github.copilot-chat", "session-store.db");
+  const debugLogs = path.join(userDir, "workspaceStorage", "e2e-workspace", "GitHub.copilot-chat", "debug-logs");
+  const seeds: [string, string, string, string][] = [
+    ["explore-linked", AUDIT_READ_SESSION_ID, AUDIT_READ_SESSION_TITLE, "2026-11-04T10:00:00.000Z"],
+    ["shell-calls", AUDIT_SHELL_SESSION_ID, AUDIT_SHELL_SESSION_TITLE, "2026-11-04T12:00:00.000Z"],
+  ];
+  for (const [name, id, , startedAt] of seeds) seedSubagentAuditFixtureSession(dbPath, debugLogs, name, startedAt, id);
+  const db = new DatabaseSync(dbPath);
+  try {
+    for (const [, id, title] of seeds) db.prepare("UPDATE sessions SET cwd = ?, repository = NULL, summary = ? WHERE id = ?").run(cwd, title, id);
+  } finally {
+    db.close();
+  }
+}
+
 export interface FixtureHome {
   home: string;
   appSettingsDir: string;
@@ -190,6 +221,8 @@ export interface FixtureOptions {
   allowance?: { aiCredits: number | null; resetDay: number; warnAtPercent: number } | undefined;
   // MS8: add the in-period Copilot sessions of `copilotAllowanceSessions`.
   allowanceSessions?: boolean;
+  // Step 10.20: add the subagent audit sessions of `copilotAuditSessions`.
+  auditSessions?: boolean;
 }
 
 export function createFixtureHome(home: string, options: FixtureOptions = {}): FixtureHome {
@@ -219,6 +252,7 @@ export function createFixtureHome(home: string, options: FixtureOptions = {}): F
   copilotSession(home, folders.portalWeb, "2026-10-27T11:00:00.000Z");
   copilotSubagentSession(home, folders.scratch, "2026-10-28T11:00:00.000Z");
   if (options.allowanceSessions) copilotAllowanceSessions(home, folders.scratch);
+  if (options.auditSessions) copilotAuditSessions(home, folders.scratch);
 
   // Billing service.
   claudeCodeSession(home, "c0000000-0000-4000-8000-000000000005", folders.billing, [{ at: "2026-10-14T10:00:00.000Z", input: 6000, cacheRead: 10_000, output: 1000 }]);
