@@ -1,18 +1,15 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { monthlyAllowanceAnswerSchema, type AllowanceSettingsWrite, type MonthlyAllowanceAnswer } from "@agent-cost-analyzer/domain";
+import { apiMethodResultSchemas, type AllowanceSettingsWrite, type MonthlyAllowanceAnswer } from "@agent-cost-analyzer/domain";
 import { ApiRequestError } from "./api-request-error.js";
+import { getApiTransport } from "./current-transport.js";
 
 // MS6 (monthly-allowance-standalone.md §4.3, §4.6): the monthly allowance
 // answer (GET /api/monthly-allowance) and its write (PUT
-// /api/config/monthly-allowance). Standalone app only: the extension has no
-// allowance store and no RPC method (§4.3), so this talks HTTP directly
-// instead of going through the ApiTransport, and the UI reaches it only behind
-// `ProductFeatures.monthlyAllowance`. Answers are parsed with the domain
-// schema, so a server that drifts fails here rather than showing wrong figures.
-
-const ANSWER_URL = "/api/monthly-allowance";
-const WRITE_URL = "/api/config/monthly-allowance";
+// /api/config/monthly-allowance), through the ApiTransport. The extension has
+// no allowance store and answers both methods with 404. Answers are parsed
+// with the domain schema, so a server that drifts fails here rather than
+// showing wrong figures.
 
 // 404: this product has no allowance (the extension, or an older server).
 export class AllowanceUnavailable extends Error {
@@ -60,42 +57,27 @@ function rejectionOf(message: string | undefined): AllowanceSettingsRejected {
   return new AllowanceSettingsRejected(fieldErrors, otherErrors);
 }
 
-// The server's error body is `{ error: message }`.
-async function errorMessageOf(response: Response): Promise<string | undefined> {
+// The transport rejects with an ApiRequestError (status and the backend's
+// message); 404 and, for the write, 400 get their own meaning here.
+async function call(method: "getMonthlyAllowance" | "setMonthlyAllowance", params: unknown, signal: AbortSignal | undefined): Promise<MonthlyAllowanceAnswer> {
   try {
-    const body: unknown = await response.json();
-    const message = typeof body === "object" && body !== null ? (body as { error?: unknown }).error : undefined;
-    return typeof message === "string" && message.length > 0 ? message : undefined;
-  } catch {
-    return undefined;
+    return apiMethodResultSchemas[method].parse(await getApiTransport().call(method, params, signal));
+  } catch (error) {
+    if (error instanceof ApiRequestError && error.status === 404) {
+      throw new AllowanceUnavailable();
+    }
+    if (error instanceof ApiRequestError && error.status === 400 && method === "setMonthlyAllowance") {
+      throw rejectionOf(error.detail);
+    }
+    throw error;
   }
 }
 
-async function answerOf(response: Response, url: string, onBadRequest?: (message: string | undefined) => Error): Promise<MonthlyAllowanceAnswer> {
-  if (response.ok) {
-    return monthlyAllowanceAnswerSchema.parse(await response.json());
-  }
-  if (response.status === 404) {
-    throw new AllowanceUnavailable();
-  }
-  const message = await errorMessageOf(response);
-  if (response.status === 400 && onBadRequest) {
-    throw onBadRequest(message);
-  }
-  throw new ApiRequestError(url, response.status, message);
-}
-
-export async function getMonthlyAllowance(signal?: AbortSignal): Promise<MonthlyAllowanceAnswer> {
-  return answerOf(await fetch(ANSWER_URL, signal ? { signal } : undefined), ANSWER_URL);
+export function getMonthlyAllowance(signal?: AbortSignal): Promise<MonthlyAllowanceAnswer> {
+  return call("getMonthlyAllowance", undefined, signal);
 }
 
 // Returns the fresh answer, so the header updates from one response.
-export async function setMonthlyAllowance(settings: AllowanceSettingsWrite, signal?: AbortSignal): Promise<MonthlyAllowanceAnswer> {
-  const response = await fetch(WRITE_URL, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(settings),
-    ...(signal ? { signal } : {}),
-  });
-  return answerOf(response, WRITE_URL, rejectionOf);
+export function setMonthlyAllowance(settings: AllowanceSettingsWrite, signal?: AbortSignal): Promise<MonthlyAllowanceAnswer> {
+  return call("setMonthlyAllowance", { settings }, signal);
 }

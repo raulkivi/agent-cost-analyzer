@@ -106,6 +106,14 @@ describe("HttpTransport URL mapping", () => {
       { sessionId: "a/b c", model: "x&y=z", pricing: "api", provider: "claude-code" },
       "/api/sessions/a%2Fb%20c/replay?model=x%26y%3Dz&pricing=api&provider=claude-code",
     ],
+    ["getMonthlyAllowance", undefined, "/api/monthly-allowance"],
+    [
+      "setMonthlyAllowance",
+      { settings: { aiCredits: null, resetDay: 15, warnAtPercent: 90 } },
+      "/api/config/monthly-allowance",
+      "PUT",
+      { aiCredits: null, resetDay: 15, warnAtPercent: 90 },
+    ],
     ["getSavingsReport", {}, "/api/savings"],
     [
       "getSavingsReport",

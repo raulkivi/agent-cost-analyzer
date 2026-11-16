@@ -38,6 +38,8 @@ function fakeApi(overrides: Partial<DispatcherApi> = {}): DispatcherApi {
     getSessionReplay: vi.fn(async () => ({}) as never),
     compareSessionReplay: vi.fn(async () => ({}) as never),
     getSavingsReport: vi.fn(async () => ({}) as never),
+    getMonthlyAllowance: vi.fn(async () => ({}) as never),
+    setMonthlyAllowance: vi.fn(async () => ({}) as never),
   };
   return { ...api, ...overrides };
 }
@@ -193,6 +195,15 @@ describe("MessageDispatcher (vscode-extension.md §4)", () => {
     expect(api.getProjects).toHaveBeenCalled();
     expect(api.saveProjects).toHaveBeenCalledWith({ version: 1, projects: [] });
     expect(api.getRepositoryList).toHaveBeenCalled();
+  });
+
+  it("routes the allowance methods to ApiService, the settings as setMonthlyAllowance's body (MS6)", async () => {
+    const api = fakeApi();
+    const dispatcher = new MessageDispatcher(api);
+    await dispatcher.dispatch(request("getMonthlyAllowance"));
+    await dispatcher.dispatch(request("setMonthlyAllowance", { settings: { aiCredits: 5, resetDay: 1, warnAtPercent: 80 } }));
+    expect(api.getMonthlyAllowance).toHaveBeenCalled();
+    expect(api.setMonthlyAllowance).toHaveBeenCalledWith({ aiCredits: 5, resetDay: 1, warnAtPercent: 80 });
   });
 
   it("routes getCostEstimate to ApiService as a query", async () => {

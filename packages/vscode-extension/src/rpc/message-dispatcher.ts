@@ -180,6 +180,11 @@ function invoke(
     // signal stops the report when the webview cancels.
     case "getSavingsReport":
       return api.getSavingsReport(toQuery(params), signal);
+    // MS6: no allowance store in the extension, so ApiService answers 404.
+    case "getMonthlyAllowance":
+      return api.getMonthlyAllowance();
+    case "setMonthlyAllowance":
+      return api.setMonthlyAllowance((params as { settings: unknown }).settings);
     case "issueStatement": {
       const { projectId, period } = params as { projectId: string; period: string };
       return api.issueStatement(projectId, period);

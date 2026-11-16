@@ -59,6 +59,8 @@ describe("apiMethodSchema", () => {
       "getSessionReplay",
       "compareSessionReplay",
       "getSavingsReport",
+      "getMonthlyAllowance",
+      "setMonthlyAllowance",
     ]);
   });
 
