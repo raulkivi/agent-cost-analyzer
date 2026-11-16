@@ -25,12 +25,12 @@ async function surfaceOf(options: Parameters<typeof connectCostFixture>[0] = {})
 }
 
 describe("the standalone MCP server's tool list (SDK 2 migration contract)", () => {
-  it("lists the same 22 tools without views and 23 with them, with the same metadata, resource and prompts as on SDK 1", async () => {
+  it("lists the same 23 tools without views and 24 with them (22 and 23 on SDK 1, plus the MS9 allowance tool), with the same metadata, resource and prompts as on SDK 1", async () => {
     const withoutViews = await surfaceOf();
     const withViews = await surfaceOf({ appViews });
 
-    expect(withoutViews.tools).toHaveLength(22);
-    expect(withViews.tools).toHaveLength(23);
+    expect(withoutViews.tools).toHaveLength(23);
+    expect(withViews.tools).toHaveLength(24);
     await expect(surfaceFixture({ withoutViews, withViews })).toMatchFileSnapshot("./__snapshots__/tool-list-standalone.json");
   });
 

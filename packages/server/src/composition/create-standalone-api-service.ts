@@ -13,8 +13,7 @@ import { resolveUserDataDir } from "../platform/vscode-paths/resolve-user-data-d
 import { checkConfig } from "../services/config-check/config-check.js";
 import { ApiService } from "../services/api/api-service.js";
 import { AuditQueryService } from "../services/tool-audit/audit-query-service.js";
-import { FileAllowanceSettingsStore } from "../data-sources/log-providers/file-allowance-settings-store.js";
-import { MonthlyAllowanceService, variantOfUserDataDir } from "../services/monthly-allowance/monthly-allowance-service.js";
+import { createMonthlyAllowance } from "./create-monthly-allowance.js";
 import { readAppVersion } from "./app-version.js";
 import { createStandalonePriceBook } from "./create-price-book.js";
 import { loadBundledVendorProfiles } from "./bundled-vendor-profiles.js";
@@ -120,16 +119,8 @@ export function createStandaloneApiService(options: StandaloneApiServiceOptions 
     // Phase 16 SR12 (D10 is the extension's): every provider, the replay above
     // for the cheaper-model saving, and the same pricer and attribution.
     savingsReport: createSavingsReport({ providers: registry, profiles: vendorProfiles, priceBook, pricer, attribution: attribution.dataset, replay: sessionReplay, ...(now ? { now } : {}) }),
-    // MS4: the VS Code provider's sessions whatever provider is active (D5),
-    // against the allowance in settings.json; the variant is the user-data
-    // dir every Copilot path derives from.
-    monthlyAllowance: new MonthlyAllowanceService({
-      settings: new FileAllowanceSettingsStore(resolvedAppSettingsDir),
-      copilot: registry.getProvider("vscode"),
-      now: now ?? (() => new Date()),
-      timeZone: timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
-      variant: variantOfUserDataDir(agentHostUserDataDir),
-    }),
+    // MS4: the VS Code provider's sessions whatever provider is active (D5).
+    monthlyAllowance: createMonthlyAllowance(registry, resolvedAppSettingsDir, { agentHostUserDataDir, now, timeZone }),
     auditQueries: new AuditQueryService(registry),
     insights,
     settings: appSettings,

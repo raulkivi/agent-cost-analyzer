@@ -10,11 +10,11 @@ import { connectStdioMcp, structured } from "../support/mcp-stdio.js";
 // 4 prompts over stdio are its bundle test's (mcp-stdio-bundle.test.ts).
 // Phase 14 step 14.5 adds the replay group to both (21 and 19 tools; Phase 16 SR19 adds get_savings_report: 22 and 20).
 
-test("MCP exit criterion: 22 read-only tools and 6 prompts; priced beside billed; effects that add up", async ({ app }) => {
+test("MCP exit criterion: 23 read-only tools and 6 prompts; priced beside billed; effects that add up", async ({ app }) => {
   const client = await connectStdioMcp(app.home);
   try {
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(22);
+    expect(tools).toHaveLength(23);
     expect(tools.every((tool) => tool.annotations?.readOnlyHint === true && tool.outputSchema?.type === "object")).toBe(true);
     const { prompts } = await client.listPrompts();
     expect(prompts.map((prompt) => prompt.name).sort()).toEqual(
