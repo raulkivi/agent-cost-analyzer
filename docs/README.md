@@ -1,6 +1,6 @@
 # Developer documentation
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 For people building or changing Agent Cost Analyzer and the AI Credits
 Analyzer extension. Users: start at the [root README](../README.md).
@@ -138,6 +138,10 @@ An npm workspace:
 - [Docs refresh and demo recordings plan](plans/docs-refresh-and-demo-recordings.md) —
   steps 10.22 and 10.23: README and User Guide updates, then GIF demos
   recorded by wdio, Playwright and Claude Desktop under Xvfb.
+- [Demo recordings for the 1.0 features](plans/demo-recordings-1.0.md) —
+  proposal (owner review): which 1.0 features extend an existing demo
+  scene, which get a new recording (npx quick start, the app's allowance
+  gauge, savings in the chat), which scenes are stale, and their fixtures.
 - [Savings report plan](plans/savings-report.md) — Phase 16: a
   ranked list of what to change to spend less, with estimated savings.
   Increment 1 (the Savings tab in both products) is built; Increment 2 (an

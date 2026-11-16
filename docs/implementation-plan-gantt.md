@@ -74,6 +74,7 @@ gantt
     10.21 Monthly allowance gauge (100%)   :done, p10g, 2026-11-12, 2d
     10.22 Extension demo recordings (100%)  :done, p10h, 2026-11-13, 3d
     10.23 Claude Desktop demo recordings (100%) :done, p10i, 2026-11-14, 1d
+    10.24 Demo recordings for 1.0 (0%, after C9) :p10j, after c9, 3d
 
     section Simulation and replay
     13 Vendor-aware Learn simulation (100%) :done, p13, 2026-11-04, 4d
@@ -148,6 +149,7 @@ gantt
 - Step 10.21 (monthly allowance gauge, 100%): done 2026-11-13 (MA0 to MA12, 14 of 14 tasks; exit criterion met, review in plan §14). Released in extension 0.12.0: the owner accepted the gauge's wdio specs (`monthly-allowance.e2e.ts`, `monthly-allowance-trust.e2e.ts`, green in CI) in place of a live real-Copilot check (2026-11-14). MA13 (standalone app) is a later increment. The Sessions row is hidden while VS Code's filter is active (plan §3.8). Plan: [monthly-allowance.md](plans/monthly-allowance.md).
 - Step 10.22 (extension demo recordings, 100%, 22 of 22 tasks): done 2026-11-14. Phase 0 (PR #255), Phase 1 code (PRs #256, #257) and docs with media; 13 owner-approved GIFs in `docs/images/demo/` (1600x1000). Open follow-ups: the release suite's monthly-allowance spec flakes between midnight and about 01:15 (plan §11); the owner's two Phase 0 findings (plan §11). Next: step 10.23 (Claude Desktop demos). Plan: [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md).
 - Step 10.23 (Claude Desktop demo recordings, 100%, 7 of 7 tasks): done 2026-11-14 (PR #262). Spike 2.0 passed route R1 (Desktop 5.11492.5 driven by `xdotool` and OpenCV template matching in Xvfb, a separate signed-in profile); `npm run demo:record:desktop -w packages/vscode-extension -- M1..M7` and `npm run demo:record -w packages/mcp-apps` (F1–F3) re-record every scene. Ten owner-approved GIFs in `docs/images/demo/` (about 16 MB, D28), embedded in the User Guide and README. Found and fixed: the replay named one model for a session that switched models (PR #261). The owner approved the retaken M6 on 2026-11-14. Plan: [docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md).
+- Step 10.24 (demo recordings for the 1.0 features, 0%, 0 of 14 tasks): approved 2026-11-16, not started. The owner accepted the recommended option in every decision (D29-D43). Start condition: C9 (MA13) closes; wave 1 (DR1-DR8: E5, W3, N1, F4, M8, M4 retake) then runs, waves 2 to 4 follow MA13's MS8 and MS13, 10.20's ST12 and ST13, and C15's CS13, and wave 5 (the sweep on the 1.0 build) follows the version bump. Media grows to about 60 MB (D42). Plan: [demo-recordings-1.0.md](plans/demo-recordings-1.0.md).
 - Phase 17 (dense ledger UI, 100%, 14 of 14 tasks): Increment 1 (P0-P7) and Increment 2 (L1-L6) done 2026-11-14; the L6 review fixed 7 findings and recorded 7 (plan §10). Exit criterion met 2026-11-14 with the owner's eyes-on review; ships in app 0.14.0 and extension 0.12.0. The Dashboard on the e2e fixture went from 2,444px to 1,467px tall at 1440x900 (`density.spec.ts`). Increment 1 (P1-P7) is the density pass in every host; Increment 2 (L1-L6) is the standalone ledger theme with light and dark modes. Plan: [dense-ledger-ui.md](plans/dense-ledger-ui.md). Standalone stills outside `screenshots.mts` (landing page, Learn scenario, older guide images) and the VS Code panel stills are retaken with step 10.22's final takes.
 - Phase 16 (savings report, 100%, 23 of 23 tasks; Increment 2 exit criterion met 2026-11-14): Increment 1 (SR0-SR17) done 2026-11-13, code and docs; SR16 review in plan §16 (5 findings fixed, 3 recorded). Exit criterion met 2026-11-14 (owner sign-off on `npm run test:real-data:savings`, PR #270). The owner approved the docs on 2026-11-14 (D13-D15 answered the same day). Increment 1 released 2026-11-14 in app 0.14.0 and extension 0.12.0. Increment 2 started 2026-11-14: SR18 boards approved (D16-D21), SR19 `get_savings_report` merged (PR #275), SR20 U18 view merged (PR #278), SR21 U18 specs done (PR #281: Playwright G5 spec, real-Copilot G4 rows written, owner runs them before tagging), SR22 review and docs done (PR #285: plan §17, 2 findings fixed, 6 recorded; the G4 seed now gives U18 a ranked row). Increment 2's exit check, `npm run test:real-data:savings` extended to `get_savings_report`, passed on the owner's logs 2026-11-14; the owner signed it off the same day; it ships in extension 0.14.0 and app 0.15.0. Plan: [savings-report.md](plans/savings-report.md).
 - Phase 14: steps 14.0-14.7 built; 14.8's docs written, the owner's review open; the §13 exit check built (V3, `npm run test:real-data:replay`) and passed on the owner's logs 2026-11-14 and the owner signed it off (exit criterion met); the extension guide's replay screenshots open (User Guide's done). Step table: [analyze-session-replay.md](plans/analyze-session-replay.md) §12.
@@ -213,6 +215,68 @@ gantt
     2.1 Desktop driver (100%)                        :done, d21, 2026-11-14, 1d
     2.3 M1-M7 takes (100%)                           :done, d23, 2026-11-14, 1d
     2.4-2.6 Owner review, docs (100%)                :done, d24, 2026-11-14, 1d
+```
+
+## Step 10.24 detail — Demo recordings for 1.0
+
+Schedule view of the task table in [demo-recordings-1.0.md](plans/demo-recordings-1.0.md) §6. Status: approved 2026-11-16 (D29-D43), not started (0 of 14 tasks); wave 1 starts after C9 closes. Dates are placeholders from 2026-11-16.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "darkMode": true,
+    "background": "#0d1117",
+    "textColor": "#e6edf3",
+    "primaryTextColor": "#e6edf3",
+    "lineColor": "#8b949e",
+    "sectionBkgColor": "#161b22",
+    "sectionBkgColor2": "#1c2129",
+    "altSectionBkgColor": "#0d1117",
+    "gridColor": "#30363d",
+    "excludeBkgColor": "#161b22",
+    "todayLineColor": "#f85149",
+    "taskBkgColor": "#1f6feb",
+    "taskBorderColor": "#58a6ff",
+    "taskTextColor": "#ffffff",
+    "taskTextLightColor": "#ffffff",
+    "taskTextDarkColor": "#ffffff",
+    "taskTextOutsideColor": "#e6edf3",
+    "doneTaskBkgColor": "#238636",
+    "doneTaskBorderColor": "#3fb950",
+    "activeTaskBkgColor": "#9e6a03",
+    "activeTaskBorderColor": "#d29922",
+    "critBkgColor": "#da3633",
+    "critBorderColor": "#f85149"
+  }
+}}%%
+gantt
+    title Step 10.24 — Demo recordings for 1.0
+    dateFormat YYYY-MM-DD
+    axisFormat %m-%d
+
+    section Wave 1 (after C9)
+    DR1 Fixture additions (0%)                :d241, 2026-11-16, 1d
+    DR2-DR3 E5 and W3 scenes (0%)             :d242, after d241, 1d
+    DR4 Terminal route, N1 scene (0%)         :d244, after d241, 2d
+    DR5 F4 fake-host scene (0%)               :d245, after d241, 1d
+    DR6 M8 and M4 live takes (0%)             :d246, after d245, 1d
+    DR7 Owner review of wave 1 (0%)           :d247, after d244 d246, 1d
+    DR8 Docs with media (0%)                  :d248, after d247, 1d
+
+    section Wave 2 (after MS8, MS13)
+    DR9 W4 allowance scene (0%)               :d249, after d248, 1d
+
+    section Wave 3 (after ST12, ST13)
+    DR10 E8 extended, E3 retaken (0%)         :d2410, after d248, 1d
+    DR11 W5 scene (0%)                        :d2411, after d2410, 1d
+
+    section Wave 4 (after CS13)
+    DR12 W2 extended, M1 check (0%)           :d2412, after d248, 1d
+
+    section Wave 5 (1.0 build)
+    DR13 Sweep, N1 final take, docs (0%)      :d2413, after d249 d2411 d2412, 1d
+    DR14 Close (0%)                           :d2414, after d2413, 1d
 ```
 
 ## Phase 16 detail — Savings report
