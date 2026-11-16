@@ -111,7 +111,10 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
   });
 
   // Names and the texts that name log sources are the only intended
-  // difference (mcp/mcp-identity.ts); everything else must match exactly.
+  // difference (mcp/mcp-identity.ts), plus the subagent wording of get_turn,
+  // get_session_cost and replay_session (Claude Code, C15 CS12); everything
+  // else must match exactly.
+  const SUBAGENT_TEXT_TOOLS = ["list_log_providers", "get_turn", "get_session_cost", "replay_session"];
   const withoutIdentityText = (tools: Awaited<ReturnType<Client["listTools"]>>["tools"]) =>
     tools.map((tool) => {
       const { description, inputSchema, ...rest } = tool;
@@ -121,7 +124,7 @@ describe("createCopilotMcpServices (the extension's MCP server, vscode-extension
           key === "provider" ? { ...value, description: undefined } : value,
         ]),
       );
-      return { ...rest, description: tool.name === "list_log_providers" ? undefined : description, inputSchema: { ...inputSchema, properties } };
+      return { ...rest, description: SUBAGENT_TEXT_TOOLS.includes(tool.name) ? undefined : description, inputSchema: { ...inputSchema, properties } };
     });
 
   // Step 15.13 (plan §10.1.4, §10.1.6): every group but billing (D7).

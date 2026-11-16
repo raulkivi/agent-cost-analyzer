@@ -52,4 +52,16 @@ describe("the standalone MCP server's tool list (SDK 2 migration contract)", () 
       expect(JSON.stringify(tool?.outputSchema), name).toContain(`"${field}"`);
     }
   });
+
+  // C15 CS12: the tool texts say Claude Code runs fold in too.
+  it("describes Claude Code subagent runs in get_turn, get_session_cost and replay_session", async () => {
+    const { tools } = (await surfaceOf()) as { tools: { name: string; description: string }[] };
+    const text = (name: string) => tools.find((entry) => entry.name === name)?.description ?? "";
+    expect(text("get_turn")).toMatch(/Copilot Chat or Claude Code session the usage includes the subagent runs/);
+    expect(text("get_turn")).toContain("usage.ownUsage");
+    expect(text("get_session_cost")).toMatch(/tokens and priced cost for Claude Code, which has no AI Credits/);
+    expect(text("get_session_cost")).toMatch(/unknown, with a reason, never 0/);
+    expect(text("replay_session")).toMatch(/subagentRuns.*main agent/s);
+    expect(text("replay_session")).toMatch(/off the active branch.*not counted/s);
+  });
 });

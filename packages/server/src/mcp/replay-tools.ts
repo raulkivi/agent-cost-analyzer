@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { subagentToolTexts } from "./mcp-identity.js";
 import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import { MAX_COMPARED_MODELS, sessionReplayComparisonSchema, sessionReplaySchema } from "@agent-cost-analyzer/domain";
@@ -45,7 +46,7 @@ export function registerReplayTools(server: McpServer, deps: McpToolDeps, replay
         "Use to see what one session (id from list_sessions) would have cost on another model: the session's own request trace (token counts only) is run through that model's vendor caching rules and priced, turn by turn beside what the session really cost. " +
         `${SIMULATED_NOTE} ` +
         "The self-check (selfCheck) is the same replay on the session's own model compared with its log (cache read within 5%): if it didn't pass, trust the figures less; null when the own model has no vendor profile; models lists every model it ran when the session switched. " +
-        "Totals compare like with like (the turns replayed with a known measured and simulated cost); coverage gives the turns and requests not replayed with their reasons (helperRequests: Copilot helper agents' requests such as the todo list and the conversation summary, left out because each has a prompt of its own; their cost stays in the measured figures), and an unknown figure is null with a reason, never 0. " +
+        "Totals compare like with like (the turns replayed with a known measured and simulated cost); coverage gives the turns and requests not replayed with their reasons (helperRequests: Copilot helper agents' requests such as the todo list and the conversation summary, left out because each has a prompt of its own; their cost stays in the measured figures" + subagentToolTexts(deps.identity.readsClaudeCode === true).replay + "), and an unknown figure is null with a reason, never 0. " +
         "A session whose provider's logs can't be replayed yet answers with the reason.",
       inputSchema: z.object({ sessionId: sessionIdArg, model: modelArg, pricing: pricingArg, provider: providerArg(deps.identity) }),
       outputSchema: sessionReplaySchema,
