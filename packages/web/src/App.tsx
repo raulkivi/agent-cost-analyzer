@@ -24,6 +24,7 @@ import { AdviceExportDialog } from "./components/AdviceExportDialog.js";
 import { AdviceExportTriggerBar } from "./components/AdviceExportTriggerBar.js";
 import { useColorMode } from "./lib/use-color-mode.js";
 import { AppHeader } from "./components/AppHeader.js";
+import { MonthlyAllowance } from "./components/allowance/MonthlyAllowance.js";
 import { AuditRollupPanel } from "./components/AuditRollupPanel.js";
 import { ColumnChooser } from "./components/ColumnChooser.js";
 import { VendorDifferencesCard, hasCacheEvent } from "./components/learn/VendorDifferencesCard.js";
@@ -707,6 +708,7 @@ export function App({ performanceMarks = pagePerformanceMarks }: AppProps = {}) 
         displayName={productProfile?.displayName}
         providerSelect={features.providerSelect}
         profilePending={!profileSettled}
+        allowance={features.monthlyAllowance && mode === "analyze" ? <MonthlyAllowance narrow={layout === "narrow"} /> : undefined}
         colorMode={host.colorMode ? { preference: colorMode.preference, onChange: colorMode.setPreference } : undefined}
         statusText={health ? `status: ${health.status} · v${health.version}` : "Checking server…"}
       />
