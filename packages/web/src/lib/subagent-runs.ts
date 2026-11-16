@@ -3,6 +3,7 @@
 import { sumTokenCounts } from "@agent-cost-analyzer/domain";
 import type { SubagentRunUsage, SubagentSpend, TokenCount, Turn } from "@agent-cost-analyzer/domain";
 import { formatAiCreditsValue } from "./format-ai-credits.js";
+import { formatTokenTotal, isPricedUsage, pricedMarker } from "./subagent-priced.js";
 
 // Step 10.19 (SA13): the wording the web panel uses for a turn's classic
 // Copilot subagent runs, so the marker, the drawer line, the Explanation
@@ -54,6 +55,14 @@ export function subagentSummary(turn: Turn): SubagentSummary | undefined {
   };
 }
 
+// The marker's words (tooltip, accessible name, drawer line): tokens and a
+// priced cost where the turn has no AI Credits (step CS13), else AI Credits.
+export function subagentMarker(turn: Turn): { text: string; unknown: boolean } | undefined {
+  if (isPricedUsage(turn.usage)) return pricedMarker(turn.usage);
+  const summary = subagentSummary(turn);
+  return summary ? { text: summary.text, unknown: summary.unknown } : undefined;
+}
+
 export interface SubagentNote {
   heading: string;
   body: string;
@@ -65,6 +74,13 @@ export function subagentInspectorNote(turn: Turn): SubagentNote | undefined {
   if (!summary) return undefined;
   const { runs } = summary;
   const left = "The rounds below are the main agent's.";
+  if (isPricedUsage(turn.usage)) {
+    const marker = pricedMarker(turn.usage);
+    if (!marker) return undefined;
+    const heading = `${runsNoun(runs.length)} ${runs.length === 1 ? "is" : "are"} not shown here.`;
+    if (marker.unknown) return { heading, body: `A run could not be read, so this turn's tokens and cost are unknown. ${left}` };
+    return { heading, body: `${runs.length === 1 ? "Its" : "Their"} tokens and priced cost are in this turn's total. ${left}` };
+  }
   if (summary.unknown) {
     const heading = runs.length === 0 ? "Subagent runs are not shown here." : `${runsNoun(runs.length)} ${runs.length === 1 ? "is" : "are"} not shown here.`;
     return { heading, body: `A run could not be read, so this turn's AI Credits are unknown. ${left}` };
@@ -86,6 +102,14 @@ export function sessionSubagentLine(spend: SubagentSpend | undefined): string | 
 
 // The Sessions list's line, worded as the extension's tooltip line.
 export function sessionListSubagentLine(spend: SubagentSpend): string {
+  // Claude Code (step CS13): the list is not priced, so tokens only.
+  if (spend.tokens) {
+    const fields = [spend.tokens.uncachedInput, spend.tokens.cacheWrite, spend.tokens.cacheRead, spend.tokens.output];
+    const unknown = fields.find((count) => !count.known);
+    if (unknown && !unknown.known) return `tokens unknown: ${unknown.reason}`;
+    const total = fields.reduce((sum, count) => sum + (count.known ? count.value : 0), 0);
+    return `incl. ${formatTokenTotal(total)} tokens from ${runsNoun(spend.runs)}`;
+  }
   if (!spend.costAiCredits.known) return `AI Credits unknown: ${spend.costAiCredits.reason}`;
   return `incl. ${formatAiCreditsValue(spend.costAiCredits.value)} AI Credits from ${runsNoun(spend.runs)}`;
 }

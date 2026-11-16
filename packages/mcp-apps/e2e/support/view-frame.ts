@@ -518,6 +518,11 @@ export class SessionCostView {
     return this.content.getByRole("group", { name: /^Subagent runs \(/ });
   }
 
+  // The opened turn's tokens, priced cost and runs, for a turn without AI Credits (step CS13).
+  pricedTurn(): Locator {
+    return this.content.getByRole("group", { name: "Tokens and priced cost", exact: true });
+  }
+
   async hideTurn(): Promise<void> {
     await this.content.getByRole("button", { name: "Hide turn", exact: true }).click();
   }

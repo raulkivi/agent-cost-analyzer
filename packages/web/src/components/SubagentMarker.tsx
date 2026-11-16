@@ -1,13 +1,14 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import type { Turn } from "@agent-cost-analyzer/domain";
-import { subagentSummary } from "../lib/subagent-runs.js";
+import { subagentMarker } from "../lib/subagent-runs.js";
 
-// A fork glyph after a turn's AI Credits when subagent runs are in the figure
+// A fork glyph after a turn's AI Credits (the Turn number for a turn without
+// AI Credits, step CS13) when subagent runs are in the figure
 // (step 10.19, mock-ups SA0b). The words are in the accessible name and the
 // tooltip, so colour is never the only signal; dashed when the figure is unknown.
 export function SubagentMarker({ turn }: { turn: Turn }) {
-  const summary = subagentSummary(turn);
+  const summary = subagentMarker(turn);
   if (!summary) return null;
   return (
     <span

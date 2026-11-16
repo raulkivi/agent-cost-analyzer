@@ -14,7 +14,7 @@
 // and pi sessions follow the shapes of those fixtures, with the times,
 // folders and token counts the scenarios need. The server runs with
 // AGENT_COST_ANALYZER_NOW = FIXTURE_NOW.
-import { copyFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, cpSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { writeClaudeCodeSession, type ClaudeCodeTurn } from "../../../server/src/test-support/claude-code-session-writer.ts";
@@ -208,6 +208,38 @@ function copilotAuditSessions(home: string, cwd: string): void {
   }
 }
 
+// Step CS13: two Claude Code sessions with subagent runs, from the server's
+// fixtures (`fixtures/claude-code/subagents/`). Opt-in (`claudeSubagentSessions`):
+// in every spec they would change the sessions list and the rollups other
+// specs count.
+//   linked-run          one run, linked by its Agent call: tokens and a priced cost
+//   missing-transcript  an Agent call whose transcript is missing: an unknown run
+export const CLAUDE_SUBAGENT_KNOWN_TITLE = "known-run";
+export const CLAUDE_SUBAGENT_UNKNOWN_TITLE = "missing-run";
+const SUBAGENT_FIXTURES = path.resolve(import.meta.dirname, "../../../server/fixtures/claude-code/subagents");
+
+// Both fixtures use the folder /home/dev/project, which names the session;
+// each copy gets its own folder name so the sessions list tells them apart.
+function claudeSubagentSessions(home: string): void {
+  const seeds: [string, string][] = [
+    ["linked-run", CLAUDE_SUBAGENT_KNOWN_TITLE],
+    ["missing-transcript", CLAUDE_SUBAGENT_UNKNOWN_TITLE],
+  ];
+  for (const [fixture, title] of seeds) {
+    const to = path.join(home, ".claude", "projects", `-home-dev-${title}`);
+    cpSync(path.join(SUBAGENT_FIXTURES, fixture, "-home-dev-project"), to, { recursive: true });
+    rewriteFolder(to, title);
+  }
+}
+
+function rewriteFolder(dir: string, title: string): void {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) rewriteFolder(full, title);
+    else if (entry.name.endsWith(".jsonl") || entry.name.endsWith(".json")) writeFileSync(full, readFileSync(full, "utf8").replaceAll("/home/dev/project", `/home/dev/${title}`));
+  }
+}
+
 export interface FixtureHome {
   home: string;
   appSettingsDir: string;
@@ -223,6 +255,8 @@ export interface FixtureOptions {
   allowanceSessions?: boolean;
   // Step 10.20: add the subagent audit sessions of `copilotAuditSessions`.
   auditSessions?: boolean;
+  // Step CS13: add the Claude Code subagent sessions of `claudeSubagentSessions`.
+  claudeSubagentSessions?: boolean;
 }
 
 export function createFixtureHome(home: string, options: FixtureOptions = {}): FixtureHome {
@@ -253,6 +287,7 @@ export function createFixtureHome(home: string, options: FixtureOptions = {}): F
   copilotSubagentSession(home, folders.scratch, "2026-10-28T11:00:00.000Z");
   if (options.allowanceSessions) copilotAllowanceSessions(home, folders.scratch);
   if (options.auditSessions) copilotAuditSessions(home, folders.scratch);
+  if (options.claudeSubagentSessions) claudeSubagentSessions(home);
 
   // Billing service.
   claudeCodeSession(home, "c0000000-0000-4000-8000-000000000005", folders.billing, [{ at: "2026-10-14T10:00:00.000Z", input: 6000, cacheRead: 10_000, output: 1000 }]);

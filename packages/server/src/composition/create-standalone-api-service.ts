@@ -99,6 +99,7 @@ export function createStandaloneApiService(options: StandaloneApiServiceOptions 
       repositories: attribution.repositories,
     },
     priceBook,
+    sessionPricing: { attribution: attribution.dataset, pricer },
     // Step 15.7: cost over time and compare, over the same dataset.
     costAnalysis: createCostAnalysis(insights, priceBook, projectDirectoryOf(attribution.catalog), now),
     // Step 15.12: estimates over the same dataset, at today's prices.
