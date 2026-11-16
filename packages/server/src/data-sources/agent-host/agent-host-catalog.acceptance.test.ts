@@ -170,15 +170,29 @@ describe("getAgentHostSessionRow", () => {
 });
 
 describe("id extraction (rule 2)", () => {
-  it("skips rows whose uri lacks the copilotcli:/ prefix or has an empty id", () => {
+  it("skips rows whose uri lacks the copilotcli:/ or ahp-session:/ prefix or has an empty id", () => {
     const db = build((w) => {
       insertSession(w, { session_uri: "copilotcli:/", provider: "copilotcli", start_time: 5 });
       insertSession(w, { session_uri: "copilotcli:", provider: "copilotcli", start_time: 6 });
+      insertSession(w, { session_uri: "ahp-session:/", provider: "copilotcli", start_time: 9 });
+      insertSession(w, { session_uri: "ahp-session:", provider: "copilotcli", start_time: 10 });
       insertSession(w, { session_uri: "other:/x", provider: "copilotcli", start_time: 7 });
       insertSession(w, { session_uri: "plain-id", provider: "copilotcli", start_time: 8 });
       insertSession(w, { session_uri: "copilotcli:/ok", provider: "copilotcli", start_time: 1 });
     });
     expect(listAgentHostSessionRows(db).map((r) => r.id)).toEqual(["ok"]);
+  });
+
+  it("reads an ahp-session:/ row (the Agent Host Protocol runtime uri some Insiders builds keyed rows by) by the id after the scheme", () => {
+    const db = build((w) => {
+      insertSession(w, { session_uri: `ahp-session:/${A}`, start_time: 2 });
+      insertSession(w, { session_uri: `copilotcli:/${B}`, start_time: 1 });
+    });
+    expect(listAgentHostSessionRows(db).map((r) => [r.id, r.sessionUri])).toEqual([
+      [A, `ahp-session:/${A}`],
+      [B, `copilotcli:/${B}`],
+    ]);
+    expect(getAgentHostSessionRow(db, A)?.sessionUri).toBe(`ahp-session:/${A}`);
   });
 
   it("removes only the leading prefix", () => {

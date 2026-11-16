@@ -70,7 +70,7 @@ import {
   type OraclePeriod,
   type OracleSession,
 } from "./allowance-oracle.mjs";
-import type { AgentHostStoreTurn } from "./cost-by-project-oracle.mjs";
+import { agentHostCatalogIdOf, agentHostCatalogSessions, type AgentHostStoreTurn } from "./cost-by-project-oracle.mjs";
 import { parseJsonl } from "./savings-oracle.mjs";
 import { classifySubagentFileName, summarizeSession } from "./subagent-spend-lib.mjs";
 
@@ -90,9 +90,12 @@ const PERIODS_BACK = [0, 1, 2] as const; // D11: the current period and the two 
 // The answer rounds its sums to cents; the plan's tolerance.
 const TOLERANCE = 0.01;
 const LIVE_MS = 15 * 60_000;
-// The URI scheme the product's catalog reader takes (step 10.13); rows under
-// another scheme are counted apart, so a difference they make is named.
-const PRODUCT_SCHEME = "copilotcli";
+// The URI schemes the product's catalog reader takes (step 10.13: the storage
+// URI, and the runtime URI some Insiders builds keyed rows by), restated here;
+// rows under another scheme are counted apart, so a difference they make is named.
+const PRODUCT_SCHEMES: readonly string[] = ["copilotcli", "ahp-session"];
+const schemeOf = (uri: string) => uri.split(":")[0]!;
+const productSchemesLabel = PRODUCT_SCHEMES.map((scheme) => `${scheme}:/`).join(" and ");
 const SAFE_ID = /^[0-9A-Za-z][0-9A-Za-z-]*$/;
 // The fixed label the answer gives each VS Code variant (plan §4.4).
 const VARIANT_LABELS: Readonly<Record<string, string>> = { Code: "VS Code", "Code - Insiders": "VS Code Insiders" };
@@ -252,6 +255,8 @@ interface AgentHostRead {
   sdkIds: string[];
   rowsByScheme: Map<string, number>;
   noId: number;
+  // Ids cataloged under both of the product's schemes (read once).
+  sharedIds: number;
   // Sessions under a scheme the product's reader doesn't take: their ids.
   otherScheme: Set<string>;
   logCheck: { agree: number; differ: string[]; withoutRecords: number; noLog: number; live: number; unknownInStore: number };
@@ -261,7 +266,7 @@ interface AgentHostRead {
 // The catalog's Copilot CLI sessions (not tombstoned) and each one's session.db,
 // snapshotted from the real user-data dir; the event log cross-checks the bill.
 function readAgentHost(userData: string, snapshot: string, now: number): AgentHostRead {
-  const out: AgentHostRead = { sessions: [], rows: 0, tombstoned: 0, neverSent: 0, stores: 0, sdkIds: [], rowsByScheme: new Map(), noId: 0, otherScheme: new Set(), logCheck: { agree: 0, differ: [], withoutRecords: 0, noLog: 0, live: 0, unknownInStore: 0 }, stableFiles: [] };
+  const out: AgentHostRead = { sessions: [], rows: 0, tombstoned: 0, neverSent: 0, stores: 0, sdkIds: [], rowsByScheme: new Map(), noId: 0, sharedIds: 0, otherScheme: new Set(), logCheck: { agree: 0, differ: [], withoutRecords: 0, noLog: 0, live: 0, unknownInStore: 0 }, stableFiles: [] };
   const catalogPath = path.join(snapshot, "User", "globalStorage", "agent-host.db");
   if (!snapshotDb(path.join(userData, "User", "globalStorage", "agent-host.db"), catalogPath)) return out;
   const catalog = new DatabaseSync(catalogPath, { readOnly: true });
@@ -276,9 +281,20 @@ function readAgentHost(userData: string, snapshot: string, now: number): AgentHo
     catalog.close();
   }
   out.rows = rows.length;
+  // Under the product's schemes, one session per id (the V4 oracle's rule: the
+  // copilotcli:/ row, deleted by a tombstone under either URI). Under any other
+  // scheme, each row by its own id and tombstone, so a session the product's
+  // reader misses shows as a difference, named in the report.
+  const productRows = rows.filter((row) => PRODUCT_SCHEMES.includes(schemeOf(row.session_uri)));
+  const productIds = productRows.map((row) => agentHostCatalogIdOf(row.session_uri)).filter((id): id is string => id !== null);
+  const toRead = agentHostCatalogSessions(productRows, tombstones);
+  out.noId = productRows.length - productIds.length;
+  out.sharedIds = productIds.length - new Set(productIds).size;
+  out.tombstoned = new Set(productIds).size - toRead.length;
   for (const row of rows) {
-    const scheme = row.session_uri.split(":")[0]!;
+    const scheme = schemeOf(row.session_uri);
     out.rowsByScheme.set(scheme, (out.rowsByScheme.get(scheme) ?? 0) + 1);
+    if (PRODUCT_SCHEMES.includes(scheme)) continue;
     const id = agentHostIdOf(row.session_uri);
     if (id === null) {
       out.noId += 1;
@@ -288,6 +304,9 @@ function readAgentHost(userData: string, snapshot: string, now: number): AgentHo
       out.tombstoned += 1;
       continue;
     }
+    toRead.push({ id, row });
+  }
+  for (const { id, row } of toRead) {
     const realStore = path.join(userData, "agentSessionData", id, "session.db");
     const store = path.join(snapshot, "agentSessionData", id, "session.db");
     let storeTurns: AgentHostStoreTurn[] | null = null;
@@ -314,7 +333,7 @@ function readAgentHost(userData: string, snapshot: string, now: number): AgentHo
       continue;
     }
     out.sessions.push(session);
-    if (scheme !== PRODUCT_SCHEME) out.otherScheme.add(id);
+    if (!PRODUCT_SCHEMES.includes(schemeOf(row.session_uri))) out.otherScheme.add(id);
 
     // The Copilot CLI's own record of the bill, where it keeps one.
     const sdk = chats
@@ -492,7 +511,7 @@ const textOf = (value: unknown): string => JSON.stringify(value);
     say(`Copilot Chat (classic store): ${classic.rows} rows, ${local.length} in scope (${classic.outOfScope} out of the §18.2 scope); ${local.filter((s) => s.billed !== null).length} known; unknown: ${reasons("local")}`);
     say(`  debug logs: ${view.folders} stable session folders in the view, ${view.live} live folders left out; ${classic.logOnly.folders} with a main.jsonl and no store row (in no period), ${classic.logOnly.withCredits} of them with billed AI Credits`);
     say(`Agent Host (catalog): ${host.rows} Copilot CLI rows (by URI scheme: ${[...host.rowsByScheme].map(([scheme, n]) => `${scheme} ${n}`).join(", ")}; ${host.noId} without a usable id), ${host.tombstoned} deleted, ${host.neverSent} never sent, ${host.sessions.length} sessions (${host.stores} session.db files); ${host.sessions.filter((s) => s.billed !== null).length} known; unknown: ${reasons("agent-host")}`);
-    say(`  sessions under a scheme other than ${PRODUCT_SCHEME}:/ (the product's catalog reader takes only that one): ${host.otherScheme.size}, ${host.sessions.filter((s) => host.otherScheme.has(s.id) && s.billed !== null).length} known`);
+    say(`  sessions under a scheme other than ${productSchemesLabel} (the product's catalog reader takes only those): ${host.otherScheme.size}, ${host.sessions.filter((s) => host.otherScheme.has(s.id) && s.billed !== null).length} known; ids cataloged under both: ${host.sharedIds}`);
     say(`start source: classic, the store's created_at; Agent Host, the catalog's start_time; zone ${TIME_ZONE}`);
     say(`  classic sessions whose first logged event falls on another day than created_at: ${classic.edges.length}${classic.edges.length ? ` (${classic.edges.map((e) => `${tag(e.id)} created ${e.createdKey} log ${e.firstLogKey}`).join("; ")})` : ""}`);
     say(`  sessions without a readable start (in no period): ${sessions.filter((s) => s.startMs === null).length}`);
@@ -547,7 +566,7 @@ const textOf = (value: unknown): string => JSON.stringify(value);
           period,
           TIME_ZONE,
         );
-        if (other.total > 0) say(`  of the oracle's: ${other.total} Agent Host sessions under another URI scheme than ${PRODUCT_SCHEME}:/, ${other.known} known, ${round(other.used)} AI Credits`);
+        if (other.total > 0) say(`  of the oracle's: ${other.total} Agent Host sessions under another URI scheme than ${productSchemesLabel}, ${other.known} known, ${round(other.used)} AI Credits`);
         expect(problems).toEqual([]);
       }, 600_000);
     }

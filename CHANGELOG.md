@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A cache-break row (idle expiry, no idle gap, model switch) now leaves a session with any break that has no price out of its amount and lists it under the row's coverage with the reason, as the failed-calls row does; the session's own saving reads "Not priced". Before, the amount counted such a session's priced breaks only.
 
 ### Fixed
+- VS Code Agent Host sessions that some VS Code Insiders builds cataloged under an `ahp-session:/` URI, instead of `copilotcli:/`, were missing everywhere: the sessions list, costs, savings and the monthly allowance. They now appear like any other Agent Host session, with their turns, AI Credits and turn text. A session cataloged under both URIs shows once.
 - The chat's savings view names pi "pi" in a currency list's heading and in the list of sessions it could not check, instead of its provider id "pi-agent".
 - `get_savings_report`'s text answer says "1 of 1 session" and "1 session." instead of "1 of 1 sessions" and "1 sessions." in a row's coverage and in the lists of sessions not checked or left out.
 - `get_savings_report`'s description now tells the model that each listed session carries its start and its own saving over the window (not per week), and that an unused-tools row lists up to 20 of its tools with estimated tokens.

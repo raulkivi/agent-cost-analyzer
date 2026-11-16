@@ -177,12 +177,13 @@ describe("listAgentHostSessionRows", () => {
     expect(listAgentHostSessionRows(db)).toEqual([]);
   });
 
-  it("skips rows whose session_uri does not start with copilotcli:/", () => {
+  it("skips rows whose session_uri starts with neither copilotcli:/ nor ahp-session:/", () => {
     const db = new DatabaseSync(dbFile);
     db.exec(SESSIONS_V2_DDL);
     seedSessions(db, [
       { sessionUri: "vscode-local:/abc", startTime: 100 },
       { sessionUri: "copilotcliX:/def", startTime: 200 },
+      { sessionUri: "ahp-chat:/ghi", startTime: 250 },
       { sessionUri: URI_1, startTime: 300 },
     ]);
 
@@ -373,6 +374,105 @@ describe("getAgentHostSessionRow", () => {
   it("returns undefined when there is no sessions_v2 table", () => {
     const db = new DatabaseSync(dbFile);
     expect(getAgentHostSessionRow(db, "anything")).toBeUndefined();
+  });
+});
+
+// Some VS Code Insiders builds keyed a Copilot CLI session's sessions_v2 row
+// by its Agent Host Protocol runtime uri, ahp-session:/<id>, instead of its
+// storage uri, copilotcli:/<id>; both name the session <id>.
+describe("sessions under the ahp-session:/ uri", () => {
+  const ID_AHP = "3f2a9c10-5555-4a1b-8c05-eeeeeeeeeee5";
+  const URI_AHP = `ahp-session:/${ID_AHP}`;
+  const ID_BOTH = "3f2a9c10-6666-4a1b-8c06-fffffffffff6";
+  let dir: string;
+  let db: DatabaseSync;
+
+  beforeEach(() => {
+    dir = mkdtempSync(path.join(tmpdir(), "agent-host-catalog-ahp-test-"));
+    db = new DatabaseSync(path.join(dir, "catalog.db"));
+    db.exec(SESSIONS_V2_DDL);
+  });
+
+  afterEach(() => {
+    db.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("lists an ahp-session:/ row beside copilotcli:/ rows, its id the path after the scheme and its uri verbatim", () => {
+    seedSessions(db, [
+      { sessionUri: URI_1, startTime: 100 },
+      { sessionUri: URI_AHP, startTime: 200, modifiedTime: 250, payload: { data: { summary: "Runtime-keyed session", workingDirectories: ["file:///home/user/src/example"] } } },
+    ]);
+
+    expect(listAgentHostSessionRows(db)).toEqual([
+      { id: ID_AHP, sessionUri: URI_AHP, title: "Runtime-keyed session", startedAtMs: 200, modifiedAtMs: 250, workingFolder: "/home/user/src/example" },
+      { id: "3f2a9c10-1111-4a1b-8c01-aaaaaaaaaaa1", sessionUri: URI_1, title: null, startedAtMs: 100, modifiedAtMs: 0 },
+    ]);
+  });
+
+  it("finds an ahp-session:/ row by its id, matching the listed row", () => {
+    seedSessions(db, [{ sessionUri: URI_AHP, startTime: 200 }]);
+
+    expect(getAgentHostSessionRow(db, ID_AHP)).toEqual(listAgentHostSessionRows(db)[0]);
+    expect(getAgentHostSessionRow(db, ID_AHP)?.sessionUri).toBe(URI_AHP);
+  });
+
+  it("skips an ahp-session row with an empty id, or of another provider", () => {
+    seedSessions(db, [
+      { sessionUri: "ahp-session:/", startTime: 1 },
+      { sessionUri: `ahp-session:/${ID_BOTH}`, provider: "claude", startTime: 2 },
+    ]);
+
+    expect(listAgentHostSessionRows(db)).toEqual([]);
+    expect(getAgentHostSessionRow(db, ID_BOTH)).toBeUndefined();
+  });
+
+  it("skips an ahp-session:/ row tombstoned under its own uri", () => {
+    seedSessions(db, [{ sessionUri: URI_AHP }, { sessionUri: URI_1 }]);
+    seedMetadata(db, [{ key: `sessionTombstone:${URI_AHP}`, value: "true" }]);
+
+    expect(listAgentHostSessionRows(db).map((row) => row.sessionUri)).toEqual([URI_1]);
+    expect(getAgentHostSessionRow(db, ID_AHP)).toBeUndefined();
+  });
+
+  describe("one session per id when both schemes name it", () => {
+    it("reads the copilotcli:/ row, whichever row sorts first", () => {
+      seedSessions(db, [
+        { sessionUri: `ahp-session:/${ID_BOTH}`, startTime: 900, payload: { data: { summary: "Runtime row" } } },
+        { sessionUri: `copilotcli:/${ID_BOTH}`, startTime: 100, payload: { data: { summary: "Storage row" } } },
+      ]);
+
+      const rows = listAgentHostSessionRows(db);
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({ id: ID_BOTH, sessionUri: `copilotcli:/${ID_BOTH}`, title: "Storage row", startedAtMs: 100 });
+      expect(getAgentHostSessionRow(db, ID_BOTH)).toEqual(rows[0]);
+    });
+
+    it.each([
+      ["the copilotcli:/ uri", `copilotcli:/${ID_BOTH}`],
+      ["the ahp-session:/ uri", `ahp-session:/${ID_BOTH}`],
+    ])("treats the session as deleted when %s is tombstoned", (_label, tombstonedUri) => {
+      seedSessions(db, [
+        { sessionUri: `ahp-session:/${ID_BOTH}`, startTime: 2 },
+        { sessionUri: `copilotcli:/${ID_BOTH}`, startTime: 1 },
+      ]);
+      seedMetadata(db, [{ key: `sessionTombstone:${tombstonedUri}`, value: "true" }]);
+
+      expect(listAgentHostSessionRows(db)).toEqual([]);
+      expect(getAgentHostSessionRow(db, ID_BOTH)).toBeUndefined();
+    });
+
+    it("treats a session as deleted when its id is tombstoned under the other scheme only", () => {
+      seedSessions(db, [{ sessionUri: URI_1 }, { sessionUri: URI_AHP }]);
+      seedMetadata(db, [
+        { key: `sessionTombstone:ahp-session:/3f2a9c10-1111-4a1b-8c01-aaaaaaaaaaa1`, value: "true" },
+        { key: `sessionTombstone:copilotcli:/${ID_AHP}`, value: "true" },
+      ]);
+
+      expect(listAgentHostSessionRows(db)).toEqual([]);
+      expect(getAgentHostSessionRow(db, "3f2a9c10-1111-4a1b-8c01-aaaaaaaaaaa1")).toBeUndefined();
+      expect(getAgentHostSessionRow(db, ID_AHP)).toBeUndefined();
+    });
   });
 });
 

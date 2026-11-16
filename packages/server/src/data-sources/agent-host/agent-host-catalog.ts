@@ -3,14 +3,14 @@
 import type { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 import { hasTable } from "../sqlite/has-table.js";
+import { agentHostSessionUrisOf, parseAgentHostSessionUri } from "./agent-host-session-uri.js";
 
 export const AGENT_HOST_COPILOT_PROVIDER = "copilotcli";
 
-const SESSION_URI_PREFIX = `${AGENT_HOST_COPILOT_PROVIDER}:/`;
 const TOMBSTONE_KEY_PREFIX = "sessionTombstone:";
 
 export interface AgentHostSessionRow {
-  /** session_uri without the `copilotcli:/` prefix */
+  /** session_uri without its `copilotcli:/` or `ahp-session:/` prefix */
   id: string;
   sessionUri: string;
   /** payload JSON data.summary */
@@ -97,14 +97,7 @@ function readWorkingFolder(data: Record<string, unknown> | null): string | null 
   return localPath(directories[0]);
 }
 
-function toRow(dbRow: SessionV2DbRow): AgentHostSessionRow | null {
-  if (!dbRow.session_uri.startsWith(SESSION_URI_PREFIX)) {
-    return null;
-  }
-  const id = dbRow.session_uri.slice(SESSION_URI_PREFIX.length);
-  if (id === "") {
-    return null;
-  }
+function toRow(dbRow: SessionV2DbRow, id: string): AgentHostSessionRow {
   const data = payloadData(dbRow.payload);
   const workingFolder = readWorkingFolder(data);
   return {
@@ -117,16 +110,21 @@ function toRow(dbRow: SessionV2DbRow): AgentHostSessionRow | null {
   };
 }
 
-// Full tombstone keys of the sessions whose metadata marks them deleted;
-// membership test keeps a foreign `sessionTombstone:...` metadata row from
-// matching an unrelated session_uri.
-function tombstoneKeys(db: DatabaseSync): Set<string> {
+const tombstoneKeysOf = (id: string): string[] => agentHostSessionUrisOf(id).map((uri) => TOMBSTONE_KEY_PREFIX + uri);
+
+// Full tombstone keys of the sessions whose metadata marks them deleted, or,
+// for a lookup by id, of that session's uris only; membership test keeps a
+// foreign `sessionTombstone:...` metadata row from matching an unrelated
+// session_uri.
+function tombstoneKeys(db: DatabaseSync, sessionId?: string): Set<string> {
   if (!hasTable(db, "metadata")) {
     return new Set<string>();
   }
+  const onlyKeys = sessionId === undefined ? [] : tombstoneKeysOf(sessionId);
+  const onlyClause = sessionId === undefined ? "" : ` AND key IN (${onlyKeys.map(() => "?").join(", ")})`;
   const metaRows = db
-    .prepare("SELECT key FROM metadata WHERE value = 'true'")
-    .all() as unknown as { key: string }[];
+    .prepare(`SELECT key FROM metadata WHERE value = 'true'${onlyClause}`)
+    .all(...onlyKeys) as unknown as { key: string }[];
   return new Set(
     metaRows
       .filter((meta) => meta.key.startsWith(TOMBSTONE_KEY_PREFIX))
@@ -134,6 +132,38 @@ function tombstoneKeys(db: DatabaseSync): Set<string> {
   );
 }
 
+// Every uri of an id names the same session, so a tombstone under any of
+// them deletes it.
+function isDeleted(tombstones: ReadonlySet<string>, id: string): boolean {
+  return tombstoneKeysOf(id).some((key) => tombstones.has(key));
+}
+
+interface ParsedDbRow {
+  dbRow: SessionV2DbRow;
+  id: string;
+  preference: number;
+}
+
+function parseDbRows(dbRows: readonly SessionV2DbRow[]): ParsedDbRow[] {
+  return dbRows.flatMap((dbRow) => {
+    const parsed = parseAgentHostSessionUri(dbRow.session_uri);
+    return parsed ? [{ dbRow, ...parsed }] : [];
+  });
+}
+
+// One row per id: the one under the most preferred scheme.
+function preferredRowPerId(rows: readonly ParsedDbRow[]): Map<string, ParsedDbRow> {
+  const chosen = new Map<string, ParsedDbRow>();
+  for (const row of rows) {
+    const held = chosen.get(row.id);
+    if (held === undefined || row.preference < held.preference) {
+      chosen.set(row.id, row);
+    }
+  }
+  return chosen;
+}
+
+// Newest start first; one session per id (rule 2), whichever scheme keys it.
 export function listAgentHostSessionRows(db: DatabaseSync): AgentHostSessionRow[] {
   if (!hasTable(db, "sessions_v2")) {
     return [];
@@ -141,19 +171,13 @@ export function listAgentHostSessionRows(db: DatabaseSync): AgentHostSessionRow[
   const dbRows = db
     .prepare(`${SELECT_SESSION} WHERE provider = ? ORDER BY start_time DESC, session_uri ASC`)
     .all(AGENT_HOST_COPILOT_PROVIDER) as unknown as SessionV2DbRow[];
+  const parsed = parseDbRows(dbRows);
+  const chosen = preferredRowPerId(parsed);
   const tombstones = tombstoneKeys(db);
 
-  const rows: AgentHostSessionRow[] = [];
-  for (const dbRow of dbRows) {
-    if (tombstones.has(TOMBSTONE_KEY_PREFIX + dbRow.session_uri)) {
-      continue;
-    }
-    const row = toRow(dbRow);
-    if (row) {
-      rows.push(row);
-    }
-  }
-  return rows;
+  return parsed
+    .filter((row) => chosen.get(row.id) === row && !isDeleted(tombstones, row.id))
+    .map((row) => toRow(row.dbRow, row.id));
 }
 
 export function getAgentHostSessionRow(
@@ -163,29 +187,15 @@ export function getAgentHostSessionRow(
   if (!hasTable(db, "sessions_v2")) {
     return undefined;
   }
-  // Rows are keyed by the full uri; the empty id would collide with the
-  // degenerate `copilotcli:/` row which rule 2 drops from the catalog.
-  if (id === "") {
+  // The empty id names no session (agentHostSessionUrisOf gives it no uri).
+  const select = db.prepare(`${SELECT_SESSION} WHERE session_uri = ? AND provider = ?`);
+  const dbRow = agentHostSessionUrisOf(id)
+    .map((uri) => select.get(uri, AGENT_HOST_COPILOT_PROVIDER) as unknown as SessionV2DbRow | undefined)
+    .find((row) => row !== undefined);
+  if (dbRow === undefined || isDeleted(tombstoneKeys(db, id), id)) {
     return undefined;
   }
-  const sessionUri = SESSION_URI_PREFIX + id;
-  const dbRow = db
-    .prepare(`${SELECT_SESSION} WHERE session_uri = ? AND provider = ?`)
-    .get(sessionUri, AGENT_HOST_COPILOT_PROVIDER) as unknown as
-    | SessionV2DbRow
-    | undefined;
-  if (dbRow === undefined) {
-    return undefined;
-  }
-  if (hasTable(db, "metadata")) {
-    const meta = db
-      .prepare("SELECT value FROM metadata WHERE key = ?")
-      .get(TOMBSTONE_KEY_PREFIX + sessionUri) as { value: string } | undefined;
-    if (meta?.value === "true") {
-      return undefined;
-    }
-  }
-  return toRow(dbRow) ?? undefined;
+  return toRow(dbRow, id);
 }
 
 // provider_data is JSON text written by VS Code, so a row that does not hold an

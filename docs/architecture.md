@@ -1577,11 +1577,21 @@ the classic stores, through `AgentHostSessionSource`
 startup.
 
 - `User/globalStorage/agent-host.db`, the session catalog:
-  - `sessions_v2`: one row per session. Only `session_uri` values with the
-    `copilotcli:/` prefix are read. `start_time` and `modified_time` are in
-    ms. `payload` is JSON; `data.summary` is the title.
+  - `sessions_v2`: one row per session, `provider` `copilotcli`. VS Code
+    keys the row by the session's storage URI, `copilotcli:/<id>`. A run of
+    VS Code Insiders builds keyed it by the Agent Host Protocol runtime URI,
+    `ahp-session:/<id>`, instead. VS Code's `sessionStorageIdentity`
+    metadata pairs the two URIs with the same id, so both name one session.
+    Both prefixes are read, and the session id is the rest of the URI. The
+    accepted schemes are defined once, in `agent-host-session-uri.ts`.
+    `start_time` and `modified_time` are in ms. `payload` is JSON;
+    `data.summary` is the title.
+  - One session per id: when both URIs of an id have a row, the
+    `copilotcli:/` row is read. Its chats are the `chats_v2` rows whose
+    `owner_session_uri` is that row's URI.
   - `metadata`: a row `sessionTombstone:<session_uri>` = `true` marks a
     deleted session. Its `sessions_v2` row stays, and the session is skipped.
+    A tombstone under either URI of an id deletes the session.
 - `agentSessionData/<id>/session.db`, one per session:
   - `turns`: one row per turn, in insertion order. Holds no text.
   - `turn_usage.usage`: per turn, JSON. `_meta.turnTokenTotals` gives each

@@ -78,6 +78,7 @@ import {
   type OracleSession,
 } from "./replay-oracle.mjs";
 import { loadBundledTables, parseJsonl, type RawLine } from "./savings-oracle.mjs";
+import { agentHostCatalogSessions } from "./cost-by-project-oracle.mjs";
 
 const REAL_DATA = process.env.REAL_DATA === "1";
 const HOME = homedir();
@@ -247,10 +248,15 @@ function agentHostCandidates(userData: string, now: number): { candidates: Candi
   if (!existsSync(dbPath) || copilotHome === null) return { candidates, live };
   const db = new DatabaseSync(dbPath, { readOnly: true });
   try {
-    const rows = db.prepare("SELECT s.session_uri AS uri, c.provider_data AS data FROM sessions_v2 s JOIN chats_v2 c ON c.owner_session_uri = s.session_uri").all() as { uri: string; data: unknown }[];
+    const rows = db.prepare("SELECT s.session_uri AS uri, c.provider_data AS data FROM sessions_v2 s JOIN chats_v2 c ON c.owner_session_uri = s.session_uri WHERE s.provider = 'copilotcli'").all() as { uri: string; data: unknown }[];
+    // One session per id under either URI scheme (the V4 oracle's rule); as
+    // before, tombstones aren't consulted: the products skip what they can't read.
+    const cataloged = agentHostCatalogSessions([...new Set(rows.map((r) => r.uri))].map((uri) => ({ session_uri: uri })), new Set());
+    const idOf = new Map(cataloged.map((s) => [s.row.session_uri, s.id]));
     const seen = new Set<string>();
     for (const { uri, data } of rows) {
-      if (seen.has(uri) || !uri.startsWith("copilotcli:/")) continue;
+      const id = idOf.get(uri);
+      if (id === undefined || seen.has(id)) continue;
       let sdk: unknown;
       try {
         sdk = typeof data === "string" ? (JSON.parse(data) as Record<string, unknown>).sdkSessionId : undefined;
@@ -260,7 +266,7 @@ function agentHostCandidates(userData: string, now: number): { candidates: Candi
       if (typeof sdk !== "string" || !/^[0-9A-Za-z][0-9A-Za-z-]*$/.test(sdk)) continue;
       const events = path.join(copilotHome, "session-state", sdk, "events.jsonl");
       if (!existsSync(events)) continue;
-      seen.add(uri);
+      seen.add(id);
       if (!stableSince(now, [events])) {
         live += 1;
         continue;
@@ -268,7 +274,7 @@ function agentHostCandidates(userData: string, now: number): { candidates: Candi
       candidates.push({
         kind: "Agent Host",
         provider: "vscode",
-        id: uri.slice("copilotcli:/".length),
+        id,
         files: [events],
         subagentFiles: 0,
         mtimeMs: statSync(events).mtimeMs,

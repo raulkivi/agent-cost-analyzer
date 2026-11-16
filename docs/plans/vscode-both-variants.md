@@ -71,7 +71,7 @@ The `REAL_DATA` scripts (`sa18-subagent-credits`, `savings-exit`, `replay-exit`)
 ### 3.3 Could session ids collide across variants?
 
 - Classic ids are UUIDs written by each variant's Copilot Chat; two installs generate them independently, so a collision is not expected. The spike found 0 overlaps (§4), with only Insiders holding data.
-- Agent Host ids are the Copilot CLI session ids from `copilotcli:/<id>` catalog URIs. Both variants read Copilot CLI event logs from the **same** Copilot home (`~/.copilot/session-state/<id>/events.jsonl`). If one CLI session were catalogued by both variants, both would report it and its AI Credits would count twice. Unverified whether VS Code catalogues CLI sessions it did not create; VB0b measures it (D3).
+- Agent Host ids come from `copilotcli:/<id>` catalog URIs, or `ahp-session:/<id>` in some Insiders builds (architecture §6.2.2.1). Both variants read Copilot CLI event logs from the **same** Copilot home (`~/.copilot/session-state/<id>/events.jsonl`). If one CLI session were cataloged by both variants, both would report it and its AI Credits would count twice. Unverified whether VS Code catalogs CLI sessions it did not create; VB0b measures it (D3).
 
 ### 3.4 Startup configuration check (Phase 5, architecture §6.3)
 
@@ -120,7 +120,7 @@ Findings:
 1. **Stable has no Copilot data on this machine.** `~/.config/Code` is a leftover folder without `User`. The both-installed case cannot be verified here until Stable is installed and used (VB0b, D9).
 2. `resolveUserDataDir()` accepts a folder without `User`. Had Insiders been absent, the app would have picked the leftover Stable folder and shown "no sessions". The root rule in §5.2 fixes this class (D10).
 3. VS Code Server holds a Copilot Chat globalStorage folder but no sessions here; out of 1.0 (D5).
-4. 11 of 109 Agent Host catalog rows use another URI form and are skipped by the reader, as today; no change proposed.
+4. 11 of 109 Agent Host catalog rows use another URI form and are skipped by the reader, as today; no change proposed. Update 2026-11-16: the form is `ahp-session:/<id>`, and the reader now takes it too (owner's decision after the MS10 real-data check; architecture §6.2.2.1).
 
 VB0b (owner step, then rerun): install VS Code Stable here, sign in to Copilot, run one classic Agent-mode chat and one Agent Host chat, then rerun the spike. It must report per-variant counts, id overlaps, and whether one Copilot CLI session id appears in both catalogs (§3.3).
 
@@ -287,7 +287,7 @@ With Stable and Insiders both holding Copilot sessions, the standalone app and i
 - Unit and component tests of VB1 to VB10, and the full suite.
 - **Playwright** `vb-both-variants.spec.ts` (§7), light and dark.
 - **`npm run test:real-data:variants`** on the owner's logs:
-  - The oracle (`variants-oracle.mts`) shares no code with the product. It enumerates `~/.config/Code` and `~/.config/Code - Insiders` itself, opens each store read-only and counts per variant: classic sessions (`sessions` rows with `agent_name = 'GitHub Copilot Chat'`), Agent Host sessions (`sessions_v2` rows of provider `copilotcli` with a `copilotcli:/` URI, minus tombstones, with the product's empty-store rule restated), and billed AI Credits from raw `main.jsonl` (classic, with subagent logs through the SA18 scanners) and `events.jsonl` (Agent Host, through the V3 oracle's reader), each session known or unknown as a whole.
+  - The oracle (`variants-oracle.mts`) shares no code with the product. It enumerates `~/.config/Code` and `~/.config/Code - Insiders` itself, opens each store read-only and counts per variant: classic sessions (`sessions` rows with `agent_name = 'GitHub Copilot Chat'`), Agent Host sessions (`sessions_v2` rows of provider `copilotcli` with a `copilotcli:/` or `ahp-session:/` URI, one per id, minus tombstones under either URI, with the product's empty-store rule restated), and billed AI Credits from raw `main.jsonl` (classic, with subagent logs through the SA18 scanners) and `events.jsonl` (Agent Host, through the V3 oracle's reader), each session known or unknown as a whole.
   - Per variant: the app's session count (`GET /api/sessions` grouped by `vscodeVariant`) and MCP `list_sessions` equal the oracle's exactly; the sum of known AI Credits is within 0.01 of the oracle's; known and total counts exact.
   - Together: `get_cost_rollup provider=vscode` and the Dashboard total equal the oracle's two-variant sum within 0.01, with a Copilot CLI session in both catalogs counted once.
   - Every id the app listed before the change (a saved list from the one-root build) still resolves to the same session.
