@@ -19,6 +19,7 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { writeClaudeCodeSession, type ClaudeCodeTurn } from "../../../server/src/test-support/claude-code-session-writer.ts";
 import { writeSavingsClaudeCodeSession } from "../../../server/src/test-support/savings-fixtures.ts";
+import { writeCopilotCliAgentHostStores } from "../../../server/src/test-support/copilot-cli-fixtures.ts";
 import {
   seedCopilotSessionStore,
   seedSubagentFixtureSession,
@@ -143,6 +144,39 @@ function copilotSubagentSession(home: string, cwd: string, startedAt: string): v
   }
 }
 
+// MS8 (monthly-allowance-standalone.md §11): Copilot sessions inside the
+// period of FIXTURE_NOW (2026-11-06, UTC, reset day 1: 2026-11-01 up to
+// 2026-12-01), which the sessions above (2026-10-27 and 28) fall before. Each
+// has its own start day, so the reset day picks which of them a test counts:
+//   2026-11-02  Agent Host (Copilot CLI) sessions, some with cost data and
+//               some without
+//   2026-11-03  a classic session with AI Credits for every request: 5.1
+//   2026-11-05  a classic session with a request that has no AI Credits:
+//               unknown. Reset day 5 leaves it as the only session.
+// The classic ones sit in the local scratch repository, so no project's
+// figures move. Opt-in (`allowanceSessions`): in every spec they would grow
+// the Dashboard past the density budget and double the 10.19 model view's total.
+export const ALLOWANCE_KNOWN_SESSION_ID = "00000000-0000-4000-9000-0000000000b1";
+export const ALLOWANCE_UNKNOWN_SESSION_ID = "00000000-0000-4000-9000-0000000000b2";
+
+function copilotAllowanceSessions(home: string, cwd: string): void {
+  const userDir = path.join(home, ".config", "Code", "User");
+  const dbPath = path.join(userDir, "globalStorage", "github.copilot-chat", "session-store.db");
+  const debugLogs = path.join(userDir, "workspaceStorage", "e2e-workspace", "GitHub.copilot-chat", "debug-logs");
+  const seeds: [string, string, string][] = [
+    ["run-and-search", ALLOWANCE_KNOWN_SESSION_ID, "2026-11-03T10:00:00.000Z"],
+    ["request-without-credits", ALLOWANCE_UNKNOWN_SESSION_ID, "2026-11-05T10:00:00.000Z"],
+  ];
+  for (const [name, id, startedAt] of seeds) seedSubagentFixtureSession(dbPath, debugLogs, name, startedAt, id);
+  const db = new DatabaseSync(dbPath);
+  try {
+    for (const [, id] of seeds) db.prepare("UPDATE sessions SET cwd = ?, repository = NULL WHERE id = ?").run(cwd, id);
+  } finally {
+    db.close();
+  }
+  writeCopilotCliAgentHostStores(path.join(home, ".config", "Code"), new Date("2026-11-02T12:00:00.000Z"));
+}
+
 export interface FixtureHome {
   home: string;
   appSettingsDir: string;
@@ -152,6 +186,10 @@ export interface FixtureHome {
 // Step 15.11: scenario S1 starts with no projects file.
 export interface FixtureOptions {
   projects?: boolean;
+  // MS8: the allowance in the app's settings.json; absent is not set.
+  allowance?: { aiCredits: number | null; resetDay: number; warnAtPercent: number } | undefined;
+  // MS8: add the in-period Copilot sessions of `copilotAllowanceSessions`.
+  allowanceSessions?: boolean;
 }
 
 export function createFixtureHome(home: string, options: FixtureOptions = {}): FixtureHome {
@@ -180,6 +218,7 @@ export function createFixtureHome(home: string, options: FixtureOptions = {}): F
   piSession(home, "p0000000-0000-4000-8000-000000000004", folders.portalApi, [{ at: "2026-10-20T08:00:00.000Z", input: 3000, output: 500, costUsd: 0.05 }]);
   copilotSession(home, folders.portalWeb, "2026-10-27T11:00:00.000Z");
   copilotSubagentSession(home, folders.scratch, "2026-10-28T11:00:00.000Z");
+  if (options.allowanceSessions) copilotAllowanceSessions(home, folders.scratch);
 
   // Billing service.
   claudeCodeSession(home, "c0000000-0000-4000-8000-000000000005", folders.billing, [{ at: "2026-10-14T10:00:00.000Z", input: 6000, cacheRead: 10_000, output: 1000 }]);
@@ -223,6 +262,7 @@ export function createFixtureHome(home: string, options: FixtureOptions = {}): F
       2,
     )}\n`,
   );
+  if (options.allowance) write(path.join(appSettingsDir, "settings.json"), `${JSON.stringify({ monthlyAllowance: options.allowance }, null, 2)}\n`);
   const captures = path.join(appSettingsDir, "mitmproxy-captures");
   mkdirSync(captures, { recursive: true });
   copyFileSync(path.join(SERVER_FIXTURES, "mitmproxy", "anthropic-non-streamed.har"), path.join(captures, "anthropic-non-streamed.har"));

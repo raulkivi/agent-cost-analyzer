@@ -182,6 +182,7 @@ opener around it (§10).
 | `services/cost-analysis` | Phase 15 §8: the cost cube over the Insights dataset and the pure builders for cost over time, compare, project cost and variance (usage, price and mix effects), behind `CostAnalysisService` |
 | `services/billing` | Phase 15 §8.5–§8.6: statements (draft, freeze, diff, CSV/JSON/Markdown export) and estimates (a p50–p90 range); standalone app only |
 | `data-sources/projects`, `data-sources/statements` | Phase 15: the projects file and issued statements, as JSON in the app's own settings folder (the only files the app writes besides `settings.json`, §11.2) |
+| `services/monthly-allowance/`, `data-sources/log-providers/file-allowance-settings-store.ts`, `composition/create-monthly-allowance.ts` | MA13 ([plans/monthly-allowance-standalone.md](plans/monthly-allowance-standalone.md) §4.4–§4.6, standalone only): `MonthlyAllowanceService` (`get`, `save`) reads the VS Code provider's sessions whatever provider is active (D5), applies the domain's `computeMonthlyAllowance` to the allowance in settings and answers a `MonthlyAllowanceAnswer`: state (`not-set`, `no-source`, `no-sessions`, `unknown`, `known`), period in the machine's zone, figures, by-harness split and the VS Code variant label (a fixed string, never a path). It depends on the `CopilotSessionSource` and `AllowanceSettingsStore` ports (DIP). `FileAllowanceSettingsStore` keeps the allowance under `monthlyAllowance` in `settings.json`; `createMonthlyAllowance` wires both entry points, so the header and `get_monthly_allowance` agree. `mcp/allowance-tools.ts`, `mcp/allowance-tool-output.ts`: the `allowance` tool group, `get_monthly_allowance` (read-only, no arguments), whose text is the domain's wording and carries numbers, day keys and the zone only |
 | Request traces (`RequestTraceReader`) | Phase 14 ([plans/analyze-session-replay.md](plans/analyze-session-replay.md) §4.1, step 14.2): an optional `LogProvider` capability (`canReadRequestTrace`, ISP) that reads a session's main chain as a numbers-only `RequestTrace`, one record per LLM request. `ClaudeCodeLogProvider` and `VscodeLogProvider` implement it (classic store first, then Agent Host through `CopilotSessionSource.readRequestTrace`); pi and mitmproxy don't yet (D1). One pure builder per provider, each reusing its provider's own turn building: `buildClaudeCodeRequestTrace` (`data-sources/claude-code/request-trace-builder.ts`), `buildLocalRequestTrace` (`data-sources/jsonl/local-request-trace.ts`) and `buildAgentHostRequestTrace` (`services/session-enricher/agent-host-request-trace.ts`) |
 | `services/session-replay/request-trace-scripter.ts` | Phase 14 step 14.3: `scriptFromRequestTrace` (and the injectable `RequestTraceScripter`) turns a trace into a `ScenarioScript` with compaction, clear, model-switch and `extended-ttl` events (pure). It replaced 13.5a's `scriptFromCapture`; calibration replays its captures through it |
 | `services/session-replay/replay-model-resolver.ts` | Phase 14 step 14.4: `ReplayModelResolver` maps a log's model id (a date suffix, `[1m]`, `copilot/`) to a vendor profile's model through Phase 15's `candidateModelIds`; no near match is guessed, and a model whose caching is undocumented is refused |
@@ -293,6 +294,7 @@ SQLite, `main.jsonl`, or scenario fixtures.
 | `state/session-store` | Holds the currently loaded `Session`, selected turn index, Learn/Analyze `mode`, selected Analyze log-provider id, and right-column `rightTab` (Analyze mode only); the rest of the UI is a pure function of this state |
 | `api-client` | Fetches provider descriptors, selects the active provider, and fetches sessions through the stable REST API; it is the only frontend module that knows an HTTP boundary exists |
 | `charts/*` | D3-based AI Credits sparkline rendered in the center column's header row |
+| `components/allowance/*`, `lib/allowance/*`, `state/use-monthly-allowance.ts`, `api-client/monthly-allowance.ts` | MA13 MS6–MS7 (behind `ProductFeatures.monthlyAllowance`, standalone only): `MonthlyAllowance` is the header gauge in Analyze mode (`AllowanceGauge`, `AllowanceMeter`) with its details and settings dialogs (focus trapped, Escape closes, focus returns to the gauge). `lib/allowance/allowance-view.ts` and `allowance-detail-rows.ts` are pure view models over the answer and the domain's `describeMonthlyAllowance`; the hook loads on entering Analyze mode, after a save and on Recount; the client calls `GET /api/monthly-allowance` and `PUT /api/config/monthly-allowance`. Boards: [plans/mockups/monthly-allowance-standalone/](plans/mockups/monthly-allowance-standalone/README.md) |
 | `components/replay/*` | Phase 14 step 14.7 (behind `ProductFeatures.sessionReplay`, both products): `ReplayOnPicker` (Learn's `VendorPicker` with an "Off (measured only)" first choice; disabled with the server's reason for pi and mitmproxy), `ReplaySummaryStrip`, `ReplaySummaryPanel` (a dialog; the assumptions open the first time), `ReplayTurnNote` in the Explanation tab, `ReplayStatus` (loading with Cancel, not replayable, errors), `ReplayPricingNote`, `SimulatedBadge` and `CompareModelsView`. `TurnsTable` gains a dashed "Simulated · <model>" column group. State in `state/use-session-replay.ts`, `use-analyze-replay.ts` and `use-replay-comparison.ts`; the client in `api-client/replay.ts` |
 | `charts/ReplayCompareBars.tsx` | Phase 14 step 14.7: the Compare models bars (one hue, the session's own model hatched and outlined, a measured reference line, an unknown total as "unknown") |
 | `components/savings/*`, `lib/savings/savings-view.ts` | Phase 16 SR14 (behind `ProductFeatures.savingsReport`, both products): `SavingsTab` (the filters, one list per currency, the Simulated and Not analysed sections, cancel and refresh through `useCancellableLoad`), `SavingsRow`, `SavingsDetail` (evidence, replay checks, the fixed action text with Copy, session links, price versions) and `SavingsLabel`. `savings-view.ts` builds every label ("up to", range, "Not priced", "estimate", "inferred", "date unknown") and `copyableText` (one line, capped at 600 characters) from the amount, never in CSS, so tests can assert them; it also formats a session's date in the viewer's time zone and saving (V24) and an unused-tools row's tool list (`toolListOf`, V26). `session-titles.ts` (`sessionTitleLookup`, `titleText`: one line, bidi and control characters out, at most 120 code points) and `use-session-titles.ts` look a session's title up in the insights dataset over the report's window, loaded once a detail opens (V25, D24); `SavingsDetail` takes the lookup as its `titleOf` prop and never fetches, and no title goes into the report, Copy or any request. In the standalone app the tab is the Dashboard's `savings` view after Billing; in the extension (`copilotOnly`) it is a view of its own after Dashboard <!-- codespell:ignore analysed --> |
@@ -655,7 +657,7 @@ MCP across the products (Phase 15 step 15.13, plan §10.1.4–§10.1.6):
 `createMcpServer` takes `toolGroups` (`sessions`, `audit`, `cost`,
 `findings`, `attribution`, `pricing`, `costAnalysis`, `replay` from
 Phase 14, `savings` from Phase 16, `billing`; every group by default), and a group is registered only when its services are
-given too. The standalone stdio server serves all 22 tools and 6 prompts (21 before Phase 16 SR19 added the `savings` group, 19 before Phase 14 step 14.5 added `replay`).
+given too. The standalone stdio server serves all 23 tools and 6 prompts (22 before MA13 MS9 added the `allowance` group, 21 before Phase 16 SR19 added the `savings` group, 19 before Phase 14 step 14.5 added `replay`).
 The extension's (`createCopilotMcpServices`) serves
 `WITHOUT_BILLING_TOOL_GROUPS`: repositories over the Copilot provider
 (`createCopilotAttribution`, with no projects file, so `list_projects`
@@ -824,6 +826,17 @@ no known part (refinement). `ToolInventoryEntry.loadedRequests` (optional;
 pi only) is the requests a tool was declared for, absent meaning every
 request. `Session.sharedPrefixRequests` (optional; pi branches only) is the
 leading requests a branch shares with an earlier branch of its file (D27).
+
+Monthly allowance (MA13, `packages/domain/src/allowance/monthly-allowance-answer.ts`;
+data flow in §4.1): a `MonthlyAllowanceAnswer` holds the `settings` (`aiCredits`
+or null, `resetDay`, `warnAtPercent`), the `state` (`not-set`, `no-source`,
+`no-sessions`, `unknown`, `known`), the `period` (start and exclusive end day
+keys, the IANA zone, days left), the `figures`, the `source` (availability, a
+reason, the variant label "VS Code" or "VS Code Insiders") and the by-harness
+split. `used`, `percent` and `remaining` exist only in the `known` state, so
+an unknown total is never 0; `atLeast` marks a sum that leaves out sessions
+without cost data. Every object is strict and holds numbers, day keys, the zone
+and fixed labels only, never a session id, title or path.
 
 Log-provider selection is a separate app-level contract, not a provider-
 specific API or UI branch:
@@ -2528,7 +2541,7 @@ this is the end-to-end view.
 | Statements and estimates | Yes | No (D7) |
 | Side bar and status bar | — | Sessions grouped by day or repository; today's AI Credits for the workspace's repository (step 15.14) |
 | Session replay (Phase 14, D5) | Replay on and Compare models for Claude Code and VS Code sessions; pi and mitmproxy not yet (D1) | Replay on and Compare models for Copilot sessions (classic and Agent Host), priced from the bundled price book |
-| MCP | 22 tools, 6 prompts | 20 tools, 4 prompts (no `billing` group) |
+| MCP | 23 tools, 6 prompts | 20 tools, 4 prompts (no `billing` or `allowance` group) |
 
 ### 6.5 Session replay (Phase 14)
 
@@ -2812,6 +2825,8 @@ themselves.
 | `POST /api/statements/:projectId/:period/issue` | Freezes the draft into `statements/<project>/<period>.json` in the app's settings folder (Phase 15 step 15.11). JSON only (415 otherwise); 409 for an open or already issued period; returns the `StatementAnswer` |
 | `GET /api/repositories` | `RepositoryList` (Phase 15 step 15.3): every repository the providers' sessions resolve to (`key`, `source`, `rootPath`, session count, providers, first and last use, projects), the Unattributed sessions grouped by reason, and each provider's status |
 | `PUT /api/config/retention-threshold` | Sets the persisted `minRetainedSessionLogsThreshold` override (body: `{ value: number }`, must be a positive integer, else 400); returns the fresh `ConfigStatus` so the caller can update both the header control and the warning banner from one response |
+| `GET /api/monthly-allowance` | `MonthlyAllowanceAnswer` (MA13 MS4, §4.3): the month-to-date AI Credits of the VS Code Copilot sessions against the allowance in `settings.json`: `state`, `settings`, `period` (day keys, zone, days left), `figures` (used, percent, remaining, coverage, by harness), `source` (availability, variant label). Billed credits only; a session without cost data is left out and `atLeast` says so; `used` exists only in the `known` state. Standalone only |
+| `PUT /api/config/monthly-allowance` | Sets the allowance (body: the whole `{ aiCredits, resetDay, warnAtPercent }`; `aiCredits` null removes it and keeps the other two). Strict zod schema (`allowanceSettingsWriteSchema`): `aiCredits` above 0 and at most 1,000,000,000, `resetDay` 1 to 28, `warnAtPercent` 1 to 100; 400 names the fields and writes nothing. JSON only: another content type reaches the schema with no body and gets 400. Returns the new answer |
 
 The server binds to `localhost` only (see §11.2).
 
@@ -2821,8 +2836,8 @@ route's query and is cancellable through the dispatcher's abort signal.
 `getSessionReplay` and `compareSessionReplay` (Phase 14) are
 the first with result schemas (`apiMethodResultSchemas`), which the web
 client parses answers with. The MCP servers expose the same services: the
-standalone stdio server 22 tools and 6 prompts, the extension's 20 tools
-and 4 prompts (no `billing` group; §5), plus the app-only `get_turn_series`
+standalone stdio server 23 tools and 6 prompts, the extension's 20 tools
+and 4 prompts (no `billing` or `allowance` group; §5), plus the app-only `get_turn_series`
 in each when the views are served (§4.1.1). Phase 15's `estimate_cost` (billing
 group, standalone only) takes an
 optional `model` (Phase 14, D7): the project's sessions in the window (at
@@ -3020,10 +3035,16 @@ on `domain` and on `web`'s presentational exports only, never on `server`
   absolute path and validated the same way `sessionId` is (allow-list/no
   traversal); a path that doesn't resolve to a readable file marks that
   provider `unavailable` with a reason, never a server crash.
-- The app's own settings (currently only the active log-provider id) are the
-  one thing this app ever writes to local disk — stored in an app-owned
-  config directory, never inside VS Code's `settings.json`, session store, or
-  a captured-log directory.
+- The app's own settings (the active log-provider id, the retained-logs
+  threshold and, since MA13, the monthly allowance under `monthlyAllowance`)
+  are the one thing this app ever writes to local disk besides the projects
+  and statements files — stored in an app-owned config directory, never inside
+  VS Code's `settings.json`, session store, or a captured-log directory. The
+  write is atomic: the new contents go to a temporary file in that folder
+  (mode 0600) and are renamed over `settings.json`, keeping keys the writer
+  does not own, so a second process never reads a torn file. The allowance
+  endpoint validates strictly and the answer carries no session title, path or
+  repository name.
 - Only the latest stable, non-vulnerable version of each dependency may be
   added or upgraded to (see §11.6); a dependency with a known unpatched
   vulnerability is not introduced regardless of how minor its role is.
@@ -3176,7 +3197,7 @@ refactored — red-green-refactor, not tests bolted on afterward.
   script, stylesheet or font, and a clean load in jsdom. On the server,
   in-memory MCP client tests (`register-app-views.test.ts`) assert the
   `tools/list` metadata, the resource's MIME type and injected brand,
-  unchanged tool `content`, and 23 and 21 tools with the views against 22
+  unchanged tool `content`, and 24 and 21 tools with the views against 23
   and 20 without; `injectBrand`, `ViewSource` and `resolveAppViews` have
   unit tests. Stdio tests start the real entry points with and without the
   file (`stdio.test.ts`, `mcp-stdio-bundle.test.ts`), and `packaging.test.ts`
@@ -3323,7 +3344,7 @@ by repository (§6.4 has the product table):
   Both resolve repositories through `sidebar/repository-sources.ts`, the
   same `SessionAttributor` and `RepositoryResolver` as the Dashboard.
 
-**As built (step 10.21, monthly allowance).** A month-to-date AI Credits
+**As built (step 10.21, monthly allowance).** The standalone app has the same gauge (MA13, §4.1 and §4.2); the extension keeps its own settings and status bar and imports the shared figures and wording from the domain package (§4.3), so both products say the same thing. A month-to-date AI Credits
 gauge against the user's allowance, in the status bar and the Sessions view
 (plan [plans/monthly-allowance.md](plans/monthly-allowance.md)):
 - **Model.** The figures are the domain's `computeMonthlyAllowance`
@@ -3424,7 +3445,9 @@ the one gap was `context_edit`, now handled.
 
 **Resolved:** whether the app-owned settings file should ever hold more than
 the active provider id — yes. It now also holds
-`minRetainedSessionLogsThreshold` (below), read-merge-write through a shared
+`minRetainedSessionLogsThreshold` (below) and the `monthlyAllowance` object
+(`aiCredits`, `resetDay`, `warnAtPercent`; MA13, written by the atomic writer
+of §11.2), read-merge-write through a shared
 private helper in `app-settings.ts` so neither key clobbers the other on
 write.
 

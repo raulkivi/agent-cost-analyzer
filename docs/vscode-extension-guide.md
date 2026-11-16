@@ -471,7 +471,9 @@ folder, not on a timer, so after midnight it changes on the next refresh.
 Set `aiCreditsAnalyzer.monthlyAllowance.aiCredits` to your plan's monthly
 AI Credits allowance. The **Set Monthly AI Credits Allowance** command opens
 that setting in the Settings editor and changes nothing. Until the setting
-is set, the gauge is hidden.
+is set, the gauge is hidden. The standalone app has the same gauge in its
+header, with its own settings dialog and the same wording (see its
+[User Guide](UserGuide.md#monthly-allowance)).
 
 ![Setting the monthly AI Credits allowance from the Command Palette and Settings, then the status bar's near-limit gauge with its tooltip and the Sessions row with days left](images/demo/e7-allowance.gif)
 
@@ -611,7 +613,7 @@ applies. Your user setting always applies.
 ### What it offers
 
 Twenty read-only tools, the standalone app's MCP server's tools without
-its billing ones (`get_statement` and `estimate_cost`), over Copilot Chat
+its billing ones (`get_statement` and `estimate_cost`) and `get_monthly_allowance`, over Copilot Chat
 sessions only. A twenty-first, `get_turn_series`, is for the interactive views
 below. It is marked app-only, so it is meant for the views, not for the model
 or for you.
@@ -670,7 +672,7 @@ with the server's name in front of it; the tool is the same:
 | How to spend less | `get_savings_report` | **Possible savings**: the ranked changes, each with its amount per week as a range or "up to" and a bar, its coverage and the **estimate** or **inferred** tag where it applies; a **Simulated** section; what was not analysed and why |
 
 The billing tools (`get_statement`, `estimate_cost`) and their views are in
-the standalone app only.
+the standalone app only, as is `get_monthly_allowance`.
 
 VS Code shows the views inline in the chat only (no fullscreen). They need
 no setup beyond the MCP server being on: the views ship inside the
