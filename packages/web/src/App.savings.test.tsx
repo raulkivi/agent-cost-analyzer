@@ -27,6 +27,7 @@ const BASE_FEATURES: ProductFeatures = {
   projectsAndBilling: true,
   sessionReplay: false,
   savingsReport: true,
+  monthlyAllowance: false,
 };
 
 const standalone = (features: Partial<ProductFeatures> = {}): ProductProfile => ({

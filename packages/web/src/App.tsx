@@ -152,6 +152,7 @@ const FALLBACK_FEATURES: ProductFeatures = {
   projectsAndBilling: false,
   sessionReplay: false,
   savingsReport: false,
+  monthlyAllowance: false,
 };
 
 const EMPTY_STATES = {
