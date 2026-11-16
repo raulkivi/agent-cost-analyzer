@@ -2425,13 +2425,59 @@ real captures show it often carries more structure (e.g. a `Read` call's
 files referenced from an oversized `<persisted-output>` preview are not
 dereferenced — the inline preview text is treated as ordinary oversized
 text, already turned into a placeholder by `buildContentPart`'s existing
-size threshold. Subagent transcripts (a session's sibling
-`<session-id>/subagents/agent-*.jsonl` directory) are out of scope for v1;
-`platform/claude-code-paths/resolve-claude-code-projects-dir.ts`'s
-`listClaudeCodeSessionFiles` walks exactly two levels
-(`projectsDir/<encoded-cwd>/<session-id>.jsonl`) and never recurses into
-that sibling directory, excluding them structurally rather than by
-filename convention.
+size threshold. A session's subagent transcripts are read separately; see
+"Subagent runs" below.
+
+**Subagent runs (plan C15,
+[plans/claude-code-subagents.md](plans/claude-code-subagents.md)).** A
+session's runs live beside its file: `<session-id>/subagents/agent-<id>.jsonl`
+with an `agent-<id>.meta.json`. `listClaudeCodeSessionFiles` still walks two
+levels and never lists them; the provider finds them from the session file's
+own path.
+
+- **Read.** `foldClaudeCodeSubagentUsage` (`session-subagent-usage.ts`) is
+  the one fold behind both `listSessions` and `readSession`, so list and
+  detail agree. It reads the folder (`subagent-transcript-path.ts`,
+  `subagent-folder-reader.ts`), then each transcript through
+  `claude-code-run-cache.ts`: slim lines (ids, model, usage, timestamps)
+  keyed by path, size and mtime, bounded in files and lines.
+  `extractClaudeCodeRunUsage` sums a run once per `message.id`; `round-usage.ts`
+  is the summation shared with the main agent's turns.
+- **Attribution.** `attributeClaudeCodeRuns` places each run on the turn
+  whose `Agent` call started it: by `meta.toolUseId`, else the call result's
+  `agentId`, else (nested runs) through `parentAgentId` to the top-level run.
+  A nested run is its own run with `parentRunId` on its own model. A
+  transcript no call names is placed by time ("matched by time", attribution
+  `timestamp`), else the session is unknown. A run whose `Agent` call is off
+  the active branch is not counted; its id is returned in `offBranchRunIds`.
+  A run another session's folder holds in the same project is counted there
+  only.
+- **Fork copies.** A fork's transcript repeats rounds of its parent; the
+  skip set is the active branch's `message.id` and `requestId` values plus
+  every ancestor run's, so each round is counted once.
+- **Merge.** `mergeClaudeCodeSubagentUsage` folds the runs into the turn's
+  `TurnUsage` through the shared `mergeSubagentUsage`: own figures stay in
+  `ownUsage`, the turn is own plus runs, and 1-hour cache writes
+  (`extendedCacheWrite`) fold too. A run, or a session, that cannot be read
+  makes the turn's figures unknown with a reason; an unknown `reasoning` or
+  `extendedCacheWrite` alone leaves the four token figures known.
+- **Session-level reasons.** `Session` has no token-total field, so a reason
+  that makes the whole session unknown (more than 500 files, an unreadable or
+  symlinked folder, an unmatched transcript) is carried on the first turn
+  with usage, as unknown token fields with the reason.
+- **No AI Credits.** Claude Code records none, so every run's `costAiCredits`
+  is unknown with the same reason as the main agent's. Cost is priced from
+  the tokens on each run's own model. `Session.subagentSpend` holds the run
+  count and tokens; `SessionCost.subagents` adds a priced cost.
+- **Tool calls.** The audit read (`claude-code-subagent-audit.ts`, detail
+  path only) takes each run's `tool_use` and `tool_result` pairs through the
+  main agent's extractor and appends them, with an `origin`, after the main
+  agent's in the turn that started the run. It reads the full transcript one
+  run at a time, skips ids a fork copied, and sets `Turn.subagentRunGaps` for
+  a run it could not read. The tool inventory stays main-only.
+- **Not covered.** Runs started off the active branch are not counted (D17),
+  and the app does not list them. The extension does not compose this
+  provider.
 
 **Tool-call outcomes (Phase 9.10).** Confirmed against a real capture
 (`fixtures/claude-code-audit/`): a failed call's `tool_result` has
@@ -2573,7 +2619,8 @@ this is the end-to-end view.
    A turn that ran classic subagents (step 10.19) is billed on more than
    one model, so it prices as **cost lines**: `turnLinesOf` splits it into
    the main agent's own line (`ownUsage`), one line per run on the run's
-   model, and, when the reader folded in a run it could not read, an
+   model (each with its own 1-hour `extendedCacheWrite`, so Claude Code runs
+   get the 1-hour price), and, when the reader folded in a run it could not read, an
    `unknown`-model line that stands for it. Each line is priced on its own
    model; any unknown line makes the priced figure unknown with its reason,
    and billed sums the lines' AI Credits.
@@ -2631,6 +2678,11 @@ the end-to-end view.
    cover the same requests; `coverage.subagentRuns` lists the runs not
    replayed and their AI Credits (unknown when one is), and the session's
    full measured total stays visible beside it.
+   For Claude Code the measured side is the main agent's own usage including
+   its own `extendedCacheWrite` only (the runs' 1-hour writes are not
+   folded in), also for a turn that holds only a session-level unknown
+   reason. `coverage.subagentRuns` adds the runs' `tokens` and priced `cost`
+   (AI Credits stay unknown).
 2. **Script.** `scriptFromRequestTrace` derives each request's new tokens
    (this input − previous input − previous output, reasoning not carried).
    A shrinking prompt becomes `compaction` (or `clear` when the log says
@@ -3048,6 +3100,13 @@ on `domain` and on `web`'s presentational exports only, never on `server`
   `runId`, `parentRunId` and `startedByCallId` share those patterns. MCP
   call rows blank a subagent-kind call's `argsSummary` (the subagent's
   prompt); the local UI shows it. Threat model §4.
+- **Claude Code subagent paths (plan C15).** No log value names a file: the
+  `subagents/` folder comes from the provider's own session file path.
+  Folders and files must `lstat` as regular (no symlink), names must match
+  `agent-<id>.jsonl` or `agent-<id>.meta.json` (no separator), at most 500
+  files per session (above: the session is unknown), meta files are cut at
+  64 KB and keep only allow-listed keys, and `label`, `id` and `parentRunId`
+  are pinned by schema patterns. Threat model §4.
 - `sessionId` (and any other path parameter used to build a filesystem path
   under `debug-logs/`) is validated against an allow-list pattern before use,
   to prevent path traversal into arbitrary files on disk.

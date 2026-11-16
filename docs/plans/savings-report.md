@@ -277,6 +277,11 @@ Recommendation (D2): a new `services/savings` module, not a fifth
 A provider or session that cannot give an opportunity appears under "Not
 analysed" with the reason, never as a saving of 0.
 
+Subagent runs (C15, as built): the detectors read the main agent's usage
+only. A row whose sessions have Claude Code subagent runs says "N subagent
+runs not analyzed: this saving reads main-agent usage only." in its coverage
+(`subagent-runs-note.ts`).
+
 ## 7. Honesty rules
 
 - Every amount is `priced` (a counterfactual cannot be billed) or

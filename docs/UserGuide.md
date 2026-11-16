@@ -342,6 +342,59 @@ the session's `main.jsonl`.
 
 ![A VS Code session with a subagent run: the turns table shows a subagent glyph after the AI Credits, and the Explanation tab lists Subagent runs this turn with the main agent, subagent and turn totals](images/guide-analyze-subagent.png)
 
+#### Claude Code subagent runs
+
+A Claude Code session that used the `Agent` tool has one transcript per run
+in `<session-id>/subagents/`. The app reads them and counts each run in the
+turn that started it, so the turn, the session and the dashboard include
+the run's tokens and priced cost. Claude Code records no AI Credits, so the
+AI Credits column stays an em dash.
+
+- **Why totals rose.** Sessions you saw before can now read higher, or
+  unknown with a reason. A run on another model is priced on its own model.
+- **Marker.** The subagent glyph sits in the Turn cell (the AI Credits cell
+  has no figure to attach it to). Its tooltip and accessible name list tokens,
+  then priced cost, for example "incl. 2.04M tokens, $0.38 priced, from 2
+  subagent runs" (synthetic example). A run placed by time adds ", matched by
+  time". When a part is unknown, the tooltip names the unknown column and its
+  reason.
+- **Explanation block.** "Subagent runs this turn" with a **Priced** tag: one
+  row per run with model, requests, tokens and priced cost, then **Main
+  agent**, **Subagent runs** and **Turn** figures, a share sentence, and
+  "Priced at Anthropic prices as of" a date, each run on its own model. A run
+  with an unknown part shows an em dash and its reason; the other runs stay
+  listed. The turn inspector and the narrow-screen drawer carry the same line
+  as text.
+- **Session tiles.** **AI Credits** reads n/a ("Claude Code has no AI
+  Credits"). A **Priced cost** tile carries the sub-line "incl. $X and N
+  tokens from M subagent runs" (matched by time stays out of it), or the
+  reason when unknown. The Sessions list shows the runs' tokens only.
+- **Matched by time.** A transcript no `Agent` call names is placed on the
+  turn whose prompt window holds its start time and labeled "matched by time".
+- **Nested runs.** A run started by another run is listed as its own run on
+  its own model.
+- **Unknown, with a reason.** A total is unknown, never lower, when a run's
+  transcript is missing, is not a regular file, can't be read, has no
+  parsable line, is nested deeper than 8 levels, or can't be matched to a
+  turn, or when the folder has more than 500 transcripts or can't be listed.
+- **Not counted.** A run started from a branch of the conversation you later
+  abandoned (an edited or resent message) is not counted, and the app doesn't
+  list it. A run whose launch failed is no run.
+- **Replay.** A replay compares the main agent only. The MCP
+  `replay_session` result counts the runs it leaves out, with their tokens
+  and priced cost, in `coverage.subagentRuns`.
+- **Savings.** A saving that reads main-agent usage only says "N subagent
+  runs not analyzed" in its coverage.
+- **Tool calls.** Calls made inside a run appear in the tool audit and the
+  security findings, labeled with their run. A run whose calls can't be read
+  shows as unknown, never as 0 calls. A run placed by time shows a
+  "matched by time" mark on its audit row. MCP output keeps the run's prompt out.
+
+In the MCP App's turn detail (U1) a Claude Code turn lists its runs with
+tokens and priced cost, and shows an n/a AI Credits tile and a Priced cost
+tile. A run another session already counts and "continued N times" are not
+shown.
+
 ### The three-tab right panel
 
 Analyze mode's right column adds two tabs beyond Explanation, since real
@@ -476,7 +529,8 @@ cost, measured beside simulated.
   instead. The only conversion is 1 AI Credit = $0.01.
 - **Coverage.** How many turns and requests were replayed, and each reason
   a turn wasn't, with its turn numbers. Only the session's main chain is
-  replayed: subagent runs are left out, and the app doesn't list them.
+  replayed: subagent runs (Copilot and Claude Code) are left out, and the app
+  doesn't list them.
 - **Self-check.** The same replay on the session's own model, compared
   request by request with the log. A request matches when its cache hit or
   miss is exactly the log's and its cache read is within 5%. The first
@@ -696,10 +750,13 @@ The replay tools give the same figures as
 in the app. Like the app, they can't replay pi or mitmproxy sessions yet,
 and they refuse a model no vendor profile lists, with the reason.
 
-In a VS Code Copilot Chat session, `get_turn` lists a turn's subagent runs
-in `usage.subagents` and the main agent's own figures in `usage.ownUsage`.
-Replay compares the main agent only; `coverage.subagentRuns` counts the
-runs it leaves out.
+In a VS Code Copilot Chat or Claude Code session, `get_turn` lists a turn's
+subagent runs in `usage.subagents` and the main agent's own figures in
+`usage.ownUsage`. `get_session_cost` `subagents` totals the runs: AI
+Credits for Copilot, tokens and priced cost for Claude Code (which records
+no AI Credits). Replay compares the main agent only; `coverage.subagentRuns`
+counts the runs it leaves out, and for Claude Code gives their tokens and
+priced cost. The extension's MCP server describes Copilot only.
 
 Every cost figure says its basis: **billed** (what the vendor billed,
 GitHub Copilot's AI Credits), **reported** (a cost the log itself records)

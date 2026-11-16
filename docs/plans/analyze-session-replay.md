@@ -608,9 +608,11 @@ request, 9 of those a summary's), 7 more read nothing in the log (a cache
 that expired) and 10 follow an unchanged or growing prompt. A per-session pass needs every request to match, so one
 compaction the scripter reads differently fails the session.
 
-**Not in the replay's coverage: Claude Code subagent transcripts**
-(`<session>/subagents/*.jsonl`, 46 in 4 sampled sessions). The Claude Code
-provider doesn't read them, nor does the session cost; a separate 1.0 plan
-covers them (`docs/plans/claude-code-subagents.md`, criterion C15). Agent
+**Claude Code subagent transcripts (C15, as built).**
+The transcripts (`<session>/subagents/*.jsonl`) are not replayed. The replay covers
+the main agent only. The session cost counts the runs
+(`docs/plans/claude-code-subagents.md`), the measured side uses the main
+agent's own usage including its own 1-hour cache writes, and
+`coverage.subagentRuns` gives the runs' count, tokens and priced cost. Agent
 Host sub-agent calls are left out the same way; only a turn with nothing
 else shows in coverage (§12.1, the 14.8 note).

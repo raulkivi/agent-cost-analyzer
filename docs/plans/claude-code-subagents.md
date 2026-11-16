@@ -447,6 +447,50 @@ CS13 → CS15 → CS16. CS1, CS2 and CS4 run beside CS3–CS7; CS14 after V21.
   `docs/implementation-plan-gantt.md` (C15 bar, criteria count, Open
   items).
 
+## 12a. As built (CS15, 2026-11-16)
+
+Where the code differs from §5, the code is the truth. CS13 (#389) built the
+web and MCP App U1 views from the CS2 boards, with an optional `pricedCost` on
+`usage`, `ownUsage` and each run (`withPricedCosts`, server side). The board
+rows "continued N times" (D2) and "counted in another session" (D7) are not
+built: CS10 carries no data for them.
+
+- **One fold for list and detail.** `foldClaudeCodeSubagentUsage`
+  (`session-subagent-usage.ts`) reads the folder, attributes runs, merges
+  them and returns the turns; `listSessions` and `readSession` both call it,
+  so the two agree by construction (CS10).
+- **Attribution input.** `attributeClaudeCodeRuns` takes one object (`runs`,
+  `folder`, `branch`, `turnGroups`, `sessionEntries`, `countedInOtherSessions`),
+  not three positional arguments, and also returns `offBranchRunIds` (D17) (CS8).
+- **Run cache.** `claude-code-run-cache.ts` keeps slim lines (ids, model,
+  usage, timestamps; no prompt or tool text), keyed by path, size and mtime,
+  bounded at 1,024 files and 200,000 lines. The audit read does not use it.
+- **Session-level unknown reason.** `Session` has no token-total field, so a
+  reason that makes the whole session unknown (folder over the cap, unreadable
+  or symlinked folder, unmatched transcript) rides on the first turn with
+  usage, as unknown token fields with the reason (CS10).
+- **Unknown fields.** An unknown `reasoning` or `extendedCacheWrite` makes only
+  that figure unknown: both are parts of `output` and `cacheWrite`, and no
+  round is left out. `costAiCredits` is always unknown and is never a reason.
+- **D7 siblings.** The project's other session folders are read (names and
+  metas only) only when an `Agent` call found no run of its own.
+- **Summaries (CS11).** `Session.subagentSpend` holds runs and tokens, with AI
+  Credits unknown. `get_session_cost` `subagents` has tokens and a priced
+  cost. A replay's measured side uses the main agent's own usage including its
+  own `extendedCacheWrite`; the earlier figure had counted the runs' 1-hour
+  writes.
+- **Savings.** Each affected row says "N subagent runs not analyzed: this
+  saving reads main-agent usage only." (`subagent-runs-note.ts`).
+- **MCP texts (CS12).** `McpIdentity.readsClaudeCode` selects the texts; the
+  extension's server never names Claude Code.
+- **Audit (CS14).** Detail read only. A fork's copied calls are skipped
+  (dedupe by session and call id). MCP blanks a subagent call's `argsSummary`.
+- **Not built.** "Continued N times" (CS2 board) has no domain field, so no
+  surface shows it. The extension does not compose the Claude Code provider;
+  its changelog is unchanged.
+- **D17.** Runs whose `Agent` call is off the active branch are not counted;
+  no session-level note. Their ids are kept for the CS16 oracle.
+
 ## 13. Open points (closed by CS0b, 2026-11-15)
 
 CS0b re-scanned the same `~/.claude/projects` read-only (26 project folders,
