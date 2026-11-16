@@ -19,8 +19,8 @@
 //   - turn: Claude Code, one real prompt on the active branch (last-prompt's
 //     leaf) and the requests (message ids, "<synthetic>" left out) up to the
 //     next; pi, one user message and every usage up to the next; Copilot Chat,
-//     one session-store turn of an interactive chat session (agent_name
-//     'GitHub Copilot Chat', agentic-coding-explained.md §18.2), its usage
+//     one session-store turn of an interactive chat session (host type
+//     'vscode' or agent_name 'GitHub Copilot Chat', plan §15.2), its usage
 //     from the debug log's turn with the same prompt (§4.1) plus the subagent
 //     runs started in it; VS Code's Agent Host, one row of the session's
 //     session.db (its turn_usage: token totals, model, AI Credits), timed by
@@ -550,6 +550,13 @@ export function alignLogTurns(logPrompts: readonly (string | null)[], storePromp
   return logPrompts.map((_, i) => start + i);
 }
 
+// Plan §15.2 (owner decision 2026-11-14): a store session is Chat-panel spend
+// when its host type is `vscode`, whatever agent name the store took from one of
+// its requests; the legacy agent-name match stays.
+export function inChatPanelScope(row: { host_type: string | null; agent_name: string | null }): boolean {
+  return row.host_type === "vscode" || row.agent_name === "GitHub Copilot Chat";
+}
+
 export interface StoreSession {
   id: string;
   cwd: string | null;
@@ -628,11 +635,19 @@ export function copilotClassicTurns(input: {
     logTurns.map((t) => t.prompt),
     storeTurns.map((t) => t.user_message),
   );
+  // A log turn past the store's last row is a turn of its own: it continues the
+  // store's numbering and has no time of its own, so the session's start (plan
+  // §15.2: the log holds a prompt the store has no row for).
+  const lastIndex = storeTurns.at(-1)?.turn_index ?? -1;
+  const slotOf = (position: number) => (position < storeTurns.length ? storeTurns[position]!.turn_index : lastIndex + (position - storeTurns.length + 1));
+  const slots: StoreTurn[] = [...storeTurns];
   const byStoreIndex = new Map<number, (typeof logTurns)[number]>();
   placement.forEach((position, i) => {
-    if (position !== null && position < storeTurns.length) byStoreIndex.set(storeTurns[position]!.turn_index, logTurns[i]!);
+    if (position === null) return;
+    if (position >= storeTurns.length) slots.push({ turn_index: slotOf(position), user_message: logTurns[i]!.prompt, timestamp: null });
+    byStoreIndex.set(slotOf(position), logTurns[i]!);
   });
-  const turns = storeTurns.map((storeTurn): OracleTurn => {
+  const turns = slots.map((storeTurn): OracleTurn => {
     const log = byStoreIndex.get(storeTurn.turn_index);
     const main = log ? sumRequests(log.events) : undefined;
     const runs = (log?.runs ?? []).map((name) => (files.has(name) ? sumRequests(parseJsonl(files.get(name)!)) : null));
@@ -665,7 +680,7 @@ export function copilotClassicTurns(input: {
       reported: undefined,
     };
   });
-  return { start: input.session.created_at, turns, prompts: storeTurns.map((t) => t.user_message ?? "") };
+  return { start: input.session.created_at, turns, prompts: slots.map((t) => t.user_message ?? "") };
 }
 
 // ------------------------------------------------- VS Code Agent Host reader
