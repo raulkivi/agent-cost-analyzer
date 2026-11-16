@@ -50,7 +50,7 @@ function firstString(entries: ClaudeCodeRawEntry[], key: string, accepts: (value
   return undefined;
 }
 
-const labelOf = (meta: SubagentMeta): string => (meta.agentType ? `Agent-${meta.agentType}` : "Agent");
+export const subagentLabelOf = (meta: SubagentMeta): string => (meta.agentType ? `Agent-${meta.agentType}` : "Agent");
 
 /**
  * Sums one Claude Code subagent transcript. `entries` is what the line reader
@@ -75,7 +75,7 @@ export function extractClaudeCodeRunUsage(
   return {
     usage: {
       id: firstString(entries, "agentId", (value) => subagentRunIdSchema.safeParse(value).success),
-      label: labelOf(meta),
+      label: subagentLabelOf(meta),
       model: rounds.length > 0 ? modelOf(rounds[rounds.length - 1]) ?? "unknown" : "unknown",
       roundsCount: rounds.length,
       ...sums,
