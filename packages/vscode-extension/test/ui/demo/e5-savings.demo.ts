@@ -1,21 +1,44 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// Free demo scene E5 on made-up data: `npm run demo:record`. Dashboard, Savings, the
-// 7/30/90-day windows, a row's detail (range, coverage) with Copy text, Include simulated,
-// Not analysed.
+// Free demo scene E5 on made-up data: `npm run demo:record`. Analyze, Savings, 90 then 30
+// days, the top row's sessions (title, id, date, saving), the unused-tools row's tool list
+// ("and N more"), Include simulated, Not analysed. Beat list: docs/plans/demo-recordings-1.0.md §3.3. // codespell:ignore analysed
 import { browser, expect } from "@wdio/globals";
 import { AnalyzerPanel } from "../support/analyzer-panel.js";
 import { readSavings, waitForSavings } from "../support/savings-view.js";
 import { wdioVscodeHost as host } from "../support/vscode-host.js";
-import { runDemoScene, type DemoScene } from "./support/demo-driver.ts";
+import { DEMO_FIXTURE_ENV, parseDemoFixture } from "../../../scripts/ui-automation/demo-fixture.mts";
+import { runDemoScene, type DemoDriver, type DemoScene } from "./support/demo-driver.ts";
 import { chooseSelectValue, inTopContext } from "./support/1.6d-helpers.ts";
+import { e5BeatMs } from "./support/e5-beats.mts";
 import { saveStill } from "./support/stills.ts";
 
+const fixture = parseDemoFixture(process.env[DEMO_FIXTURE_ENV], DEMO_FIXTURE_ENV);
 const panel = new AnalyzerPanel(host);
 const WAIT_MS = 30_000;
 const WINDOW_SELECT = "[aria-label='Savings filters'] select";
 const DETAIL = "section[aria-label='Savings detail']";
+const TOOLS = `${DETAIL} section[aria-label='Tools']`;
+const SESSIONS = `${DETAIL} section[aria-label='Sessions']`;
 const optionLabel = (text: string) => `//label[contains(@class,'seg-opt')][normalize-space()='${text}']`;
+const rowButton = (subject: string) => `//*[@data-testid='savings-row'][.//*[contains(@class,'savings-subject-text')][contains(normalize-space(),'${subject}')]]//button`;
+
+// Scrolls a block of the open detail to the top of the panel and points at it.
+async function showBlock(driver: DemoDriver, selector: string): Promise<void> {
+  const block = await (await browser.$(selector)).getElement();
+  await browser.execute((element: HTMLElement) => element.scrollIntoView({ block: "start", behavior: "instant" }), block as never);
+  await driver.pointerTo(block);
+}
+
+async function openRow(driver: DemoDriver, buttonSelector: string): Promise<void> {
+  await waitForSavings();
+  await driver.click(await (await browser.$(buttonSelector)).getElement());
+  await browser.waitUntil(async () => (await browser.$(DETAIL)).isExisting(), { timeout: WAIT_MS, timeoutMsg: "the detail did not open" });
+}
+
+async function closeDetail(driver: DemoDriver): Promise<void> {
+  await driver.click(await (await browser.$(`${DETAIL} .savings-close`)).getElement());
+}
 
 const scene: DemoScene = {
   id: "E5",
@@ -24,7 +47,7 @@ const scene: DemoScene = {
   steps: [
     {
       label: "open the analyzer panel",
-      beatMs: 600,
+      beatMs: e5BeatMs("open the analyzer panel"),
       action: async () => {
         await host.command("workbench.action.closeSidebar");
         await panel.openDashboard();
@@ -35,7 +58,7 @@ const scene: DemoScene = {
     },
     {
       label: "Analyze, then Savings",
-      beatMs: 1_500,
+      beatMs: e5BeatMs("Analyze, then Savings"),
       action: (driver) =>
         panel.inside(async () => {
           await driver.click(await (await browser.$(optionLabel("Analyze"))).getElement());
@@ -45,11 +68,10 @@ const scene: DemoScene = {
           await waitForSavings();
         }),
     },
-    { label: "7 days", beatMs: 900, action: (driver) => panel.inside(() => chooseSelectValue(driver, WINDOW_SELECT, "7")) },
-    { label: "90 days", beatMs: 900, action: (driver) => panel.inside(() => chooseSelectValue(driver, WINDOW_SELECT, "90")) },
+    { label: "90 days", beatMs: e5BeatMs("90 days"), action: (driver) => panel.inside(() => chooseSelectValue(driver, WINDOW_SELECT, "90")) },
     {
       label: "back to 30 days",
-      beatMs: 700,
+      beatMs: e5BeatMs("back to 30 days"),
       action: async (driver) => {
         await panel.inside(() => chooseSelectValue(driver, WINDOW_SELECT, "30"));
         await panel.inside(() => waitForSavings());
@@ -58,36 +80,35 @@ const scene: DemoScene = {
       },
     },
     {
-      label: "open the first row's detail",
-      beatMs: 1_800,
+      label: "open the top row: its sessions",
+      beatMs: e5BeatMs("open the top row: its sessions"),
       action: (driver) =>
         panel.inside(async () => {
-          await waitForSavings();
-          await driver.click(await (await browser.$("[data-testid='savings-row'] button")).getElement());
-          await browser.waitUntil(async () => (await browser.$(DETAIL)).isExisting(), { timeout: WAIT_MS });
+          await openRow(driver, "[data-testid='savings-row'] button");
+          await showBlock(driver, SESSIONS);
         }),
     },
     {
-      label: "Copy text",
-      beatMs: 1_000,
+      label: "open the unused-tools row: its tools",
+      beatMs: e5BeatMs("open the unused-tools row: its tools"),
       action: (driver) =>
         panel.inside(async () => {
-          await driver.click(await (await browser.$(`//section[@aria-label='Savings detail']//button[normalize-space()='Copy text']`)).getElement());
-          await browser.waitUntil(async () => (await (await browser.$(`${DETAIL} [role='status']`)).getText()).trim() === "Copied", { timeout: WAIT_MS, timeoutMsg: "Copy did not say Copied" });
+          await openRow(driver, rowButton(fixture.savings.unusedToolsRow.server));
+          await showBlock(driver, TOOLS);
         }),
     },
     {
       label: "close the detail, tick Include simulated",
-      beatMs: 900,
+      beatMs: e5BeatMs("close the detail, tick Include simulated"),
       action: (driver) =>
         panel.inside(async () => {
-          await driver.click(await (await browser.$(`${DETAIL} .savings-close`)).getElement());
+          await closeDetail(driver);
           await driver.click(await (await browser.$(".savings-check input")).getElement());
         }),
     },
     {
       label: "scroll to Not analysed",
-      beatMs: 1_800,
+      beatMs: e5BeatMs("scroll to Not analysed"), // codespell:ignore analysed
       action: (driver) =>
         panel.inside(async () => {
           const list = await (await browser.$("ul[aria-label='Not analysed']")).getElement();
@@ -107,8 +128,10 @@ suite("Demo E5 savings (made-up data)", () => {
         panel.inside(async () => {
           const screen = await readSavings();
           expect(screen.rows.length).toBeGreaterThanOrEqual(4);
+          expect(screen.rows.some((row) => row.subject.includes(fixture.savings.unusedToolsRow.server))).toBe(true);
           expect(screen.notAnalysed.length).toBeGreaterThan(0);
           expect(await browser.$(DETAIL).isExisting()).toBe(false);
+          expect(await browser.$(".savings-check input").isSelected()).toBe(true);
         }),
     });
     console.log(`E5 master: ${mp4}`);
