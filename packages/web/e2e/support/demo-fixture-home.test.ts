@@ -9,6 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   createDemoFixtureHome,
   DEMO_CLAUDE_SESSION,
+  DEMO_CLAUDE_SUBAGENT_SESSION,
   DEMO_COPILOT_MODELS,
   DEMO_LOCAL_MODEL,
   DEMO_PI_SESSION,
@@ -129,6 +130,46 @@ describe("createDemoFixtureHome", () => {
     for (const line of assistants.slice(1)) expect(line.message?.usage?.cache_read_input_tokens ?? 0).toBeGreaterThan(0);
   });
 
+  // DR12 (W2 extended): a Claude Code session whose first turn started one subagent run (CS3's linked shape).
+  describe("the Claude Code session with a subagent run", () => {
+    const { id, runId, toolUseId } = DEMO_CLAUDE_SUBAGENT_SESSION;
+    const jsonl = (file: string) => readFileSync(file, "utf8").trim().split("\n").map((line) => JSON.parse(line) as Record<string, any>); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const sessionFile = () => files(path.join(home, ".claude", "projects")).find((f) => f.endsWith(`${id}.jsonl`))!;
+    const runFile = (ext: string) => path.join(sessionFile().replace(/\.jsonl$/, ""), "subagents", `agent-${runId}${ext}`);
+
+    it("links the run by its Agent call: the call's result names the agent, the meta names the call", () => {
+      const lines = jsonl(sessionFile());
+      const call = lines.flatMap((line) => (Array.isArray(line.message?.content) ? line.message.content : [])).find((part: { type: string; name?: string }) => part.type === "tool_use" && part.name === "Agent");
+      expect(call.id).toBe(toolUseId);
+      // The run belongs to the second turn: the session opens on a turn without runs.
+      const humanPrompts = lines.map((line, index) => (line.type === "user" && line.promptId ? index : -1)).filter((index) => index >= 0);
+      const callIndex = lines.findIndex((line) => Array.isArray(line.message?.content) && line.message.content.some((part: { id?: string }) => part.id === toolUseId && true));
+      expect(humanPrompts).toHaveLength(2);
+      expect(callIndex).toBeGreaterThan(humanPrompts[1]!);
+      expect(lines.find((line) => line.toolUseResult)?.toolUseResult).toMatchObject({ agentId: runId });
+      expect(JSON.parse(readFileSync(runFile(".meta.json"), "utf8"))).toMatchObject({ toolUseId, spawnDepth: 1, agentType: "general-purpose" });
+    });
+
+    it("has a run transcript on a priced model with usage, in the session folder and inside the window", () => {
+      const run = jsonl(runFile(".jsonl"));
+      const assistants = run.filter((line) => line.type === "assistant");
+      expect(assistants.length).toBeGreaterThanOrEqual(2);
+      for (const line of assistants) expect(line.message.model).toBe(DEMO_CLAUDE_SUBAGENT_SESSION.runModel);
+      for (const line of [...jsonl(sessionFile()), ...run]) {
+        expect(NOW - Date.parse(line.timestamp)).toBeLessThan(30 * DAY_MS);
+        expect(Date.parse(line.timestamp)).toBeLessThan(NOW);
+        expect(line.cwd).toBe(path.join(home, "dev", "portal-api"));
+      }
+    });
+
+    it("has a first turn without a run and reads like real use", () => {
+      const users = jsonl(sessionFile()).filter((line) => line.type === "user" && line.promptId);
+      expect(users).toHaveLength(2);
+      const text = readFileSync(sessionFile(), "utf8") + readFileSync(runFile(".jsonl"), "utf8");
+      expect(text).not.toMatch(/made-up|placeholder|fixture-/i);
+    });
+  });
+
   it("holds nothing of the generated fixture's folder or the owner's model alias", () => {
     const text = textOf(home, ".jsonl");
     expect(text).not.toContain("/home/user/project");
@@ -146,6 +187,7 @@ describe("the shared fixture home", () => {
       expect(all).not.toContain(DEMO_PI_SESSION.id);
       for (const session of DEMO_UNUSED_TOOLS_SESSIONS) expect(all).not.toContain(session.id);
       expect(all).not.toContain(DEMO_CLAUDE_SESSION.id);
+      expect(all).not.toContain(DEMO_CLAUDE_SUBAGENT_SESSION.id);
       expect(all).toContain("fixture-main-model");
     } finally {
       rmSync(root, { recursive: true, force: true });

@@ -275,6 +275,22 @@ already ran about 35 s on this setup (the committed GIF was a trimmed cut that e
 tab), and with them the content is about 22 s. Its new take is 25 s, of which the last 5 s are the
 end-state checks and probe, cut by the trim.
 
+**As built (DR12).**
+
+- Web demo home: `claudeSubagentSession` in `demo-fixture-home.mts` adds a two-turn Claude Code session in
+  portal-api (2026-11-02): turn two starts one `general-purpose` run (the session opens on turn one, which has none) on `claude-haiku-5-5` through an Agent
+  call (`subagents/agent-<id>.jsonl` plus `.meta.json`, CS3's linked shape), the main agent is on
+  `claude-sonnet-5-5`, so the marker and the Explanation show priced figures. The shared home is untouched.
+- The run is 120 s into turn two and the cache numbers follow the usual chain (each read is the last read plus its write and input), so the replay self-check passes.
+- W2 now runs on the demo home with the privacy probe after every beat and asserts each beat's end state.
+  Beats: glide to the Turn-cell marker, open turn two for the Explanation's Subagent runs block, Replay on another model, the
+  replay summary with "1 subagent run not replayed". "Close the summary" is dropped.
+- The marker's words are a native `title` tooltip, which the x11grab take does not show: the beat shows the
+  pointer on the marker and the same words are in the Explanation beside it.
+- M1/F1 check: F1 opens "Fix the bug", a Copilot Chat turn, so it is unchanged. M1's top session is the
+  Claude Code session "scratch" (4 turns, no runs), so its turn view (U1) changed with C15 and M1 needs a
+  retake.
+
 ## 5. Docs mapping and alt text
 
 | Recording | Doc and section | Alt text draft |
