@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { DatabaseSync } from "node:sqlite";
+import type { DatabaseSync } from "node:sqlite";
+import { openReadOnlySqlite } from "./read-only-open.js";
 
 const COPILOT_CHAT_AGENT_NAME = "GitHub Copilot Chat";
 const CHAT_PANEL_HOST_TYPE = "vscode";
@@ -61,7 +62,7 @@ export interface SessionFileRow {
 }
 
 export function openReadOnlyDb(dbPath: string): DatabaseSync {
-  return new DatabaseSync(dbPath, { readOnly: true });
+  return openReadOnlySqlite(dbPath);
 }
 
 // turn_count is a correlated subquery rather than a JOIN so each session row

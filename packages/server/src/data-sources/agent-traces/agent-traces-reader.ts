@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { DatabaseSync } from "node:sqlite";
+import type { DatabaseSync } from "node:sqlite";
+import { openReadOnlySqlite } from "../sqlite/read-only-open.js";
 
 // agent-traces.db schema (confirmed against a real capture — see
 // docs/copilot-chat-source-investigation.md §5d/§5f): reasoning_tokens is a
@@ -16,7 +17,7 @@ export interface AgentTraceUsage {
 }
 
 export function openAgentTracesDbReadOnly(dbPath: string): DatabaseSync {
-  return new DatabaseSync(dbPath, { readOnly: true });
+  return openReadOnlySqlite(dbPath);
 }
 
 interface AgentTraceUsageRow {

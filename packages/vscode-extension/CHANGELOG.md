@@ -1,6 +1,6 @@
 # Changelog
 
-**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 All notable changes to AI Credits Analyzer, the VS Code extension, are
 documented in this file. The standalone app, Agent Cost Analyzer, has its
@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A cache-break row (idle expiry, no idle gap, model switch) now leaves a session with any break that has no price out of its amount and lists it under the row's coverage with the reason, as the failed-calls row does; the session's own saving reads "Not priced". Before, the amount counted such a session's priced breaks only.
 
 ### Fixed
+- Reading a Copilot or VS Code session store no longer fails with "database is locked" while VS Code or Copilot is writing to it. The read now waits up to 5 seconds for the other app's commit instead of failing at once; the analyzer still never writes those files.
 - A session in a savings row whose VS Code Agent Host title only repeated its first prompt no longer shows "Session <id>" as its title: the row shows the id alone, as for any untitled session.
 - VS Code Agent Host sessions that some VS Code Insiders builds cataloged under an `ahp-session:/` URI, instead of `copilotcli:/`, were missing everywhere: the sessions list, costs and savings. They now appear like any other Agent Host session, with their turns, AI Credits and turn text. A session cataloged under both URIs shows once.
 - Savings action text now agrees with its counts: "1 session", "1 tool", "1 day", "1 break", "1 time", "1 token" and "1 minute" instead of "1 sessions" and so on.
