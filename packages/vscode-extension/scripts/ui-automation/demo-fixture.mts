@@ -58,7 +58,8 @@ export interface DemoFixture {
   workspacePath: string;
   repositories: { demo: DemoRepository; ledger: DemoRepository };
   // E3, E4: 10 turns, subagent runs in `subagentTurns` (0-based), a system prompt containing `systemPromptMarker`.
-  readSession: DemoSessionRef & { turns: number; subagentTurns: number[] };
+  // E8, E3 (step 10.20): the subagent runs' child-log calls the audit counts, and the runs the analyzer could not read.
+  readSession: DemoSessionRef & { turns: number; subagentTurns: number[]; subagentAudit: { calls: number; failed: number; runs: number; unread: number }; firstRun: { calls: number; failed: number } };
   systemPromptMarker: string;
   // E4: a model to replay readSession on (not the one it ran on).
   replayModel: string;
@@ -226,8 +227,11 @@ const READ_TOOLS = ["grep_search", "read_file", "replace_string_in_file", "repla
 // 0-based turns that start a subagent run.
 const READ_SUBAGENT_TURNS = [1, 4, 7];
 
-function subagentRun(agentName: string, rounds: number, tools: string[]): DemoSubagentRun {
-  return { agentName, model: SUBAGENT_MODEL, requests: Array.from({ length: rounds }, (_, i) => priced(SUBAGENT_MODEL, 9000 + i * 1500, i === 0 ? 0 : 9000 + (i - 1) * 1500, 350)), toolNames: tools };
+// 0-based turn that also starts an `explore_subagent` call whose run writes no log (unread, with its reason).
+const READ_UNREAD_TURN = 7;
+
+function subagentRun(agentName: string, rounds: number, tools: string[], failures?: Record<number, string>): DemoSubagentRun {
+  return { agentName, model: SUBAGENT_MODEL, requests: Array.from({ length: rounds }, (_, i) => priced(SUBAGENT_MODEL, 9000 + i * 1500, i === 0 ? 0 : 9000 + (i - 1) * 1500, 350)), toolNames: tools, ...(failures ? { failures } : {}) };
 }
 
 function readSessionTurns(): DemoClassicTurn[] {
@@ -236,9 +240,9 @@ function readSessionTurns(): DemoClassicTurn[] {
     response: `Done: ${prompt.replace(/\.$/, "").toLowerCase()}.`,
     model: MAIN_MODEL,
     tool: READ_TOOLS[index]!,
-    ...(READ_SUBAGENT_TURNS.includes(index) ? { subagents: [index === 4 ? subagentRun("Plan", 2, ["read_file", "grep_search"]) : subagentRun("Explore", 3, ["grep_search", "read_file", "read_file"])] } : {}),
+    ...(READ_SUBAGENT_TURNS.includes(index) ? { subagents: [index === 4 ? subagentRun("Plan", 2, ["read_file", "grep_search"]) : subagentRun("Explore", 3, ["grep_search", "read_file", "read_file"], index === 1 ? { 1: "File not found: src/orders/query.ts" } : undefined)] } : {}),
   }));
-  return assemble(specs, 20_000, 2600, mulberry32(11));
+  return assemble(specs, 20_000, 2600, mulberry32(11)).map((turn, index) => (index === READ_UNREAD_TURN ? { ...turn, unreadSubagentCalls: 1 } : turn));
 }
 
 // ---- A session with an idle gap and a model switch (Savings) -------------------
@@ -482,7 +486,7 @@ export function createDemoFixture(rootDir: string, options: DemoFixtureOptions =
     copilotHome,
     workspacePath: repositories.demo.path,
     repositories,
-    readSession: { id: readSession.id, title: readSession.title, turns: readSession.turns.length, subagentTurns: READ_SUBAGENT_TURNS },
+    readSession: { id: readSession.id, title: readSession.title, turns: readSession.turns.length, subagentTurns: READ_SUBAGENT_TURNS, subagentAudit: { calls: 8, failed: 1, runs: 4, unread: 1 }, firstRun: { calls: 3, failed: 1 } },
     systemPromptMarker: DEMO_SYSTEM_PROMPT_MARKER,
     replayModel: REPLAY_MODEL,
     savings: { kinds: ["unused-tools", "failed-tool-calls", "idle-cache-expiry", "model-switch"], unusedToolsServers: MCP_SERVERS, unusedToolsRow: { server: MCP_SERVERS[0]!, tools: MCP_TOOLS[MCP_SERVERS[0]!]!.length }, failedPrograms: ["rg", "curl"] },
