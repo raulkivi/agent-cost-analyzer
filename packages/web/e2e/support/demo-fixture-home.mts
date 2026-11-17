@@ -147,11 +147,28 @@ function claudeSingleModelSession(home: string, cwd: string): void {
   ]);
 }
 
+// The shared seeds title some sessions "Fixture session"; no demo frame may read that (D36).
+// Placeholder titles, handed out in session order; the shared home keeps its own.
+const DEMO_SEED_TITLES = ["Add a settings page", "Review the open pull request", "Fix the flaky test", "Update the changelog"] as const;
+
+function retitleFixtureSessions(home: string): void {
+  const dbPath = path.join(home, ".config", "Code", "User", "globalStorage", "github.copilot-chat", "session-store.db");
+  const db = new DatabaseSync(dbPath);
+  try {
+    const rows = db.prepare("SELECT id FROM sessions WHERE summary LIKE 'Fixture%' ORDER BY created_at, id").all() as { id: string }[];
+    if (rows.length > DEMO_SEED_TITLES.length) throw new Error(`${rows.length} sessions need a demo title, ${DEMO_SEED_TITLES.length} are defined`);
+    rows.forEach((row, index) => db.prepare("UPDATE sessions SET summary = ? WHERE id = ?").run(DEMO_SEED_TITLES[index], row.id));
+  } finally {
+    db.close();
+  }
+}
+
 export function createDemoFixtureHome(home: string, options: FixtureOptions = {}): FixtureHome {
   const fixture = createFixtureHome(home, options);
   copilotUnusedToolsSessions(home, fixture.folders.scratch);
   piLocalModelSession(home, fixture.folders.scratch);
   claudeSingleModelSession(home, fixture.folders.scratch);
+  retitleFixtureSessions(home);
   renameModels(home);
   return fixture;
 }

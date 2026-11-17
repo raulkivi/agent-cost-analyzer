@@ -251,7 +251,7 @@ on purpose. Fixture code is written test first (as `demo-fixture.test.ts`).
 on 2026-11-02, 11-03 and 11-05, one without cost data, and the Agent Host sessions) on the demo home, and
 the home has no allowance until the scene saves one. The demo home's release-notes session (2026-11-03)
 adds to the month, so the gauge reads "at least 32.46 of 36 AI Credits" (8 of 9 sessions known); the
-scene's 36 is 90% of the allowance. `demo-fixture-home.test.ts` pins the seeds.
+scene's 36 is 90% of the allowance. `demo-fixture-home.test.ts` pins the seeds. The demo home retitles the shared seeds' "Fixture session" rows (`retitleFixtureSessions`), and the web scenes share one privacy probe (`e2e/demo/support/privacy-probe.ts`) that also forbids the word "fixture".
 
 ## 5. Docs mapping and alt text
 

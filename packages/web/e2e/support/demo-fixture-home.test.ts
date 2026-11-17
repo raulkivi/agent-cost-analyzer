@@ -186,3 +186,32 @@ describe("createDemoFixtureHome with the allowance seeds", () => {
     expect(files(home).filter((file) => readFileSync(file).includes("fixture-"))).toEqual([]);
   });
 });
+
+// DR9 review: the shared seeds title some sessions "Fixture session"; the demo home retitles them.
+describe("session titles", () => {
+  const titles = (home: string): string[] => {
+    const db = new DatabaseSync(path.join(home, ".config", "Code", "User", "globalStorage", "github.copilot-chat", "session-store.db"), { readOnly: true });
+    try {
+      return (db.prepare("SELECT summary FROM sessions").all() as { summary: string }[]).map((row) => row.summary);
+    } finally {
+      db.close();
+    }
+  };
+  let root: string;
+  beforeAll(() => {
+    root = mkdtempSync(path.join(tmpdir(), "aica-demo-titles-"));
+    createDemoFixtureHome(path.join(root, "demo"), { allowanceSessions: true });
+    createFixtureHome(path.join(root, "shared"), { allowanceSessions: true });
+  });
+  afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+  it("leaves no demo session titled Fixture", () => {
+    const demo = titles(path.join(root, "demo"));
+    expect(demo.filter((title) => /fixture/i.test(title))).toEqual([]);
+    expect(new Set(demo).size).toBeGreaterThan(5);
+  });
+
+  it("leaves the shared home's titles alone", () => {
+    expect(titles(path.join(root, "shared"))).toContain("Fixture session");
+  });
+});
