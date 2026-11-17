@@ -293,6 +293,13 @@ describe("get_savings_report answer", () => {
     expect(text).not.toMatch(/\b1 (of 1 )?sessions\b/);
   });
 
+  it("lists a row's coverage reason once, with the summed count, when two reasons fold to the same sentence", async () => {
+    const dup = { sessionsInWindow: 17, sessionsAnalysed: 4, notAnalysed: [{ reason: "No tool  inventory.", sessions: 5 }, { reason: "No tool inventory.", sessions: 8 }] };
+    const result = await call(await connect(new FakeSavings(reportOf([opportunity(1, { coverage: dup })]))));
+    const row = (result.structuredContent as { opportunities: { coverage: { notAnalysed: unknown[] } }[] }).opportunities[0]!;
+    expect(row.coverage.notAnalysed).toEqual([{ reason: "No tool inventory.", sessions: 13 }]);
+  });
+
   it("passes the SDK's output-schema check with Simulated rows", async () => {
     const result = await call(await connect(new FakeSavings(reportOf([opportunity(1)], [cheaper]))), { includeSimulated: true });
     expect(result.isError, JSON.stringify(result.content)).not.toBe(true);

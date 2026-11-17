@@ -109,6 +109,12 @@ describe("notPricedReasons", () => {
 });
 
 describe("coverageText", () => {
+  it("lists a reason once with the summed count", () => {
+    const gap = "The log records no tool inventory for this session.";
+    const coverage = { sessionsInWindow: 17, sessionsAnalysed: 4, notAnalysed: [{ reason: gap, sessions: 5 }, { reason: gap, sessions: 8 }] };
+    expect(coverageText(coverage)).toBe(`4 of 17 sessions; 13 not analysed: ${gap}`); // codespell:ignore analysed
+  });
+
   it("states analysed of total and the reason for each gap", () => {
     expect(coverageText(UNUSED_TOOLS.coverage)).toBe("31 of 41 sessions; 10 not analysed: no tool inventory");
     expect(coverageText({ sessionsInWindow: 5, sessionsAnalysed: 5, notAnalysed: [] })).toBe("5 of 5 sessions");
