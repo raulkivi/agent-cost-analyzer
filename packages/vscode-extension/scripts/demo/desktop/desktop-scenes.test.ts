@@ -125,11 +125,11 @@ describe("scene specifics", () => {
     expect(steps.indexOf("scrollPane")).toBeLessThan(steps.indexOf("click:price-changes-button"));
     expect(steps.indexOf("click:back-to-cost-change")).toBeGreaterThan(steps.indexOf("click:price-changes-button"));
   });
-  it("M4 waits for the session audit after Analyse, which sends a new model turn", () => {
+  it("M4 waits for Claude's answer after the row's button sends a new model turn", () => {
     const steps = order("M4");
     const analyse = steps.indexOf("click:analyse-button");
-    expect(steps.indexOf("waitFor:audit-kicker")).toBeGreaterThan(analyse);
-    expect(steps.lastIndexOf("waitAnswerDone")).toBeGreaterThan(steps.indexOf("waitFor:audit-kicker"));
+    expect(steps.indexOf("waitFor:session-cost-chat-kicker")).toBeGreaterThan(analyse); // codespell:ignore analyse
+    expect(steps.lastIndexOf("waitAnswerDone")).toBeGreaterThan(steps.indexOf("waitFor:session-cost-chat-kicker"));
   });
   it("M4 sends the message Analyse put in the composer with the send button: keyboard focus stays in the view", () => {
     const steps = DESKTOP_SCENES.M4!.steps.map((s) => s.action);
@@ -137,9 +137,11 @@ describe("scene specifics", () => {
     // The pane is open by then, so the click searches the chat column too.
     expect(steps[analyse + 1]).toEqual({ kind: "click", template: "composer-send", inChat: true }); // codespell:ignore analyse
   });
-  it("M4 waits for the session audit in the chat: Claude answers the sent message there, not in the open pane", () => {
-    const wait = DESKTOP_SCENES.M4!.steps.map((s) => s.action).find((a) => a.kind === "waitFor" && a.template === "audit-kicker");
-    expect(wait).toEqual({ kind: "waitFor", template: "audit-kicker", inChat: true });
+  // Claude answers with the session cost view first, then the audit, which can start below the visible chat
+  // (live take 2026-11-17, after the n/a tile's note made the cost view taller).
+  it("M4 waits for the session cost view in the chat: Claude answers the sent message there, not in the open pane", () => {
+    const wait = DESKTOP_SCENES.M4!.steps.map((s) => s.action).find((a) => a.kind === "waitFor" && a.template === "session-cost-chat-kicker");
+    expect(wait).toEqual({ kind: "waitFor", template: "session-cost-chat-kicker", inChat: true });
   });
   it.each(["M2", "M3", "M4", "M5", "M6", "M7", "M8"])("%s opens the pane of its own view, found by its kicker: Claude may show other views", (id) => {
     const open = DESKTOP_SCENES[id]!.steps.find((s) => s.label === "Open the host side pane")!.action;

@@ -4,7 +4,8 @@
 
 Status: **in progress**: DR1–DR6 and DR9–DR12 done 2026-11-17 (PRs #394,
 #396–#399, #404–#406, #408, #415, and DR6's live takes); DR7 done: the owner approved the nine drafts and the M1, M4
-and M8 takes; M1, M4 and M8 are retaken after two fixes (D57, D58). Approved (owner interview 2026-11-16: D29–D43, all
+and M8 takes; M1, M4 and M8 were retaken after the two fixes (D57, D58; PRs #419, #420) and wait for
+the owner's look. Approved (owner interview 2026-11-16: D29–D43, all
 recommended options accepted). Owner interview 2026-11-17: D44–D51 (GIFs up to
 25 s, retakes of N1, W3, W5 and E3, the recorder stops before the end checks), then D52–D55 (drafts
 approved, the tool-audit chip fix before 1.0, DR6 recorded, the version bump after DR7 and C2), then D56–D59 (M1, M4
@@ -187,6 +188,10 @@ and the wait search the whole frame (`inChat`). The recorder stops before it lau
 unreachable: a shell with a stale D-Bus address started Desktop signed out and dropped the profile's sign-in.
 Each tool's first use shows a permission prompt (Always allow keeps it), so a take with a prompt is retaken.
 GIFs on Desktop 5.11492.5: M1 22.5 s 1.92 MB, M4 24.5 s 1.99 MB, M8 24.0 s 1.95 MB.
+Retakes after PRs #419 and #420 (the same evening): the n/a tile's note made the session cost view taller, so
+Claude's audit view started below the visible chat and M4 now waits for the session cost view's kicker
+(`session-cost-chat-kicker`, a live crop); `unused-tools-row` is a live crop of the row's title and subject
+only, since the merged coverage line changed its text. M1 22.0 s 2.02 MB, M4 22.5 s 1.66 MB, M8 24.0 s 2.04 MB.
 
 **F4: savings view close-up** (fake host, free)
 

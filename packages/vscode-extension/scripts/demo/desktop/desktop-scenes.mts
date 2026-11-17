@@ -111,7 +111,8 @@ const M4: DesktopScene = {
     // Desktop puts the view's "Analyse session <id>" in the composer under a caution note and waits; keyboard focus
     // stays in the view, so Return does nothing: click the composer's send button.
     step("Send it", { kind: "click", template: "composer-send", inChat: true }, 500),
-    step("Wait for the session audit", { kind: "waitFor", template: "audit-kicker", inChat: true }, 1500),
+    // The session cost view comes first; the audit after it can start below the visible chat.
+    step("Wait for the answer's session cost view", { kind: "waitFor", template: "session-cost-chat-kicker", inChat: true }, 1500),
     step("Wait for the answer", { kind: "waitAnswerDone" }, 3500),
   ],
 };
