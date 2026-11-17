@@ -85,6 +85,26 @@ export function sessionCost(overrides: Partial<SessionCost> = {}): SessionCost {
   };
 }
 
+// A Claude Code session: no AI Credits, so the server flags it and ranks by
+// input tokens; `pricedTurns` of its `turnCount` turns are priced at $0.096.
+export function claudeCodeSessionCost(pricedTurns = 3, turnCount = 3, overrides: Partial<SessionCost> = {}): SessionCost {
+  const none = { known: false as const, reason: "no data" };
+  const priced = { known: true as const, amount: 0.096, currency: "USD" as const, basis: "priced" as const };
+  const unpriced = { known: false as const, reason: "The price book has no price for this model." };
+  const rows = Array.from({ length: turnCount }, (_, index) => ({ billed: none, reported: none, priced: index < pricedTurns ? priced : unpriced }));
+  const base = sessionCost();
+  return sessionCost({
+    withoutAiCredits: true,
+    rankedBy: "inputTokens",
+    turnCount,
+    totals: measures(turnCount, { aiCredits: total(null, 0, turnCount) }),
+    cost: costBasisTotals(rows),
+    topTurns: base.topTurns.map((turn) => ({ ...turn, aiCredits: null, cost: { billed: none, reported: none, priced } })),
+    ...(pricedTurns < turnCount ? { pricedCostUnknownReason: unpriced.reason } : {}),
+    ...overrides,
+  });
+}
+
 function NO_COST_FIGURES(): SessionCost["topTurns"][number]["cost"] {
   const unknown = { known: false as const, reason: "no data" };
   return { billed: unknown, reported: unknown, priced: unknown };

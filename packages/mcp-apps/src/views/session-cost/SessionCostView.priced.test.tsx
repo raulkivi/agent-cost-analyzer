@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { FakeAppHostPort } from "../../host/fake-app-host-port.js";
 import type { ViewBrand } from "../../brand/view-brand.js";
 import { axeViolations } from "../../test-support/axe.js";
-import { sessionCost, turnSeries } from "../../view-models/fixtures.js";
+import { claudeCodeSessionCost, sessionCost, turnSeries } from "../../view-models/fixtures.js";
 import { claudeRun, claudeTurnView, missingClaudeRun, priced, turnView, unpriced } from "../../view-models/turn-view-fixture.js";
 import { SessionCostView } from "../SessionCostView.js";
 
@@ -94,6 +94,56 @@ describe("SessionCostView turn detail without AI Credits", () => {
     toggle.focus();
     await user.keyboard("{Enter}");
     await screen.findByRole("group", { name: "Tokens and priced cost" });
+    expect(await axeViolations(document.body)).toEqual([]);
+  });
+});
+
+// Chat views match the web app's KPI tiles for a session without AI Credits
+// (C15, CS2 decision 1): a Priced cost tile, AI Credits n/a, never Unknown.
+describe("SessionCostView tiles without AI Credits", () => {
+  function renderClaude(cost = claudeCodeSessionCost()) {
+    const port = new FakeAppHostPort();
+    port.toolResults.set("get_turn_series", { structuredContent: turnSeries() });
+    return render(<SessionCostView port={port} brand={brand} clipboard={{ writeText: async () => undefined }} result={{ structuredContent: cost }} />);
+  }
+
+  it("follows the web app: AI Credits n/a first, then the Priced cost tile", () => {
+    renderClaude();
+    const tiles = screen.getAllByRole("group").filter((group) => group.classList.contains("stat-tile"));
+    expect(tiles[0]).toHaveTextContent("AI Credits");
+    expect(tiles[1]).toHaveTextContent("Priced cost");
+    expect(tiles[1]).toHaveTextContent("$0.288");
+    const credits = screen.getByRole("group", { name: "AI Credits" });
+    expect(credits).toHaveTextContent("n/a");
+    expect(credits).toHaveTextContent("Claude Code has no AI Credits");
+    expect(credits).not.toHaveTextContent("Unknown");
+  });
+
+  it("keeps an unknown priced cost Unknown with its reason", () => {
+    renderClaude(claudeCodeSessionCost(1, 3));
+    const tile = screen.getByRole("group", { name: "Priced cost" });
+    expect(tile).toHaveTextContent("Unknown");
+    expect(tile).toHaveTextContent("The price book has no price for this model.");
+    expect(tile.textContent).not.toMatch(/\$0/);
+  });
+
+  it("reads n/a in the Top turns AI Credits column", () => {
+    renderClaude();
+    const table = screen.getByRole("table", { name: "Top turns by input tokens" });
+    const rows = within(table).getAllByRole("row").slice(1);
+    for (const row of rows) expect(within(row).getAllByRole("cell")[2]).toHaveTextContent("n/a");
+    expect(table).not.toHaveTextContent("Unknown AI");
+  });
+
+  it("gives a Copilot session no Priced cost tile", () => {
+    const port = new FakeAppHostPort();
+    port.toolResults.set("get_turn_series", { structuredContent: turnSeries() });
+    render(<SessionCostView port={port} brand={brand} clipboard={{ writeText: async () => undefined }} result={{ structuredContent: sessionCost() }} />);
+    expect(screen.queryByRole("group", { name: "Priced cost" })).toBeNull();
+  });
+
+  it("passes axe", async () => {
+    renderClaude();
     expect(await axeViolations(document.body)).toEqual([]);
   });
 });

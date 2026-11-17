@@ -20,6 +20,7 @@
     "./insights/FindingsTable": "./src/components/insights/FindingsTable.tsx",
     "./lib/format-ai-credits": "./src/lib/format-ai-credits.ts",
     "./lib/subagent-priced": "./src/lib/subagent-priced.ts",
+    "./lib/ai-credits-usd": "./src/lib/ai-credits-usd.ts",
     "./charts/CostTimeChart": "./src/charts/CostTimeChart.tsx",
     "./charts/Waterfall": "./src/charts/Waterfall.tsx",
     "./charts/ReplayCompareBars": "./src/charts/ReplayCompareBars.tsx",

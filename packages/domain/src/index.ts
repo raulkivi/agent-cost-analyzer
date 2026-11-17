@@ -243,6 +243,7 @@ export {
   type CostReconciliationRow,
   type ReconciliationInput,
 } from "./cost-figure.js";
+export { isPricedProvider } from "./priced-provider.js";
 export { turnViewToolCallSchema, turnViewSchema, type TurnView } from "./turn-view.js";
 export {
   productFeaturesSchema,

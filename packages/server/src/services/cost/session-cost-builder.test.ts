@@ -268,6 +268,26 @@ describe("buildSessionCost", () => {
       expect(priced.totals).toEqual(plain.totals);
     });
 
+    // Chat views: a provider without AI Credits shows a priced cost tile and AI Credits n/a.
+    it("flags a Claude Code session as without AI Credits and gives the first unknown priced reason", () => {
+      const cost = buildSessionCost(session([turn(0), turn(1)]), {}, { providerId: "claude-code", attributor, pricer });
+      expect(sessionCostSchema.parse(cost)).toEqual(cost);
+      expect(cost.withoutAiCredits).toBe(true);
+      expect(cost.pricedCostUnknownReason).toBe("no price");
+    });
+
+    it("gives no unknown reason when every turn is priced", () => {
+      const cost = buildSessionCost(session([turn(0)]), {}, { providerId: "claude-code", attributor, pricer });
+      expect(cost.withoutAiCredits).toBe(true);
+      expect(cost).not.toHaveProperty("pricedCostUnknownReason");
+    });
+
+    it("leaves the flag out for a Copilot session", () => {
+      const cost = buildSessionCost(session([turn(0), turn(1)], { providerId: "vscode" }), {}, { providerId: "vscode", attributor, pricer });
+      expect(cost).not.toHaveProperty("withoutAiCredits");
+      expect(cost).not.toHaveProperty("pricedCostUnknownReason");
+    });
+
     it("leaves repository and project out when attribution isn't configured", () => {
       const cost = buildSessionCost(session([turn(0)]));
       expect(cost).not.toHaveProperty("repositoryKey");
