@@ -25,6 +25,8 @@ packages/web/e2e/out/
 packages/mcp-apps/e2e/out/
 # The npm-package smoke (task NP7): its logs and Playwright output
 packages/cli/smoke/out/
+# Playwright's default output folder, from a run outside a config's outputDir
+test-results/
 *.tsbuildinfo
 
 # Test coverage
