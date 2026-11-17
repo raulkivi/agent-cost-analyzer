@@ -263,6 +263,15 @@ scene's 36 is 90% of the allowance. `demo-fixture-home.test.ts` pins the seeds. 
   `demo-fixture-home.test.ts` covers it (no "fixture-" text with the sessions on, absent by default).
 - Scene: `packages/web/e2e/demo/w5-tool-audit.demo.ts`, 19 s draft GIF.
 
+**As built (DR10).** The extension demo fixture's subagent session is `readSession` ("Add pagination to
+the orders API"), not the Copilot CLI audit session, which has no subagent runs. Its child logs now hold
+8 calls in 3 read runs (turn 1 Explore: 3 calls, 1 failed; turn 4 Plan: 2; turn 7 Explore: 3) and one
+`explore_subagent` call with no log (turn 7, unread, with its reason). The unread run adds no AI Credits
+and the session cost stays known, so E3/E4 figures do not move. E8 opens the audit twice: the CLI session
+first (categories, Unknown), then `readSession` for the Agent filter and runs table. The E8 take is 21.6 s
+without the Advice Bundle preview (dialog shown, not previewed) and is trimmed to 20 s; E3 runs about 30 s
+and is trimmed to 20 s, which cuts the end of the last beat (see the DR10 PR).
+
 ## 5. Docs mapping and alt text
 
 | Recording | Doc and section | Alt text draft |

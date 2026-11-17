@@ -33,6 +33,8 @@ export interface DemoSubagentRun {
   model: string;
   requests: DemoRequest[];
   toolNames: string[];
+  // Child-log calls that fail: the index into `toolNames`, and the error text.
+  failures?: Record<number, string>;
 }
 
 export interface DemoClassicTurn {
@@ -42,6 +44,8 @@ export interface DemoClassicTurn {
   requests: DemoRequest[];
   tools: string[];
   subagents?: DemoSubagentRun[];
+  // `explore_subagent` calls that write no child log: the run is unread, with its reason (step 10.20).
+  unreadSubagentCalls?: number;
   // Idle time before the turn; the default stays inside every prompt cache's lifetime.
   gapBeforeMinutes?: number;
 }
@@ -90,7 +94,7 @@ interface Line {
   name: string;
   spanId: string;
   parentSpanId?: string;
-  status: "ok";
+  status: "ok" | "error";
   attrs: Record<string, unknown>;
 }
 
@@ -104,9 +108,9 @@ class LogWriter {
   ) {
     this.lines[0] = { v: 1, ts: startTs, dur: 0, sid, type: "session_start", name: "session_start", spanId: `session-start-${sid}`, status: "ok", attrs: { copilotVersion: "0.61.0", vscodeVersion: "1.146.0", ...sessionAttrs } } as Line;
   }
-  add(type: string, ts: number, attrs: Record<string, unknown>, extra: { dur?: number; name?: string; spanId?: string; parentSpanId?: string } = {}): string {
+  add(type: string, ts: number, attrs: Record<string, unknown>, extra: { dur?: number; name?: string; spanId?: string; parentSpanId?: string; status?: "ok" | "error" } = {}): string {
     const spanId = extra.spanId ?? `${type}-${this.sid.slice(-6)}-${++this.counter}`;
-    this.lines.push({ ts, dur: extra.dur ?? 0, sid: this.sid, type, name: extra.name ?? type, spanId, ...(extra.parentSpanId ? { parentSpanId: extra.parentSpanId } : {}), status: "ok", attrs });
+    this.lines.push({ ts, dur: extra.dur ?? 0, sid: this.sid, type, name: extra.name ?? type, spanId, ...(extra.parentSpanId ? { parentSpanId: extra.parentSpanId } : {}), status: extra.status ?? "ok", attrs });
     return spanId;
   }
   text(): string {
@@ -164,6 +168,9 @@ export function writeClassicSession(paths: ClassicStorePaths, session: DemoClass
       log.add("child_session_ref", callTs + 500, { childSessionId: childId, childLogFile: `${label}-${childId}.jsonl`, label }, { parentSpanId: callSpan });
       writeChildLog(sessionDir, session.id, childId, label, run, callTs + 600);
     });
+    for (let unread = 0; unread < (turn.unreadSubagentCalls ?? 0); unread++) {
+      log.add("tool_call", turnStart + 2500 + unread * 500, { args: { description: "Placeholder exploration", query: "placeholder" }, result: "placeholder" }, { name: "explore_subagent", dur: 4000 });
+    }
     log.add("agent_response", afterRounds, { response: turn.response, reasoning: "" });
     log.add("turn_end", afterRounds + 1000, { turnId: String(index + 1) }, { name: `turn_end:${index + 1}` });
     cursor = afterRounds + 1000;
@@ -199,7 +206,10 @@ function writeChildLog(sessionDir: string, parentId: string, childId: string, la
     const at = startTs + 200 + round * 1500;
     llmRequest(log, at, request, run.model, `resp-${childId}-${round}`, `tool/${label}`, {});
     const tool = run.toolNames[round];
-    if (tool !== undefined) log.add("tool_call", at + 800, { args: {}, result: "placeholder" }, { name: tool });
+    if (tool === undefined) return;
+    const error = run.failures?.[round];
+    if (error !== undefined) log.add("tool_call", at + 800, { args: {}, error }, { name: tool, status: "error" });
+    else log.add("tool_call", at + 800, { args: {}, result: "placeholder" }, { name: tool });
   });
   log.add("turn_end", startTs + 300 + run.requests.length * 1500, { turnId: "1" }, { name: "turn_end" });
   writeFileSync(path.join(sessionDir, `${label}-${childId}.jsonl`), log.text());

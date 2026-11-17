@@ -26,7 +26,7 @@ const scene: DemoScene = {
   steps: [
     {
       label: "show the Sessions view",
-      beatMs: 1_200,
+      beatMs: 600,
       action: async () => {
         await sidebar.labels("sessions");
         await browser.$(sessionRow()).waitForDisplayed({ timeout: WAIT_MS });
@@ -34,7 +34,7 @@ const scene: DemoScene = {
     },
     {
       label: "pick the session: the panel opens on it",
-      beatMs: 1_500,
+      beatMs: 800,
       action: async () => {
         // Enter on the focused row, no drawn pointer: the driver's overlay sets `innerHTML`,
         // which the workbench document refuses (Trusted Types) when the first move is made
@@ -53,7 +53,7 @@ const scene: DemoScene = {
     },
     {
       label: "select the first turn (it has subagent runs): Explanation tab",
-      beatMs: 1_500,
+      beatMs: 800,
       action: (driver) =>
         panel.inside(async (view) => {
           const markers = await view.subagentMarkers();
@@ -65,29 +65,39 @@ const scene: DemoScene = {
     },
     {
       label: "the subagent marker and Subagent runs this turn",
-      beatMs: 2_500,
-      action: (driver) =>
-        panel.inside(async () => {
+      beatMs: 1_500,
+      action: async (driver) => {
+        await panel.inside(async (view) => {
           // At 1200 px the AI Credits column (with the marker) sits right of the frame: scroll it in.
           const marker = await browser.$("table tbody .subagent-marker").getElement();
           await browser.execute((el: Element) => el.scrollIntoView({ block: "nearest", inline: "center" }), marker as never);
           await driver.pointerTo(marker);
-          await driver.beat(1_200);
+          await driver.beat(700);
           await driver.pointerTo(await browser.$(".subagent-block-title").getElement());
-        }),
+          // Step 10.20: the block says calls and failed per run, and the Tools cell counts the run's calls.
+          const { calls, failed } = fixture.readSession.firstRun;
+          const block = await view.subagentBlock();
+          expect(block?.runs[0]).toContain(`${calls} calls, ${failed} failed`);
+          const toolsCell = await browser.$(`table tbody tr:nth-child(${(await view.subagentMarkers())[0]!.row + 1}) [title^='incl. ']`);
+          expect(await toolsCell.getAttribute("title")).toBe(`incl. ${calls} from subagent runs`);
+        });
+        await driver.probePrivacy();
+      },
     },
     {
       label: "open the turn inspector",
-      beatMs: 2_000,
-      action: (driver) =>
-        panel.inside(async (view) => {
+      beatMs: 1_200,
+      action: async (driver) => {
+        await panel.inside(async (view) => {
           await driver.click(await browser.$(button("Inspect request/response")).getElement());
           await view.waitForText("inspector");
-        }),
+        });
+        await driver.probePrivacy();
+      },
     },
     {
       label: "back to the session",
-      beatMs: 800,
+      beatMs: 400,
       action: (driver) =>
         panel.inside(async (view) => {
           await driver.click(await browser.$(button("← Back to session")).getElement());
@@ -96,20 +106,22 @@ const scene: DemoScene = {
     },
     {
       label: "System prompt tab",
-      beatMs: 1_500,
-      action: (driver) =>
-        panel.inside(async (view) => {
+      beatMs: 800,
+      action: async (driver) => {
+        await panel.inside(async (view) => {
           await driver.click(await browser.$(tab("System prompt")).getElement());
           await view.waitForText("System prompt breakdown");
-        }),
+        });
+        await driver.probePrivacy();
+      },
     },
     {
       label: "open the system prompt inspector, then the prompt in an editor",
-      beatMs: 2_500,
+      beatMs: 1_500,
       action: (driver) =>
         panel.inside(async () => {
           await driver.click(await browser.$(button("Open system prompt inspector")).getElement());
-          await driver.beat(1_200);
+          await driver.beat(700);
           await driver.click(await browser.$(button("Open prompt in editor")).getElement());
         }),
     },

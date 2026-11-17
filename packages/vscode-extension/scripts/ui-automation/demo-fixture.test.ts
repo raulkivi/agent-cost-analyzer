@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { MAX_TOOLS_SHOWN } from "@agent-cost-analyzer/web/lib/savings/savings-view";
-import { unlistedTools } from "@agent-cost-analyzer/domain";
+import { isFailedStatus, unlistedTools } from "@agent-cost-analyzer/domain";
 import { createExtensionApiService } from "@agent-cost-analyzer/server/src/composition/create-extension-api-service";
 import { InMemoryAppSettingsStore } from "@agent-cost-analyzer/server/src/test-support/in-memory-app-settings-store";
 import { copilotLogPathsFromUserDataDir } from "../../src/platform/copilot-log-paths.js";
@@ -95,6 +95,29 @@ describe("createDemoFixture", () => {
     const withRuns = session.turns.flatMap((turn, index) => ((turn.usage.subagents?.length ?? 0) > 0 ? [index] : []));
     expect(withRuns).toEqual(fixture.readSession.subagentTurns);
     expect(await api.getSystemPromptText(fixture.readSession.id)).toContain(DEMO_SYSTEM_PROMPT_MARKER);
+  });
+
+  // Step 10.24 (DR10): E8 and E3 read the subagent runs' tool calls in the same session.
+  it("E8, E3: the read-a-session session's runs hold child-log tool calls, one failed, and one run is unread with its reason", async () => {
+    const api = apiOver(fixture);
+    const audit = await api.getSessionAudit(fixture.readSession.id);
+    const expected = fixture.readSession.subagentAudit;
+    expect(audit.byOrigin?.subagents).toMatchObject({ toolCalls: expected.calls, failed: expected.failed, runs: expected.runs });
+    expect(expected.failed).toBeGreaterThanOrEqual(1);
+    const unread = (audit.subagentRuns ?? []).filter((run) => run.totals === null);
+    expect(unread).toHaveLength(expected.unread);
+    expect(unread[0]?.unreadReason).toMatch(/writes no log/);
+    // The unread run adds no AI Credits to the session: E3 and E4 read the same figure.
+    expect((await api.getSession(fixture.readSession.id)).costAiCredits.known).toBe(true);
+  });
+
+  it("E3: the first subagent turn shows calls from its run, one of them failed", async () => {
+    const api = apiOver(fixture);
+    const detail = await api.getSession(fixture.readSession.id);
+    const turn = detail.turns[fixture.readSession.subagentTurns[0]!]!;
+    const calls = turn.toolCalls.filter((call) => call.origin?.kind === "subagent");
+    expect(calls).toHaveLength(fixture.readSession.firstRun.calls);
+    expect(calls.filter((call) => call.outcome !== undefined && isFailedStatus(call.outcome.status))).toHaveLength(fixture.readSession.firstRun.failed);
   });
 
   it("E4: the session replays on another model, its self-check passing and a coverage line that names the subagent runs", async () => {
