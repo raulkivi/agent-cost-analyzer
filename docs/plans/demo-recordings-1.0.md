@@ -262,7 +262,7 @@ scene's 36 is 90% of the allowance. `demo-fixture-home.test.ts` pins the seeds. 
   has the child-log calls. The scene sets `test.use({ demo: true, auditSessions: true })`, and
   `createDemoFixtureHome` passes the option through, so only W5 has them and W3/F4 lists stay as they are.
   `demo-fixture-home.test.ts` covers it (no "fixture-" text with the sessions on, absent by default).
-- Scene: `packages/web/e2e/demo/w5-tool-audit.demo.ts`, 19 s draft GIF.
+- Scene: `packages/web/e2e/demo/w5-tool-audit.demo.ts`, 19 s draft GIF. Retake (D46): a Succeeded-chip beat shows all 3 subagent calls, 22 s.
 
 **As built (DR10).** The extension demo fixture's subagent session is `readSession` ("Add pagination to
 the orders API"), not the Copilot CLI audit session, which has no subagent runs. Its child logs now hold

@@ -6,17 +6,17 @@ import { assertPrivate, probed } from "./support/privacy-probe.js";
 import { DEMO_MAX_BEAT_MS, play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
 
 // W3, "Savings" (docs/plans/demo-recordings-1.0.md §3.3): Dashboard, Savings
-// tab, 90 then 30 days, the top row's sessions, the unused-tools row's tool
-// list, the pi row ranked last ("Not priced" and its reason), Open in
+// tab, 90 then 30 days, the top row (the unused-tools row, D45) with its sessions
+// and its tool list, the pi row ranked last ("Not priced" and its reason), Open in
 // Analyze. Runs on the demo fixture home (DR1): made-up data, realistic
 // model names, so no frame reads "fixture-…".
 const tab = (page: Page) => page.getByTestId("savings-tab");
 const windowSelect = (page: Page) => tab(page).getByRole("combobox", { name: "Window" });
 const rows = (page: Page) => tab(page).getByTestId("savings-row");
 const detail = (page: Page) => tab(page).getByRole("region", { name: "Savings detail" });
-// The first row in API order: model switches (USD).
-const topRow = (page: Page) => rows(page).filter({ hasText: "Model switched" }).first();
-const unusedToolsRow = (page: Page) => rows(page).filter({ hasText: "acmedocs" });
+// The top row is the unused-tools row (D45), so one row serves both the "top row" and the
+// "unused-tools row" beats: its detail lists the sessions, then the per-tool list below them.
+const topRow = (page: Page) => rows(page).first();
 // The pi row is the last ranked row and has no price.
 const piRow = (page: Page) => rows(page).last();
 
@@ -51,17 +51,20 @@ export const W3: DemoScene = {
       action: (page, pointer) => pointer.select(windowSelect(page), "Last 30 days"),
     },
     {
-      label: "Open the top row: its sessions with title, id, date and saving",
-      beatMs: 2000,
+      label: "Open the top row: its per-tool list",
+      beatMs: 2700,
       action: async (page, pointer) => {
-        await expect(topRow(page)).toBeVisible();
+        await expect(topRow(page)).toContainText("acmedocs");
         await pointer.click(topRow(page).getByRole("button"));
+        await expect(detail(page)).toBeVisible();
       },
     },
     {
-      label: "Open the unused-tools row: the per-tool list",
-      beatMs: 2000,
-      action: (page, pointer) => pointer.click(unusedToolsRow(page).getByRole("button")),
+      label: "Scroll down the same row to its sessions: title, id, date and saving",
+      beatMs: 2700,
+      action: async (page, pointer) => {
+        await pointer.glideTo(detail(page).getByText("Check the API docs links"));
+      },
     },
     {
       label: "Scroll to the pi row ranked last: Not priced and its reason",
