@@ -5,7 +5,7 @@ import type { DemoScene } from "../../../web/e2e/demo/support/demo-driver.js";
 import type { McpHost } from "../support/mcp-host.js";
 import type { ViewFrame } from "../support/view-frame.js";
 
-// F1 to F3 (docs/plans/docs-refresh-and-demo-recordings.md §4.2): close-ups of
+// F1 to F4 (docs/plans/docs-refresh-and-demo-recordings.md §4.2): close-ups of
 // the MCP App views, shown alone in the fake host. Steps read the view through
 // `context.view`, which a step that opens another view replaces. The fixture
 // home's made-up data; a fixed clock. The specs assert each scene's end state.
@@ -116,5 +116,25 @@ export const F3 = (context: DemoContext): DemoScene => ({
         await pointer.glideTo(context.view.statement.linesTable("USD").getByRole("row").first());
       },
     },
+  ],
+});
+
+// F4 (docs/plans/demo-recordings-1.0.md §3.2): the savings view on its own, over the demo home (DR1). The
+// simulated rows are on so a session offers Open replay (U12).
+export const F4_ARGS = { includeSimulated: true };
+const UNUSED_TOOLS_ROW = /Tools loaded but never used\s*acmedocs/;
+const CHEAPER_MODEL_ROW = /A cheaper model\s*claude-haiku-5\.5/;
+
+export const F4 = (context: DemoContext): DemoScene => ({
+  id: "F4",
+  slug: "savings",
+  title: "Savings: a row, its tools and sessions, replay",
+  steps: [
+    { label: "Open the unused-tools row", beatMs: 1800, action: (_page, pointer) => pointer.click(context.view.content.getByRole("button", { name: UNUSED_TOOLS_ROW })) },
+    { label: "Look at its per-tool list", beatMs: 1600, action: (_page, pointer) => pointer.glideTo(context.view.content.getByRole("region", { name: "Tools" })) },
+    { label: "Look at its sessions", beatMs: 1800, action: (_page, pointer) => pointer.glideTo(context.view.content.getByRole("region", { name: "Sessions" })) },
+    { label: "Open the cheaper-model row", beatMs: 1000, action: (_page, pointer) => pointer.click(context.view.content.getByRole("button", { name: CHEAPER_MODEL_ROW })) },
+    { label: "Open replay on its session", beatMs: 2000, action: (_page, pointer) => pointer.click(context.view.content.getByRole("button", { name: /^Open replay for session/ })) },
+    { label: "Back to savings, focus on the session", beatMs: 1400, action: (_page, pointer) => pointer.click(context.view.backButton("Back to savings")) },
   ],
 });
