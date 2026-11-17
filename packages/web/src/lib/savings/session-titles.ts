@@ -24,7 +24,10 @@ export function sessionTitleLookup(rows: readonly InsightSessionRow[] | undefine
   const titles = new Map<string, string>();
   for (const row of rows ?? []) {
     const title = titleText(row.title);
-    if (title !== "") titles.set(row.key, title);
+    // "Session <id>" is the dataset's stand-in for an untitled session (an Agent
+    // Host title that only echoes the first prompt is dropped); showing it would
+    // repeat the id as a title.
+    if (title !== "" && title !== `Session ${row.sessionId}`) titles.set(row.key, title);
   }
   return ({ providerId, sessionId }) => titles.get(`${providerId}:${sessionId}`);
 }
