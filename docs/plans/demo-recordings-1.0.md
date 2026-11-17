@@ -281,6 +281,7 @@ end-state checks and probe, cut by the trim.
   portal-api (2026-11-02): turn two starts one `general-purpose` run (the session opens on turn one, which has none) on `claude-haiku-5-5` through an Agent
   call (`subagents/agent-<id>.jsonl` plus `.meta.json`, CS3's linked shape), the main agent is on
   `claude-sonnet-5-5`, so the marker and the Explanation show priced figures. The shared home is untouched.
+- The run is 120 s into turn two and the cache numbers follow the usual chain (each read is the last read plus its write and input), so the replay self-check passes.
 - W2 now runs on the demo home with the privacy probe after every beat and asserts each beat's end state.
   Beats: glide to the Turn-cell marker, open turn two for the Explanation's Subagent runs block, Replay on another model, the
   replay summary with "1 subagent run not replayed". "Close the summary" is dropped.

@@ -232,27 +232,27 @@ function claudeSubagentSession(home: string, cwd: string): void {
   const text = (value: string) => ({ type: "text", text: value });
 
   const call = assistant("e5-s2b", "e5-s2a", {
-    at: 304, model: mainModel, msg: "e5_s2", stop: "tool_use", usage: { input: 900, cacheWrite: 600, cacheRead: 18_000, output: 140 },
+    at: 124, model: mainModel, msg: "e5_s2", stop: "tool_use", usage: { input: 300, cacheWrite: 600, cacheRead: 19_200, output: 140 },
     content: [{ type: "tool_use", id: toolUseId, name: "Agent", input: { description: "Review the session handler", subagent_type: "general-purpose", prompt: "Read the session handler and list the places that skip validation." } }],
   }, {});
   const lines = [
     { parentUuid: null, isSidechain: false, ...common, type: "user", message: { role: "user", content: "Show me how the session handler is structured." }, uuid: "e5-u1", timestamp: time(0), promptId: "p1", origin: { kind: "human" } },
     assistant("e5-s1a", "e5-u1", { at: 5, model: mainModel, msg: "e5_s1", stop: "end_turn", usage: { input: 1200, cacheWrite: 18_000, cacheRead: 0, output: 400 }, content: [text("It has three handlers: create, refresh and revoke.")] }, {}),
-    { parentUuid: "e5-s1a", isSidechain: false, ...common, type: "user", message: { role: "user", content: "Review the session handler for missing validation." }, uuid: "e5-u2", timestamp: time(300), promptId: "p2", origin: { kind: "human" } },
-    assistant("e5-s2a", "e5-u2", { at: 302, model: mainModel, msg: "e5_s2", stop: null, usage: { input: 900, cacheWrite: 600, cacheRead: 18_000, output: 140 }, content: [text("I will hand the review to a helper.")] }, {}),
+    { parentUuid: "e5-s1a", isSidechain: false, ...common, type: "user", message: { role: "user", content: "Review the session handler for missing validation." }, uuid: "e5-u2", timestamp: time(120), promptId: "p2", origin: { kind: "human" } },
+    assistant("e5-s2a", "e5-u2", { at: 122, model: mainModel, msg: "e5_s2", stop: null, usage: { input: 300, cacheWrite: 600, cacheRead: 19_200, output: 140 }, content: [text("I will hand the review to a helper.")] }, {}),
     call,
-    { parentUuid: "e5-s2b", isSidechain: false, ...common, type: "user", message: { role: "user", content: [{ type: "tool_result", tool_use_id: toolUseId, content: "Async agent launched successfully." }] }, uuid: "e5-tr1", timestamp: time(306), toolUseResult: { isAsync: true, status: "async_launched", agentId: runId, agentType: "general-purpose" } },
-    assistant("e5-s3a", "e5-tr1", { at: 340, model: mainModel, msg: "e5_s3", stop: "end_turn", usage: { input: 1500, cacheWrite: 700, cacheRead: 18_600, output: 420 }, content: [text("The helper found three handlers that skip validation.")] }, {}),
+    { parentUuid: "e5-s2b", isSidechain: false, ...common, type: "user", message: { role: "user", content: [{ type: "tool_result", tool_use_id: toolUseId, content: "Async agent launched successfully." }] }, uuid: "e5-tr1", timestamp: time(126), toolUseResult: { isAsync: true, status: "async_launched", agentId: runId, agentType: "general-purpose" } },
+    assistant("e5-s3a", "e5-tr1", { at: 160, model: mainModel, msg: "e5_s3", stop: "end_turn", usage: { input: 300, cacheWrite: 700, cacheRead: 20_100, output: 420 }, content: [text("The helper found three handlers that skip validation.")] }, {}),
   ];
 
   const runCommon = { isSidechain: true, agentId: runId, ...common };
   const runRound = (n: number, parentUuid: string, at: number, u: Round["usage"], content: unknown[], stop: string | null) =>
     assistant(`e5-ra${n}`, parentUuid, { at, model: runModel, msg: `e5_run${n}`, content, usage: u, stop }, { isSidechain: true, agentId: runId });
   const runLines = [
-    { parentUuid: null, ...runCommon, type: "user", message: { role: "user", content: "Read the session handler and list the places that skip validation." }, uuid: "e5-ru1", timestamp: time(305), promptId: "rp1" },
-    runRound(1, "e5-ru1", 309, { input: 400, cacheWrite: 2400, cacheRead: 0, output: 90 }, [{ type: "tool_use", id: "toolu_demo_read", name: "Read", input: { file_path: `${cwd}/src/session-handler.ts` } }], "tool_use"),
-    { parentUuid: "e5-ra1", ...runCommon, type: "user", message: { role: "user", content: [{ type: "tool_result", tool_use_id: "toolu_demo_read", content: "1\texport function handle(request) {" }] }, uuid: "e5-rtr1", timestamp: time(312) },
-    runRound(2, "e5-rtr1", 330, { input: 480, cacheWrite: 0, cacheRead: 2800, output: 260 }, [text("Three handlers skip validation: create, refresh and revoke.")], "end_turn"),
+    { parentUuid: null, ...runCommon, type: "user", message: { role: "user", content: "Read the session handler and list the places that skip validation." }, uuid: "e5-ru1", timestamp: time(125), promptId: "rp1" },
+    runRound(1, "e5-ru1", 129, { input: 400, cacheWrite: 2400, cacheRead: 0, output: 90 }, [{ type: "tool_use", id: "toolu_demo_read", name: "Read", input: { file_path: `${cwd}/src/session-handler.ts` } }], "tool_use"),
+    { parentUuid: "e5-ra1", ...runCommon, type: "user", message: { role: "user", content: [{ type: "tool_result", tool_use_id: "toolu_demo_read", content: "1\texport function handle(request) {" }] }, uuid: "e5-rtr1", timestamp: time(132) },
+    runRound(2, "e5-rtr1", 150, { input: 480, cacheWrite: 0, cacheRead: 2800, output: 260 }, [text("Three handlers skip validation: create, refresh and revoke.")], "end_turn"),
   ];
 
   const sessionDir = path.join(home, ".claude", "projects", cwd.replace(/[^A-Za-z0-9]/g, "-"));
