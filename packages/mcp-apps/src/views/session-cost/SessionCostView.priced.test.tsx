@@ -107,11 +107,12 @@ describe("SessionCostView tiles without AI Credits", () => {
     return render(<SessionCostView port={port} brand={brand} clipboard={{ writeText: async () => undefined }} result={{ structuredContent: cost }} />);
   }
 
-  it("leads with the Priced cost tile and shows AI Credits as n/a", () => {
+  it("follows the web app: AI Credits n/a first, then the Priced cost tile", () => {
     renderClaude();
     const tiles = screen.getAllByRole("group").filter((group) => group.classList.contains("stat-tile"));
-    expect(tiles[0]).toHaveTextContent("Priced cost");
-    expect(tiles[0]).toHaveTextContent("$0.288");
+    expect(tiles[0]).toHaveTextContent("AI Credits");
+    expect(tiles[1]).toHaveTextContent("Priced cost");
+    expect(tiles[1]).toHaveTextContent("$0.288");
     const credits = screen.getByRole("group", { name: "AI Credits" });
     expect(credits).toHaveTextContent("n/a");
     expect(credits).toHaveTextContent("Claude Code has no AI Credits");
