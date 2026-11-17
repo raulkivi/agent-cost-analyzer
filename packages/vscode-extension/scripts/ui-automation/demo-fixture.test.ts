@@ -6,6 +6,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { MAX_TOOLS_SHOWN } from "@agent-cost-analyzer/web/lib/savings/savings-view";
+import { unlistedTools } from "@agent-cost-analyzer/domain";
 import { createExtensionApiService } from "@agent-cost-analyzer/server/src/composition/create-extension-api-service";
 import { InMemoryAppSettingsStore } from "@agent-cost-analyzer/server/src/test-support/in-memory-app-settings-store";
 import { copilotLogPathsFromUserDataDir } from "../../src/platform/copilot-log-paths.js";
@@ -111,6 +113,28 @@ describe("createDemoFixture", () => {
     expect(kinds.length).toBeGreaterThanOrEqual(3);
     expect(kinds).toEqual(expect.arrayContaining(fixture.savings.kinds));
     expect(report.notAnalysed.length).toBeGreaterThan(0);
+  });
+
+  // R23: "and N more (about X)" shows only when every listed tool was loaded in every session of the row.
+  it("E5: the unused-tools row names an MCP server with at least six tools, each loaded in every session of the row, inside the 30 days", async () => {
+    const api = apiOver(fixture);
+    const since = new Date(now.getTime() - 30 * DAY_MS).toISOString().slice(0, 10);
+    const report = await api.getSavingsReport({ since, pricing: "as-of-use", includeSimulated: false });
+    const row = report.opportunities.find((opportunity) => opportunity.kind === "unused-tools" && opportunity.subject === fixture.savings.unusedToolsRow.server);
+    expect(row).toBeDefined();
+    expect(row!.toolsTotal).toBe(fixture.savings.unusedToolsRow.tools);
+    expect(row!.toolsTotal!).toBeGreaterThanOrEqual(6);
+    for (const tool of row!.tools!) expect(tool.sessions).toBe(row!.evidence.sessions);
+    const rest = unlistedTools(row!.tools!.slice(0, MAX_TOOLS_SHOWN), row!.toolsTotal!, row!.evidence.tokens, row!.evidence.sessions);
+    expect(rest.count).toBeGreaterThan(0);
+    expect(rest.tokens).not.toBeNull();
+    const listed = await api.listSessions();
+    const titles = new Map(listed.map((session) => [session.id, session.title]));
+    expect(row!.sessions.length).toBeGreaterThanOrEqual(3);
+    for (const ref of row!.sessions) {
+      expect(titles.get(ref.sessionId)).toBeTruthy();
+      expect(Date.parse(ref.startedAt ?? "")).toBeGreaterThanOrEqual(now.getTime() - 30 * DAY_MS);
+    }
   });
 
   it("E8: the tool-audit session has failed calls in several categories and an Unknown outcome", async () => {

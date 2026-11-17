@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { CandidatePriceModelMapper } from "../../../../server/src/services/pricing/price-model-mapper.ts";
 import { BundledPriceBookSource } from "../../../../server/src/services/pricing/bundled-price-book-source.ts";
 import { PriceBook } from "../../../../server/src/services/pricing/price-book.ts";
+import { DEMO_PI_SESSION, DEMO_UNUSED_TOOLS_SESSIONS } from "../../../../web/e2e/support/demo-fixture-home.mts";
 import { createDemoDesktopHome, DEMO_COPILOT_MODELS } from "./demo-desktop-home.mts";
 
 function files(dir: string): string[] {
@@ -44,6 +45,12 @@ describe("createDemoDesktopHome", () => {
     for (const model of Object.values(DEMO_COPILOT_MODELS)) {
       expect(mapper.priceModelFor("github-copilot", model)).toEqual({ known: true, modelId: model });
     }
+  });
+
+  it("inherits the web demo home's additions: the unused-tools sessions and the pi session on a local model (M8)", () => {
+    const names = files(home).join("\n");
+    for (const session of DEMO_UNUSED_TOOLS_SESSIONS) expect(names).toContain(session.id);
+    expect(names).toContain(DEMO_PI_SESSION.id);
   });
 
   it("returns the fixture home's layout", () => {

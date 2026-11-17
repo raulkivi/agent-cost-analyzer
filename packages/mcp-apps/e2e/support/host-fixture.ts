@@ -4,6 +4,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test as base, expect } from "@playwright/test";
+import { createDemoFixtureHome } from "../../../web/e2e/support/demo-fixture-home.mts";
 import { createFixtureHome } from "../../../web/e2e/support/fixture-home.mts";
 import { connectStdioMcp } from "../../../web/e2e/support/mcp-stdio.js";
 import { CLAUDE_SETS, VSCODE_SETS, type HostSet } from "../../test/theme/host-sets.js";
@@ -36,15 +37,18 @@ function recordedProfile(kind: HostKind, set: HostSet): HostProfile {
   return hostProfileFrom(JSON.parse(readFileSync(path.join(RECORDINGS, file), "utf8")) as HostRecording);
 }
 
-export const test = base.extend<{ hostKind: HostKind; hostSet: HostSet; withProjects: boolean; host: McpHost }>({
+export const test = base.extend<{ hostKind: HostKind; hostSet: HostSet; withProjects: boolean; demoHome: boolean; host: McpHost }>({
   hostKind: ["claude", { option: true }],
   hostSet: [CLAUDE_DARK, { option: true }],
   // false: the fixture home has no projects file (A24 2.6).
   withProjects: [true, { option: true }],
-  host: async ({ page, hostKind, hostSet, withProjects }, use) => {
+  // DR1: the demo variant of the fixture home (realistic model names, an unused-tools row, a pi session on
+  // a local model); only the demo scenes set it.
+  demoHome: [false, { option: true }],
+  host: async ({ page, hostKind, hostSet, withProjects, demoHome }, use) => {
     if (!existsSync(VIEWS_HTML)) throw new Error("packages/mcp-apps/dist/views.html is not built: run `npm run build --workspace=packages/mcp-apps` first");
     const home = mkdtempSync(path.join(os.tmpdir(), "aca-e2e-mcp-apps-"));
-    createFixtureHome(home, { projects: withProjects });
+    (demoHome ? createDemoFixtureHome : createFixtureHome)(home, { projects: withProjects });
     const server = await connectStdioMcp(home, { args: ["--app-views-html", VIEWS_HTML], clientName: "fake-mcp-apps-host" });
     try {
       const host = await McpHost.open(page, server, recordedProfile(hostKind, hostSet), hostSet);

@@ -28,8 +28,8 @@ const tsx = path.resolve(webDir, "../../node_modules/.bin/tsx");
 // fixture home.
 const OUTSIDE_HOME = ["XDG_CONFIG_HOME", "APPDATA", "COPILOT_HOME", "CLAUDE_CONFIG_DIR", "PI_CODING_AGENT_DIR"];
 
-async function startServer(home: string, noProjects: boolean, allowance: AllowanceSeed, allowanceSessions: boolean, auditSessions: boolean, claudeSubagentSessions: boolean): Promise<{ baseURL: string; child: ChildProcess }> {
-  const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, USERPROFILE: home, AGENT_COST_ANALYZER_NOW: FIXTURE_NOW, ...(noProjects ? { AGENT_COST_E2E_NO_PROJECTS: "1" } : {}), ...(allowance ? { AGENT_COST_E2E_ALLOWANCE: JSON.stringify(allowance) } : {}), ...(allowanceSessions ? { AGENT_COST_E2E_ALLOWANCE_SESSIONS: "1" } : {}), ...(auditSessions ? { AGENT_COST_E2E_AUDIT_SESSIONS: "1" } : {}), ...(claudeSubagentSessions ? { AGENT_COST_E2E_CLAUDE_SUBAGENT_SESSIONS: "1" } : {}) };
+async function startServer(home: string, noProjects: boolean, allowance: AllowanceSeed, allowanceSessions: boolean, auditSessions: boolean, claudeSubagentSessions: boolean, demo: boolean): Promise<{ baseURL: string; child: ChildProcess }> {
+  const env: NodeJS.ProcessEnv = { ...process.env, HOME: home, USERPROFILE: home, AGENT_COST_ANALYZER_NOW: FIXTURE_NOW, ...(noProjects ? { AGENT_COST_E2E_NO_PROJECTS: "1" } : {}), ...(allowance ? { AGENT_COST_E2E_ALLOWANCE: JSON.stringify(allowance) } : {}), ...(allowanceSessions ? { AGENT_COST_E2E_ALLOWANCE_SESSIONS: "1" } : {}), ...(auditSessions ? { AGENT_COST_E2E_AUDIT_SESSIONS: "1" } : {}), ...(claudeSubagentSessions ? { AGENT_COST_E2E_CLAUDE_SUBAGENT_SESSIONS: "1" } : {}), ...(demo ? { AGENT_COST_E2E_DEMO: "1" } : {}) };
   for (const name of OUTSIDE_HOME) delete env[name];
   const child = spawn(tsx, ["e2e/support/serve.mts"], { cwd: webDir, env, stdio: ["ignore", "pipe", "pipe"] });
   let stderr = "";
@@ -56,15 +56,18 @@ async function startServer(home: string, noProjects: boolean, allowance: Allowan
 // Step 15.11: `home` and `appSettingsDir` let a scenario change files the
 // way a user would (a late log, a price-book update); `noProjects` starts
 // with no projects file (S1).
-export const test = base.extend<{ noProjects: boolean; allowance: AllowanceSeed; allowanceSessions: boolean; auditSessions: boolean; claudeSubagentSessions: boolean; app: { baseURL: string; home: string; appSettingsDir: string } }>({
+export const test = base.extend<{ noProjects: boolean; allowance: AllowanceSeed; allowanceSessions: boolean; auditSessions: boolean; claudeSubagentSessions: boolean; demo: boolean; app: { baseURL: string; home: string; appSettingsDir: string } }>({
   noProjects: [false, { option: true }],
   allowance: [null, { option: true }],
   allowanceSessions: [false, { option: true }],
   auditSessions: [false, { option: true }],
   claudeSubagentSessions: [false, { option: true }],
-  app: async ({ noProjects, allowance, allowanceSessions, auditSessions, claudeSubagentSessions }, use) => {
+  // DR1: the demo variant of the fixture home (realistic model names, the unused-tools and local-model
+  // sessions of demo-fixture-home.mts). The scenes set it; no spec does, so their figures stay put.
+  demo: [false, { option: true }],
+  app: async ({ noProjects, allowance, allowanceSessions, auditSessions, claudeSubagentSessions, demo }, use) => {
     const home = mkdtempSync(path.join(os.tmpdir(), "aca-e2e-"));
-    const { baseURL, child } = await startServer(home, noProjects, allowance, allowanceSessions, auditSessions, claudeSubagentSessions);
+    const { baseURL, child } = await startServer(home, noProjects, allowance, allowanceSessions, auditSessions, claudeSubagentSessions, demo);
     try {
       await use({ baseURL, home, appSettingsDir: path.join(home, ".config", "agent-cost-analyzer") });
     } finally {

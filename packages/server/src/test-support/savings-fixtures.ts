@@ -54,9 +54,12 @@ const toolDefinition = (name: string) => ({
 // file loads an MCP server (`mcp_acmedocs_*`) that no turn calls. Add it to a
 // store that already exists (seedCopilotSessionStore); `startedAt` must be
 // after the price book's first prices (2026-10-01) and inside the window.
-export function writeSavingsVscodeSession(options: { sessionStoreDbPath: string; debugLogsDir: string; startedAt: string }): void {
+// `sessionId` and `mcpTools` (the server's tool names after `mcp_acmedocs_`)
+// let a demo fixture add more sessions and a larger group; `nanoAiuPerRequest`
+// gives every request a billed AI Credits figure (the default records none).
+export function writeSavingsVscodeSession(options: { sessionStoreDbPath: string; debugLogsDir: string; startedAt: string; sessionId?: string; mcpTools?: readonly string[]; nanoAiuPerRequest?: number }): void {
   const { sessionStoreDbPath, debugLogsDir, startedAt } = options;
-  const id = SAVINGS_VSCODE_SESSION_ID;
+  const id = options.sessionId ?? SAVINGS_VSCODE_SESSION_ID;
   const start = Date.parse(startedAt);
   const prompts = ["Synthetic prompt 1.", "Synthetic prompt 2."];
 
@@ -92,6 +95,7 @@ export function writeSavingsVscodeSession(options: { sessionStoreDbPath: string;
         inputTokens: 20_000 + round * 1000,
         outputTokens: 300,
         cachedTokens: 15_000,
+        ...(options.nanoAiuPerRequest === undefined ? {} : { copilotUsageNanoAiu: options.nanoAiuPerRequest }),
         responseId: `synthetic-response-${turn}-${round}`,
         systemPromptFile: "system_prompt_0.json",
         toolsFile: "tools_0.json",
@@ -105,7 +109,7 @@ export function writeSavingsVscodeSession(options: { sessionStoreDbPath: string;
   mkdirSync(sessionDir, { recursive: true });
   writeFileSync(path.join(sessionDir, "main.jsonl"), `${lines.map((line) => JSON.stringify(line)).join("\n")}\n`);
   writeFileSync(path.join(sessionDir, "system_prompt_0.json"), JSON.stringify({ content: JSON.stringify([{ type: "text", content: "Synthetic system prompt." }]) }));
-  const tools = ["read_file", "run_in_terminal", `mcp_${MCP_SERVER}_search`, `mcp_${MCP_SERVER}_fetch`].map(toolDefinition);
+  const tools = ["read_file", "run_in_terminal", ...(options.mcpTools ?? ["search", "fetch"]).map((tool) => `mcp_${MCP_SERVER}_${tool}`)].map(toolDefinition);
   writeFileSync(path.join(sessionDir, "tools_0.json"), JSON.stringify({ content: JSON.stringify(tools) }));
 }
 
