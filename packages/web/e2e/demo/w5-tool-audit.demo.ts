@@ -56,7 +56,21 @@ export const W5: DemoScene = {
         await pointer.click(agentFilter(page).getByRole("button", { name: "Subagents" }));
         await expect(agentFilter(page).getByRole("button", { name: "Subagents" })).toHaveAttribute("aria-pressed", "true");
         await expect(callsTable(page).getByRole("columnheader", { name: "Agent" })).toBeVisible();
+        // Status chips default to failed-first: only the failed call shows until Succeeded is on.
+        await expect(callsTable(page).locator("tbody tr")).toHaveCount(1);
         await expect(callsTable(page).locator("tbody tr").first()).toContainText("searchSubagent");
+      },
+    },
+    {
+      label: "Succeeded chip: all 3 subagent calls",
+      beatMs: 2500,
+      action: async (page, pointer) => {
+        const chip = page.getByRole("button", { name: /^Succeeded/ });
+        await pointer.click(chip);
+        await expect(chip).toHaveAttribute("aria-pressed", "true");
+        const body = callsTable(page).locator("tbody tr");
+        await expect(body).toHaveCount(3);
+        await expect(callsTable(page).getByRole("columnheader", { name: "Agent" })).toBeVisible();
       },
     },
     {
