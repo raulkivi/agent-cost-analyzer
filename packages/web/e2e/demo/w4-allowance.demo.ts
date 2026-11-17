@@ -3,7 +3,7 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "../support/app-fixture.js";
 import { assertPrivate, probed } from "./support/privacy-probe.js";
-import { play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
+import { DEMO_MAX_BEAT_MS, play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
 
 // W4, "Monthly allowance" (docs/plans/demo-recordings-1.0.md §3.2): Analyze, the muted
 // "Set monthly allowance" button, the settings dialog, Save, the gauge ("at least <used> of
@@ -91,7 +91,7 @@ export const W4: DemoScene = {
 test.use({ demo: true, allowanceSessions: true });
 
 test("W4: set a monthly allowance, read the gauge and its details", async ({ page, app }) => {
-  expect(totalBeatMs(W4)).toBeLessThan(20_000);
+  expect(totalBeatMs(W4)).toBeLessThan(DEMO_MAX_BEAT_MS);
   await presetColorMode(page, "dark");
   await page.goto(app.baseURL);
   await expect(page.getByText("Analyze", { exact: true })).toBeVisible();
@@ -99,9 +99,7 @@ test("W4: set a monthly allowance, read the gauge and its details", async ({ pag
   const pointer = new Pointer(page);
   await pointer.install();
 
-  await recordScene(page, W4, async () => {
-    await play(page, probed(W4), pointer);
-
+  await recordScene(page, W4, () => play(page, probed(W4), pointer), async () => {
     // End state: the allowance is set, the dialog is closed and the gauge has focus.
     await expect(gauge(page)).toContainText(`of ${ALLOWANCE} AI Credits · near limit`);
     await expect(gauge(page)).toBeFocused();

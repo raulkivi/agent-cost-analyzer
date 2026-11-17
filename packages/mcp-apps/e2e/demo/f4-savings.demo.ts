@@ -5,7 +5,7 @@ import { findForbidden, forbiddenTerms } from "../../../vscode-extension/scripts
 import { play, totalBeatMs } from "../../../web/e2e/demo/support/demo-driver.js";
 import { modelTurnsIn, toolCallsIn } from "../support/call-log.js";
 import { expect, test } from "../support/host-fixture.js";
-import { F4, F4_ARGS, type DemoContext } from "./scenes.js";
+import { DEMO_MAX_BEAT_MS, F4, F4_ARGS, type DemoContext } from "./scenes.js";
 import { applyDemoLayout, installPointer } from "./support/demo-setup.js";
 import { recordScene } from "./support/record.js";
 
@@ -27,12 +27,10 @@ test("F4: savings row, replay, back", async ({ page, host }) => {
     if (hits.length > 0) throw new Error(`Privacy probe: ${hits.map((hit) => `"${hit.match}" in ${hit.source}`).join("; ")}`);
   };
   const scene = F4(context);
-  expect(totalBeatMs(scene)).toBeLessThan(20_000);
+  expect(totalBeatMs(scene)).toBeLessThan(DEMO_MAX_BEAT_MS);
   const pointer = await installPointer(page);
 
-  await recordScene(page, scene, async () => {
-    await play(page, scene, pointer);
-
+  await recordScene(page, scene, () => play(page, scene, pointer), async () => {
     // End state: back on the list, the replay's button focused; the replay was a plain tool call.
     await expect(context.view.title()).toContainText("Possible savings");
     expect(await context.view.focusedControl()).toMatch(/^Open replay for session /);

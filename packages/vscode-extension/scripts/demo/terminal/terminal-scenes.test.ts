@@ -10,7 +10,7 @@ describe("N1", () => {
     expect(N1.id).toBe("N1");
     expect(TERMINAL_SCENES.N1).toBe(N1);
   });
-  it("leaves room in the 20 s budget for the typing and the waits", () => {
+  it("leaves room in the GIF length limit for the typing and the waits", () => {
     expect(totalBeatMs(N1)).toBeLessThanOrEqual(14_000);
   });
   it("follows beats 1 to 4: type in A, start line and browser, Analyze, B reuses the app", () => {

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { GIF_DEFAULTS } from "../../../vscode-extension/scripts/demo/ffmpeg-args.mts";
 import { totalBeatMs } from "../../../vscode-extension/scripts/demo/scene-timeline.mts";
 import type { DemoScene } from "../../../web/e2e/demo/support/demo-driver.js";
 import type { McpHost } from "../support/mcp-host.js";
@@ -19,7 +20,9 @@ export interface DemoContext {
   probe?: () => Promise<void>;
 }
 
-export const DEMO_MAX_SECONDS = 20;
+// The GIF length limit (25 s); the scenes' beats must stay under it.
+export const DEMO_MAX_SECONDS = GIF_DEFAULTS.maxSeconds;
+export const DEMO_MAX_BEAT_MS = DEMO_MAX_SECONDS * 1000;
 // What a step costs besides its beat: the pointer's glide and the click's round trip.
 const STEP_OVERHEAD_MS = 800;
 const LEAD_MS = 800;

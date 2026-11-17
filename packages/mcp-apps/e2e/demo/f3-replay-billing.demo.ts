@@ -3,7 +3,7 @@
 import { play, totalBeatMs } from "../../../web/e2e/demo/support/demo-driver.js";
 import { modelTurnsIn } from "../support/call-log.js";
 import { expect, test } from "../support/host-fixture.js";
-import { F3, f3Args, FULLSCREEN, type DemoContext } from "./scenes.js";
+import { DEMO_MAX_BEAT_MS, F3, f3Args, FULLSCREEN, type DemoContext } from "./scenes.js";
 import { applyDemoLayout, installPointer } from "./support/demo-setup.js";
 import { recordScene } from "./support/record.js";
 
@@ -23,12 +23,10 @@ test("F3: compare models, replay; statement", async ({ page, host }) => {
   await expect(view.replay.measuredRow()).toBeVisible();
   const context = { host, view, session } as DemoContext;
   const scene = F3(context);
-  expect(totalBeatMs(scene)).toBeLessThan(20_000);
+  expect(totalBeatMs(scene)).toBeLessThan(DEMO_MAX_BEAT_MS);
   const pointer = await installPointer(page);
 
-  await recordScene(page, scene, async () => {
-    await play(page, scene, pointer);
-
+  await recordScene(page, scene, () => play(page, scene, pointer), async () => {
     // End state: the project's draft statement; the replay was a plain tool call.
     await expect(context.view.title()).toHaveText("Customer portal · October 2026");
     await expect(context.view.statement.status()).toHaveText("Draft");

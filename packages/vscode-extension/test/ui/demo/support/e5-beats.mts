@@ -14,7 +14,7 @@ export const E5_BEATS = [
 ] as const;
 
 // Pauses only; pointer glides, clicks and the panel's own load time come on top of this,
-// inside the 20 s budget of docs-refresh-and-demo-recordings.md.
+// inside the GIF length limit (GIF_DEFAULTS.maxSeconds).
 export const E5_MAX_BEAT_MS = 7_000;
 
 export type E5Label = (typeof E5_BEATS)[number]["label"];

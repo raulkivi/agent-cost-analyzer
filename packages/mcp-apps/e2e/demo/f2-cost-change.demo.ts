@@ -3,7 +3,7 @@
 import { play, totalBeatMs } from "../../../web/e2e/demo/support/demo-driver.js";
 import { modelTurnsIn } from "../support/call-log.js";
 import { expect, test } from "../support/host-fixture.js";
-import { F2, F2_ARGS, FULLSCREEN, type DemoContext } from "./scenes.js";
+import { DEMO_MAX_BEAT_MS, F2, F2_ARGS, FULLSCREEN, type DemoContext } from "./scenes.js";
 import { applyDemoLayout, installPointer } from "./support/demo-setup.js";
 import { recordScene } from "./support/record.js";
 
@@ -16,12 +16,10 @@ test("F2: cost change, price changes, Back; the currency switch", async ({ page,
   await expect(view.costChange.waterfall().first()).toBeVisible();
   const context = { host, view } as DemoContext;
   const scene = F2(context);
-  expect(totalBeatMs(scene)).toBeLessThan(20_000);
+  expect(totalBeatMs(scene)).toBeLessThan(DEMO_MAX_BEAT_MS);
   const pointer = await installPointer(page);
 
-  await recordScene(page, scene, async () => {
-    await play(page, scene, pointer);
-
+  await recordScene(page, scene, () => play(page, scene, pointer), async () => {
     // End state: the project's cost in AI Credits again, both currencies offered; U11 to U13 and back sent no message.
     await expect(context.view.costOverTime.chart()).toBeVisible();
     expect(await context.view.costOverTime.currencyOptions()).toEqual(["AI Credits", "USD"]);

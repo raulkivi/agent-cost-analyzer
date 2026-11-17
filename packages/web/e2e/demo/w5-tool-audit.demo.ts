@@ -4,7 +4,7 @@ import type { Page } from "@playwright/test";
 import { expect, test } from "../support/app-fixture.js";
 import { AUDIT_READ_SESSION_TITLE } from "../support/fixture-home.mts";
 import { assertPrivate, probed } from "./support/privacy-probe.js";
-import { play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
+import { DEMO_MAX_BEAT_MS, play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
 
 // W5, "Tool audit with subagent calls" (docs/plans/demo-recordings-1.0.md §3.2): Analyze on the
 // VS Code Copilot Chat source, the audit session, the Tool audit tab (the KPI sub-line and the
@@ -86,7 +86,7 @@ export const W5: DemoScene = {
 test.use({ demo: true, auditSessions: true });
 
 test("W5: the Tool audit tab splits subagent calls, filters them and rolls them up", async ({ page, app }) => {
-  expect(totalBeatMs(W5)).toBeLessThan(20_000);
+  expect(totalBeatMs(W5)).toBeLessThan(DEMO_MAX_BEAT_MS);
   await presetColorMode(page, "dark");
   await page.goto(app.baseURL);
   await expect(page.getByText("Analyze", { exact: true })).toBeVisible();
@@ -94,9 +94,7 @@ test("W5: the Tool audit tab splits subagent calls, filters them and rolls them 
   const pointer = new Pointer(page);
   await pointer.install();
 
-  await recordScene(page, W5, async () => {
-    await play(page, probed(W5), pointer);
-
+  await recordScene(page, W5, () => play(page, probed(W5), pointer), async () => {
     // End state: the All sessions audit, with the audit session's unread run counted.
     const sessions = page.getByRole("table", { name: "Sessions" });
     await expect(sessions.locator("tbody tr", { hasText: AUDIT_READ_SESSION_TITLE })).toContainText("1 run unread");

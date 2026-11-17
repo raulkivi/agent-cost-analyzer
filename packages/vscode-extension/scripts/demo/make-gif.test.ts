@@ -44,6 +44,14 @@ describe("parseArgs", () => {
 });
 
 describe("gifVerdict", () => {
+  it("limits a GIF to 25 s and 8 MB", () => {
+    expect(GIF_DEFAULTS.maxSeconds).toBe(25);
+    expect(GIF_DEFAULTS.maxBytes).toBe(8 * 1024 * 1024);
+    expect(gifVerdict({ bytes: 8 * 1024 * 1024, seconds: 25 })).toBe("ok");
+    expect(gifVerdict({ bytes: 1, seconds: 25.001 })).toBe("too-long");
+    expect(gifVerdict({ bytes: 8 * 1024 * 1024 + 1, seconds: 25 })).toBe("too-big");
+  });
+
   it("is ok at exactly the limits", () => {
     expect(gifVerdict({ bytes: GIF_DEFAULTS.maxBytes, seconds: GIF_DEFAULTS.maxSeconds })).toBe("ok");
   });
@@ -58,11 +66,11 @@ describe("gifVerdict", () => {
 
   it("checks the duration alone before the GIF exists", () => {
     expect(gifVerdict({ seconds: 5 })).toBe("ok");
-    expect(gifVerdict({ seconds: 25 })).toBe("too-long");
+    expect(gifVerdict({ seconds: 26 })).toBe("too-long");
   });
 
   it("reports too-long first when both limits are exceeded", () => {
-    expect(gifVerdict({ bytes: GIF_DEFAULTS.maxBytes + 1, seconds: 25 })).toBe("too-long");
+    expect(gifVerdict({ bytes: GIF_DEFAULTS.maxBytes + 1, seconds: 26 })).toBe("too-long");
   });
 });
 
@@ -150,14 +158,14 @@ describe("makeGif", () => {
   });
 
   it("refuses an input longer than the limit before running ffmpeg", async () => {
-    const { deps, runs } = fakeDeps({ duration: "25" });
-    await expect(makeGif({ input: "/in/e0-test.mp4", outDir: "/out" }, deps)).rejects.toThrow(/25\.0 s.*--trim/);
+    const { deps, runs } = fakeDeps({ duration: "26" });
+    await expect(makeGif({ input: "/in/e0-test.mp4", outDir: "/out" }, deps)).rejects.toThrow(/26\.0 s.*--trim/);
     expect(runs).toHaveLength(1);
     expect(runs[0].bin).toBe("/bin/fp");
   });
 
   it("accepts a long input once --trim brings it under the limit", async () => {
-    const { deps, runs } = fakeDeps({ duration: "25" });
+    const { deps, runs } = fakeDeps({ duration: "26" });
     await makeGif({ input: "/in/e0-test.mp4", outDir: "/out", trim: { startSec: 0, durationSec: 10 } }, deps);
     expect(runs.some((run) => run.args.includes("/tmp/aica/e0-test-trim.mp4"))).toBe(true);
   });

@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
+import { GIF_DEFAULTS } from "../../../vscode-extension/scripts/demo/ffmpeg-args.mts";
 import { assertScene } from "../../../vscode-extension/scripts/demo/scene-timeline.mts";
-import { DEMO_MAX_SECONDS, estimatedSeconds, F1, F2, F3, F4, type DemoContext } from "./scenes.js";
+import { DEMO_MAX_BEAT_MS, DEMO_MAX_SECONDS, estimatedSeconds, F1, F2, F3, F4, type DemoContext } from "./scenes.js";
 
 const context = { host: {}, view: {}, session: { sessionId: "s", provider: "claude-code" } } as unknown as DemoContext;
 const scenes = [F1(context), F2(context), F3(context), F4(context)];
@@ -14,7 +15,12 @@ describe("the F scenes", () => {
     for (const scene of scenes) assertScene(scene);
   });
 
-  it("fit the 20 s budget with the pointer's glide counted", () => {
+  it("take the GIF length limit from the one shared setting", () => {
+    expect(DEMO_MAX_SECONDS).toBe(GIF_DEFAULTS.maxSeconds);
+    expect(DEMO_MAX_BEAT_MS).toBe(GIF_DEFAULTS.maxSeconds * 1000);
+  });
+
+  it("fit the 25 s GIF limit with the pointer's glide counted", () => {
     for (const scene of scenes) expect(estimatedSeconds(scene), scene.id).toBeLessThanOrEqual(DEMO_MAX_SECONDS - 2);
   });
 

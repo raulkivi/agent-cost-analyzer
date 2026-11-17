@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { expect, test } from "../support/app-fixture.js";
-import { play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
+import { DEMO_MAX_BEAT_MS, play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
 
 // W1, "Learn mode" (docs/plans/docs-refresh-and-demo-recordings.md §4.1):
 // pick a scenario, step through its turns, then the cache-expiry and
@@ -30,7 +30,7 @@ export const W1: DemoScene = {
 };
 
 test("W1: Learn mode, scenarios and their cache and compaction markers", async ({ page, app }) => {
-  expect(totalBeatMs(W1)).toBeLessThan(20_000);
+  expect(totalBeatMs(W1)).toBeLessThan(DEMO_MAX_BEAT_MS);
   await presetColorMode(page, "light");
   await page.goto(app.baseURL);
   await expect(page.getByRole("list", { name: "Scenarios" }).getByRole("button").first()).toBeVisible();
@@ -38,9 +38,7 @@ test("W1: Learn mode, scenarios and their cache and compaction markers", async (
   const pointer = new Pointer(page);
   await pointer.install();
 
-  await recordScene(page, W1, async () => {
-  await play(page, W1, pointer);
-
+  await recordScene(page, W1, () => play(page, W1, pointer), async () => {
   // End state: the compaction scenario with its trigger shown and turn 3 selected.
   await expect(page.locator("html")).toHaveAttribute("data-color-mode", "dark");
   await expect(page.getByRole("heading", { name: "Context Compaction Mid-Session" })).toBeVisible();
