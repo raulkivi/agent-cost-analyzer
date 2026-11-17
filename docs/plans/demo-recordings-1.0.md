@@ -2,7 +2,8 @@
 
 **Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **approved, not started** (owner interview 2026-11-16: D29–D43, all
+Status: **wave 1 in progress**: DR1–DR5 done 2026-11-17 (PRs #394,
+#396–#399); DR6 and DR7 wait for the owner. Approved (owner interview 2026-11-16: D29–D43, all
 recommended options accepted). Tracked as step 10.24 in
 [implementation-plan.md](../implementation-plan.md) and in the
 [Gantt](../implementation-plan-gantt.md). **Start condition:** recording

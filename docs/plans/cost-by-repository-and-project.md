@@ -1,8 +1,10 @@
 # Phase 15: Cost by repository and project, price history, billing and estimates
 
-**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **In progress**: steps 15.0–15.13 are done (see §14.1). The owner accepted
+Status: **In progress**: steps 15.0–15.13 are done (see §14.1). The exit check
+(C4) passes on the owner's logs; the owner signed off its output on 2026-11-14
+and, after C15 counted Claude Code subagent runs (PR #401), again on 2026-11-17. The owner accepted
 every recommended decision on 2026-11-05 ([§13](#13-decisions)). The UI
 design (§11) was then revised against the project's existing design and UX
 guidance. This document is the design; Phase 15 in
