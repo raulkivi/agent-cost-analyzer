@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **Done 2026-11-17: CS0 to CS16; the owner signed off the real-data check (CS16, PR #393, 9 of 9 pass) on 2026-11-17, so C15 is met.** Plan approved (2026-11-14): the owner accepted every recommendation, D1–D16 (§8). A 1.0 criterion, C15 in
+Status: **Done 2026-11-17: CS0 to CS16; the owner signed off the real-data check (CS16, PR #393, 9 of 9 pass) on 2026-11-17, so C15 is met.** The check now reads one frozen copy of the logs, as the C3 and C4 checks do (PR #401), and passes in the full run on main. Plan approved (2026-11-14): the owner accepted every recommendation, D1–D16 (§8). A 1.0 criterion, C15 in
 [implementation-plan.md](../implementation-plan.md#100-release) (tasks V32
 plan, V33 build). Spike CS0 done read-only on the owner's machine (§4).
 Built on the patterns of step 10.19

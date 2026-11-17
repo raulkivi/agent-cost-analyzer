@@ -1,13 +1,14 @@
 # Phase 14: Replay a real Analyze session on another model
 
-**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 **Status: built (8 of 9 steps); the owner's review is open.** Steps
 14.0–14.7 are done (2026-11-07) and shipped from extension 0.4.0 and app
 0.10.0; step 14.8's docs are written. Open: the owner's review of the docs,
 the extension guide's replay screenshots (the User Guide's are done). The
 §13 exit check passed on the owner's logs and the owner signed it off on
-2026-11-14. The owner decided D1, D2, D4, D5
+2026-11-14; after C15 counted Claude Code subagent runs it passed again (PR
+#401) and the owner signed off the changed output on 2026-11-17. The owner decided D1, D2, D4, D5
 and D7 on 2026-11-07; D3, D6 and D8 take the recommendation, open for the
 owner to revisit (§11).
 
