@@ -26,6 +26,14 @@ describe("sessionTitleLookup", () => {
     expect(sessionTitleLookup([row("vscode", "s3", " \u200f\n ")])({ providerId: "vscode", sessionId: "s3" })).toBeUndefined();
   });
 
+  // An Agent Host session whose title only echoes its first prompt is untitled by design; the dataset
+  // names it "Session <id>" (the server's fallback), which would repeat the id as if it were a title.
+  it("answers undefined for the fallback title 'Session <id>', so the id shows alone", () => {
+    const untitled = sessionTitleLookup([row("vscode", "9a1b-0702", "Session 9a1b-0702"), row("vscode", "s1", "Session notes")]);
+    expect(untitled({ providerId: "vscode", sessionId: "9a1b-0702" })).toBeUndefined();
+    expect(untitled({ providerId: "vscode", sessionId: "s1" })).toBe("Session notes");
+  });
+
   it("answers undefined for every session when there is no dataset", () => {
     expect(sessionTitleLookup(undefined)({ providerId: "vscode", sessionId: "s1" })).toBeUndefined();
   });

@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A cache-break row (idle expiry, no idle gap, model switch) now leaves a session with any break that has no price out of its amount and lists it under the row's coverage with the reason, as the failed-calls row does; the session's own saving reads "Not priced". Before, the amount counted such a session's priced breaks only.
 
 ### Fixed
+- A session in a savings row whose VS Code Agent Host title only repeated its first prompt no longer shows "Session <id>" as its title: the row shows the id alone, as for any untitled session.
 - VS Code Agent Host sessions that some VS Code Insiders builds cataloged under an `ahp-session:/` URI, instead of `copilotcli:/`, were missing everywhere: the sessions list, costs and savings. They now appear like any other Agent Host session, with their turns, AI Credits and turn text. A session cataloged under both URIs shows once.
 - Savings action text now agrees with its counts: "1 session", "1 tool", "1 day", "1 break", "1 time", "1 token" and "1 minute" instead of "1 sessions" and so on.
 - The extension now ships third-party license notices (`THIRD-PARTY-NOTICES.md` in the .vsix) for the npm packages it bundles, with their license texts.

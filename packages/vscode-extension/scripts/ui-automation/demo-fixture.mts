@@ -464,7 +464,7 @@ export function createDemoFixture(rootDir: string, options: DemoFixtureOptions =
     turns: auditSessionTurns(),
   };
   agent(auditSession);
-  agent({ id: agentId(2), sdkId: sdkId(2), title: "Bump the Dockerfile base image", startedAt: startOf(now, 6, 4, 0), cwd: repositories.ledger.path, turns: dockerTurns });
+  agent({ id: agentId(2), sdkId: sdkId(2), title: "Upgrade the Node image in the Dockerfile", startedAt: startOf(now, 6, 4, 0), cwd: repositories.ledger.path, turns: dockerTurns });
 
   const monthToDateCredits = round2(monthToDate);
   const userSettings: Record<string, string | number | boolean | object> = {

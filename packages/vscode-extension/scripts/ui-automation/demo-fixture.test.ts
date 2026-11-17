@@ -115,6 +115,21 @@ describe("createDemoFixture", () => {
     expect(report.notAnalysed.length).toBeGreaterThan(0);
   });
 
+  // V25: the browser looks a title up in the insights dataset by `${providerId}:${sessionId}`. An Agent Host
+  // session whose title only echoes its first prompt is untitled by design ("Session <id>"), so no demo
+  // session may do that: every session of every Savings row needs a real title there.
+  it("E5: every session of every Savings row has a real title in the insights dataset", async () => {
+    const api = apiOver(fixture);
+    const since = new Date(now.getTime() - 30 * DAY_MS).toISOString().slice(0, 10);
+    const report = await api.getSavingsReport({ since, pricing: "as-of-use", includeSimulated: false });
+    const { sessions } = await api.getInsights({ since: report.window.since, until: report.window.until, limit: "200" });
+    const titles = new Map(sessions.map((row) => [row.key, row.title]));
+    const refs = report.opportunities.flatMap((opportunity) => opportunity.sessions);
+    expect(refs.length).toBeGreaterThan(0);
+    const untitled = refs.filter((ref) => (titles.get(`${ref.providerId}:${ref.sessionId}`) ?? `Session ${ref.sessionId}`) === `Session ${ref.sessionId}`);
+    expect(untitled.map((ref) => ref.sessionId)).toEqual([]);
+  });
+
   // R23: "and N more (about X)" shows only when every listed tool was loaded in every session of the row.
   it("E5: the unused-tools row names an MCP server with at least six tools, each loaded in every session of the row, inside the 30 days", async () => {
     const api = apiOver(fixture);
