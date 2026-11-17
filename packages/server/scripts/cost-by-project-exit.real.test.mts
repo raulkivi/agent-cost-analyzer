@@ -20,7 +20,8 @@
 // projects over the repositories with the most turns), and that folder also
 // receives the statement this check issues. Claude Code and pi are read
 // through a view of their stable files (a file written in the last 15 minutes
-// is a live session, left out and counted). Copilot's stores are read in
+// is a live session, left out and counted; Claude Code's holds copies of each
+// session's subagents/ folder, claude-code-view.mts). Copilot's stores are read in
 // place; files of theirs written in the last 15 minutes are counted.
 //
 // pi is in scope of §15, but Phase 11 hasn't pinned its provider yet: its
@@ -72,6 +73,7 @@ import {
   inChatPanelScope,
   emptyCell,
   figuresOf,
+  pricedParts,
   loadBook,
   monthOf,
   piLeafCount,
@@ -90,6 +92,7 @@ import {
   type StoreSession,
   type StoreTurn,
 } from "./cost-by-project-oracle.mjs";
+import { buildClaudeCodeView } from "./claude-code-view.mjs";
 import { parseJsonl } from "./savings-oracle.mjs";
 
 const REAL_DATA = process.env.REAL_DATA === "1";
@@ -530,7 +533,7 @@ const SESSION_TITLE_AT = /\.provenance\.sessions\.\d+\.title$/;
     tmpRoot = mkdtempSync(path.join(tmpdir(), "cost-by-project-exit-"));
     settingsDir = path.join(tmpRoot, "settings");
     mkdirSync(settingsDir);
-    claudeView = buildView(CLAUDE_PROJECTS, path.join(tmpRoot, "claude"), startedAt);
+    claudeView = buildClaudeCodeView(CLAUDE_PROJECTS, path.join(tmpRoot, "claude"), startedAt, LIVE_MS);
     piView = buildView(PI_SESSIONS, path.join(tmpRoot, "pi"), startedAt);
     copilotRaw = readCopilotRaw(USER_DATA, startedAt);
     agentHostRaw = readAgentHostRaw(USER_DATA, startedAt);
@@ -772,19 +775,16 @@ const SESSION_TITLE_AT = /\.provenance\.sessions\.\d+\.title$/;
     const problems: string[] = [];
     for (const period of [periodA, periodB]) {
       const inPeriod = attributed.filter((a) => projectIdOf(a) === PROJECT_A && a.month === period);
-      const known = inPeriod.filter((a) => figuresOf(a.turn, book).priced.known);
+      // Each cost line is explained on its own (10.19): a turn with one unknown line is
+      // not explained, and its known lines still count.
+      const parted = inPeriod.map((a) => pricedParts(a.turn, book));
+      const unexplained = parted.filter((p) => p.unknown > 0).length;
       const side = period === periodA ? "A" : "B";
       const notExplained = fromApi.notExplained[period === periodA ? "periodA" : "periodB"].turns;
-      if (notExplained !== inPeriod.length - known.length) problems.push(`period ${side}: not explained ${notExplained} vs oracle ${inPeriod.length - known.length}`);
+      if (notExplained !== unexplained) problems.push(`period ${side}: not explained ${notExplained} vs oracle ${unexplained}`);
       for (const currency of CURRENCIES) {
-        const expected = known.reduce((s, a) => {
-          const f = figuresOf(a.turn, book).priced;
-          return f.known && f.currency === currency ? s + f.amount : s;
-        }, 0);
-        const turns = known.filter((a) => {
-          const f = figuresOf(a.turn, book).priced;
-          return f.known && f.currency === currency;
-        }).length;
+        const expected = parted.reduce((s, p) => s + p.known.filter((k) => k.currency === currency).reduce((m, k) => m + k.amount, 0), 0);
+        const turns = parted.filter((p) => p.known.some((k) => k.currency === currency)).length;
         const row = fromApi.currencies.find((c) => c.currency === currency);
         const actual = row ? (side === "A" ? row.costA : row.costB) : 0;
         const actualTurns = row ? (side === "A" ? row.turnsA : row.turnsB) : 0;

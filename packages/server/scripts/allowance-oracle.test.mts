@@ -49,8 +49,8 @@ describe("independence", () => {
     expect(files.every((file) => path.dirname(file) === SCRIPTS && existsSync(file))).toBe(true);
     expect(specifiers.filter((s) => s.includes("@agent-cost-analyzer") || s.includes("/src/") || s.startsWith(".."))).toEqual([]);
     // The SA18 scanner for classic logs, the Phase 15 oracle's turn alignment
-    // and Agent Host store reader, the shared JSONL parser.
-    expect(files.map((file) => path.basename(file)).sort()).toEqual(["allowance-oracle.mts", "cost-by-project-oracle.mts", "savings-oracle.mts", "subagent-spend-lib.mts"]);
+    // and Agent Host store reader, the shared JSONL parser, the Claude Code subagent-run rules.
+    expect(files.map((file) => path.basename(file)).sort()).toEqual(["allowance-oracle.mts", "claude-subagent-runs-oracle.mts", "cost-by-project-oracle.mts", "savings-oracle.mts", "subagent-spend-lib.mts"]);
   });
 });
 

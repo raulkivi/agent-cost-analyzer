@@ -29,15 +29,17 @@
 // user message is turn N); a session whose log and store disagree on the turn
 // count is reported and left out of the per-turn checks.
 //
-// Reported, not asserted: the subagent runs outside the replay that coverage
-// doesn't list (Claude Code's transcripts, plan claude-code-subagents.md;
-// Agent Host's sub-agent calls, plan §12.1, 14.8 note).
+// Claude Code's subagent runs (C15, plan claude-code-subagents.md) are asserted
+// like Copilot local's: coverage.subagentRuns lists them, with the runs' tokens,
+// as the oracle reads them from the subagents/ folder (the check's view holds a
+// copy of it). Reported, not asserted: Agent Host's sub-agent calls (plan §12.1,
+// 14.8 note).
 //
 // Output carries counts, short hashes of session ids, model ids, token and
 // money figures and tolerances: never a prompt, response, title, file content
 // or path. Read-only (fingerprints before and after, as savings-exit does).
 import { createHash } from "node:crypto";
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, symlinkSync } from "node:fs";
+import { existsSync, lstatSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, statSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -66,6 +68,8 @@ import { resolveAppSettingsDir } from "../src/platform/app-settings-dir/resolve-
 import type { ApiService } from "../src/services/api/api-service.js";
 import { InMemoryAppSettingsStore } from "../src/test-support/in-memory-app-settings-store.js";
 import { FIXTURE_VENDOR_PROFILES_DIR } from "../src/test-support/vendor-profiles-dir.js";
+import { buildClaudeCodeView } from "./claude-code-view.mjs";
+import { idsHeldByOtherSessions, readRunFolder } from "./claude-subagent-runs-oracle.mjs";
 import {
   agentHostSessionOf,
   claudeCodeSessionOf,
@@ -159,8 +163,6 @@ interface Candidate {
   id: string;
   // The raw log files the oracle reads (fingerprinted: they must not change).
   files: string[];
-  // Claude Code: the subagent transcripts beside the session file.
-  subagentFiles: number;
   mtimeMs: number;
   read: () => OracleSession;
 }
@@ -175,42 +177,26 @@ interface ClaudeView {
   live: number;
 }
 
-// A symlink per stable session file: the products read through it, so a live
-// file never enters the view. The products name a session by
-// sha256("<file path>:<mtimeMs>")[0..16] (the log's identity, not a figure).
+// The view the products read (claude-code-view.mts: a symlink per stable session
+// file, a copy of its subagents/ folder), so the oracle and the products read
+// the same bytes. The products name a session by sha256("<file path>:<mtimeMs>")[0..16]
+// (the log's identity, not a figure).
 function buildClaudeView(now: number): ClaudeView {
   const dir = mkdtempSync(path.join(tmpdir(), "replay-exit-claude-"));
-  const candidates: Candidate[] = [];
-  let live = 0;
-  if (!isDir(CLAUDE_PROJECTS)) return { dir, candidates, live };
-  for (const project of readdirSync(CLAUDE_PROJECTS)) {
-    const projectDir = path.join(CLAUDE_PROJECTS, project);
-    if (!isDir(projectDir)) continue;
-    for (const name of readdirSync(projectDir)) {
-      const target = path.join(projectDir, name);
-      if (!name.endsWith(".jsonl") || !statSync(target).isFile()) continue;
-      if (!stableSince(now, [target])) {
-        live += 1;
-        continue;
-      }
-      mkdirSync(path.join(dir, project), { recursive: true });
-      const link = path.join(dir, project, name);
-      symlinkSync(target, link);
-      const subagentsDir = path.join(projectDir, name.slice(0, -".jsonl".length), "subagents");
-      const subagentFiles = isDir(subagentsDir) ? readdirSync(subagentsDir).filter((n) => n.endsWith(".jsonl")).length : 0;
-      const mtimeMs = statSync(target).mtimeMs;
-      candidates.push({
-        kind: "Claude Code",
-        provider: "claude-code",
-        id: createHash("sha256").update(`${link}:${mtimeMs}`).digest("hex").slice(0, 16),
-        files: [target],
-        subagentFiles,
-        mtimeMs,
-        read: () => claudeCodeSessionOf(readLines(target)),
-      });
-    }
-  }
-  return { dir, candidates, live };
+  const view = buildClaudeCodeView(CLAUDE_PROJECTS, dir, now, LIVE_MS);
+  const candidates: Candidate[] = view.files.map((link) => {
+    const target = realpathSync(link);
+    const mtimeMs = statSync(target).mtimeMs;
+    return {
+      kind: "Claude Code",
+      provider: "claude-code",
+      id: createHash("sha256").update(`${link}:${mtimeMs}`).digest("hex").slice(0, 16),
+      files: [target],
+      mtimeMs,
+      read: () => claudeCodeSessionOf(readLines(link), { runs: readRunFolder(link), heldElsewhere: idsHeldByOtherSessions(link) }),
+    };
+  });
+  return { dir, candidates, live: view.live };
 }
 
 // Copilot's local harness: one debug-log folder per session, named by its id.
@@ -232,7 +218,7 @@ function localCandidates(userData: string, now: number): { candidates: Candidate
         live += 1;
         continue;
       }
-      candidates.push({ kind: "VS Code local", provider: "vscode", id, files: [main], subagentFiles: 0, mtimeMs: statSync(main).mtimeMs, read: () => vscodeLocalSessionOf(readLines(main)) });
+      candidates.push({ kind: "VS Code local", provider: "vscode", id, files: [main], mtimeMs: statSync(main).mtimeMs, read: () => vscodeLocalSessionOf(readLines(main)) });
     }
   }
   return { candidates, live };
@@ -276,7 +262,6 @@ function agentHostCandidates(userData: string, now: number): { candidates: Candi
         provider: "vscode",
         id,
         files: [events],
-        subagentFiles: 0,
         mtimeMs: statSync(events).mtimeMs,
         read: () => agentHostSessionOf(readLines(events)),
       });
@@ -517,7 +502,7 @@ const say = (line: string) => {
     expect(problems).toEqual([]);
   });
 
-  it("coverage counts the subagent runs and helper-agent requests left out where the provider reads them (Copilot local); the others are reported", () => {
+  it("coverage counts the subagent runs and helper-agent requests left out where the provider reads them (Copilot local); Claude Code lists them with their tokens; Agent Host reports them", () => {
     const problems: string[] = [];
     const helperProblems: string[] = [];
     for (const s of of("VS Code local").filter(comparable)) {
@@ -541,12 +526,29 @@ const say = (line: string) => {
     problems.push(...helperProblems);
     const claude = of("Claude Code");
     const host = of("Agent Host");
-    const claudeRuns = claude.reduce((n, s) => n + s.candidate.subagentFiles + s.oracle.subagentRuns, 0);
+    const claudeProblems: string[] = [];
+    for (const s of claude) {
+      const listed = s.api.own.coverage.subagentRuns;
+      const expected = s.oracle.subagentTokens;
+      if ((listed?.runs ?? 0) !== s.oracle.subagentRuns) claudeProblems.push(`${tag(s.candidate.id)}: ${listed?.runs ?? 0} runs, oracle ${s.oracle.subagentRuns}`);
+      if ((listed === undefined) !== (expected === undefined)) claudeProblems.push(`${tag(s.candidate.id)}: coverage.subagentRuns ${listed === undefined ? "absent" : "present"}, oracle ${expected === undefined ? "none" : "lists it"}`);
+      if (listed?.tokens !== undefined && expected !== undefined) {
+        const fields = { uncached: listed.tokens.uncachedInput, cacheWrite: listed.tokens.cacheWrite, cacheRead: listed.tokens.cacheRead, output: listed.tokens.output };
+        for (const [name, count] of Object.entries(fields)) {
+          if (count.known !== (expected !== null) || (count.known && expected !== null && count.value !== expected[name as keyof typeof expected])) claudeProblems.push(`${tag(s.candidate.id)}: run tokens (${name}) differ from the oracle's`);
+        }
+      }
+    }
+    const claudeRuns = claude.reduce((n, s) => n + s.oracle.subagentRuns, 0);
+    const claudeUnknown = claude.filter((s) => s.oracle.subagentTokens === null).length;
+    say(`Subagent runs, Claude Code: ${claudeRuns} runs in ${claude.filter((s) => s.oracle.subagentRuns > 0).length} sessions (${claudeUnknown} sessions with an unknown run figure), coverage.subagentRuns runs and run tokens equal per session: ${claudeProblems.length === 0 ? "PASS" : "FAIL"}`);
+    problems.push(...claudeProblems);
     const hostRuns = host.reduce((n, s) => n + s.oracle.subagentRuns, 0);
-    say(`  Claude Code: ${claudeRuns} subagent transcripts in ${claude.filter((s) => s.candidate.subagentFiles + s.oracle.subagentRuns > 0).length} sessions, outside the replay and not in coverage (the provider doesn't read them; plan claude-code-subagents.md, C15)`);
     say(`  Agent Host: ${hostRuns} sub-agents' calls outside the main chain (D6); only a turn with nothing else is listed, as a turn not replayed`);
-    for (const s of [...claude, ...host]) {
+    for (const s of host) {
       if (s.api.own.coverage.subagentRuns !== undefined) problems.push(`${s.candidate.kind} ${tag(s.candidate.id)}: unexpected subagentRuns`);
+    }
+    for (const s of [...claude, ...host]) {
       if (s.api.own.coverage.helperRequests !== undefined) problems.push(`${s.candidate.kind} ${tag(s.candidate.id)}: unexpected helperRequests`);
     }
     expect(problems).toEqual([]);

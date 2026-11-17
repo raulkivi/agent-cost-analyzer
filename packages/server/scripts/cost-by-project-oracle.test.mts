@@ -21,6 +21,7 @@ import {
   normaliseRemote,
   piTurns,
   pricedFigure,
+  pricedParts,
   projectOf,
   redactKey,
   repositoryKeyOf,
@@ -30,10 +31,10 @@ import {
 } from "./cost-by-project-oracle.mjs";
 
 describe("independence", () => {
-  it("imports nothing from the product's sources, only the savings oracle's model spellings", () => {
+  it("imports nothing from the product's sources, only the oracles of other checks (savings, subagent runs)", () => {
     const source = readFileSync(new URL("./cost-by-project-oracle.mts", import.meta.url), "utf-8");
     const imports = [...source.matchAll(/from\s+"([^"]+)"/g)].map((m) => m[1]!);
-    expect(imports.filter((specifier) => specifier.startsWith(".") || specifier.includes("@agent-cost-analyzer"))).toEqual(["./savings-oracle.mjs"]);
+    expect(imports.filter((specifier) => specifier.startsWith(".") || specifier.includes("@agent-cost-analyzer"))).toEqual(["./claude-subagent-runs-oracle.mjs", "./savings-oracle.mjs"]);
   });
 });
 
@@ -501,5 +502,84 @@ describe("agentHostTurns (VS Code's Agent Host: session.db turns, the CLI's even
     const storeTurns = [{ id: "request_1", event_id: "u1", usage: usage({ model: "m", _meta: { turnTokenTotals: [{ inputTokens: 999, cachedTokens: 40, outputTokens: 10 }] } }) }];
     expect(agentHostTurns({ session, storeTurns, events }).turns[0]!.parts[0]!.tokens).toMatchObject({ uncached: 959, cacheWrite: null });
     expect(agentHostTurns({ session, storeTurns, events: null }).turns[0]).toMatchObject({ at: "2026-10-01T00:00:00.000Z", parts: [{ tokens: { cacheWrite: null } }] });
+  });
+});
+
+describe("claudeCodeTurns with subagent runs (C15: a turn holds the runs its Agent calls started)", () => {
+  const roots: string[] = [];
+  afterAll(() => {
+    for (const root of roots) rmSync(root, { recursive: true, force: true });
+  });
+  const usage = (n: number) => ({ input_tokens: n, cache_read_input_tokens: 2 * n, cache_creation_input_tokens: 3 * n, cache_creation: { ephemeral_1h_input_tokens: 3 * n }, output_tokens: 4 * n });
+  const sessionText = [
+    line({ type: "user", uuid: "u1", parentUuid: null, timestamp: "2026-10-10T10:00:00Z", cwd: "/repo", message: { role: "user", content: "go" } }),
+    line({ type: "assistant", uuid: "a1", parentUuid: "u1", timestamp: "2026-10-10T10:00:01Z", message: { id: "m1", model: "claude-opus-5-5", content: [{ type: "tool_use", id: "call-1", name: "Agent", input: {} }], usage: usage(1) } }),
+    line({ type: "user", uuid: "u2", parentUuid: "a1", timestamp: "2026-10-10T11:00:00Z", cwd: "/repo", message: { role: "user", content: "next" } }),
+    line({ type: "assistant", uuid: "a2", parentUuid: "u2", timestamp: "2026-10-10T11:00:01Z", message: { id: "m2", model: "claude-opus-5-5", usage: usage(2) } }),
+  ].join("\n");
+  const project = (withRun: boolean): string => {
+    const root = mkdtempSync(path.join(tmpdir(), "cbp-runs-"));
+    roots.push(root);
+    writeFileSync(path.join(root, "s.jsonl"), sessionText);
+    if (withRun) {
+      const dir = path.join(root, "s", "subagents");
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(path.join(dir, "agent-aaa.meta.json"), JSON.stringify({ toolUseId: "call-1" }));
+      // Runs after the next prompt, on another model; its third round repeats the session's first.
+      writeFileSync(
+        path.join(dir, "agent-aaa.jsonl"),
+        [
+          line({ type: "assistant", uuid: "r1", timestamp: "2026-10-10T11:30:00Z", requestId: "q1", message: { id: "x1", model: "claude-haiku-5-5", usage: usage(5) } }),
+          line({ type: "assistant", uuid: "r2", timestamp: "2026-10-10T11:30:05Z", requestId: "q2", message: { id: "x2", model: "claude-haiku-5-5", usage: usage(7) } }),
+          line({ type: "assistant", uuid: "r3", timestamp: "2026-10-10T11:30:09Z", requestId: "q3", message: { id: "m1", model: "claude-opus-5-5", usage: usage(1) } }),
+        ].join("\n"),
+      );
+    }
+    return path.join(root, "s.jsonl");
+  };
+
+  it("adds one part per run to the turn that made the call, on the run's own model, each round once", () => {
+    const { turns } = claudeCodeTurns(sessionText, project(true));
+    expect(turns[0]!.parts).toEqual([
+      { model: "claude-opus-5-5", requests: 1, tokens: { uncached: 1, cacheRead: 2, cacheWrite: 3, cacheWrite1h: 3, output: 4 } },
+      { model: "claude-haiku-5-5", requests: 2, tokens: { uncached: 12, cacheRead: 24, cacheWrite: 36, cacheWrite1h: 36, output: 48 } },
+    ]);
+    expect(turns[1]!.parts).toHaveLength(1);
+  });
+
+  it("makes the turn's cost unknown when the call has no run, never a smaller known figure", () => {
+    const { turns } = claudeCodeTurns(sessionText, project(false));
+    expect(turns[0]!.parts.some((part) => part.tokens === null)).toBe(true);
+    expect(turns[1]!.parts.every((part) => part.tokens !== null)).toBe(true);
+  });
+
+  it("puts a session-level reason (a transcript no turn window holds) on the session's first turn", () => {
+    const file = project(true);
+    const dir = path.join(path.dirname(file), "s", "subagents");
+    writeFileSync(path.join(dir, "agent-zzz.jsonl"), line({ type: "assistant", uuid: "z1", timestamp: "2026-10-09T10:00:00Z", requestId: "qz", message: { id: "xz", model: "claude-haiku-5-5", usage: usage(1) } }));
+    const { turns } = claudeCodeTurns(sessionText, file);
+    expect(turns[0]!.parts.some((part) => part.tokens === null)).toBe(true);
+    expect(turns[1]!.parts.every((part) => part.tokens !== null)).toBe(true);
+  });
+});
+
+describe("pricedParts (each cost line explained on its own, 10.19)", () => {
+  const known = { uncached: 1_000_000, cacheRead: 0, cacheWrite: 0, cacheWrite1h: 0, output: 0 };
+  const parts = [
+    { model: "claude-opus-5-5", requests: 1, tokens: known },
+    { model: "claude-opus-5-5", requests: 1, tokens: null },
+    { model: "claude-opus-5-5", requests: 1, tokens: known },
+  ];
+  it("keeps the known parts' amounts and counts the unknown ones; the whole turn is unknown", () => {
+    const t = turn({ parts });
+    const one = pricedFigure(turn({ parts: [parts[0]!] }), book);
+    expect(one.known).toBe(true);
+    const amount = one.known ? one.amount : 0;
+    expect(pricedParts(t, book)).toEqual({ known: [{ amount, currency: "USD" }, { amount, currency: "USD" }], unknown: 1 });
+    expect(pricedFigure(t, book)).toEqual({ known: false });
+  });
+  it("counts a turn with no part or no channel as one unknown line", () => {
+    expect(pricedParts(turn({ parts: [] }), book)).toEqual({ known: [], unknown: 1 });
+    expect(pricedParts(turn({ channel: null }), book)).toEqual({ known: [], unknown: 1 });
   });
 });

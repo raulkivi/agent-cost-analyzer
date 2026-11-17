@@ -4,8 +4,8 @@
 // independent oracle for cost by repository and project. It reads the raw logs,
 // the projects file and the bundled price-book JSON, and shares no code with the
 // cost cube, the pricer, the repository resolver or the log readers: a bug in
-// one of those can't also be in here. Its only import from the product's side
-// is savings-oracle.mts's model spellings (itself an independent oracle).
+// one of those can't also be in here. Its only imports (from other oracles, none from
+// the product): savings-oracle.mts's model spellings and claude-subagent-runs-oracle.mts.
 //
 // Definitions, from the plan (not from the code):
 //   - repository (§4.2): walk up from the folder to the nearest .git (a .git
@@ -27,6 +27,10 @@
 //     the Copilot CLI event log's user.message with the row's event id, its
 //     cache writes from that turn's usage records when they add up to the
 //     totals.
+//   - Claude Code subagent runs (C15, plan claude-code-subagents.md): a turn
+//     also holds the runs its Agent calls started, each a part on its own model
+//     (claude-subagent-runs-oracle.mts has the placement, fork-copy and unknown
+//     rules); the file's subagents/ folder sits beside the file read.
 //   - turn time: the prompt's own time, else the session's start; month = UTC.
 //   - billed (§5): Copilot's copilotUsageNanoAiu / 1e9 AI Credits, unknown if
 //     any request lacks it; reported: pi's Usage.cost.total (USD), unknown if
@@ -43,6 +47,7 @@
 //     L1: only the sum is kept per turn, so each request's tier is not known).
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
+import { idsHeldByOtherSessions, placeRuns, readRunFolder, type PlacedRun, type TurnWindow } from "./claude-subagent-runs-oracle.mjs";
 import { bookModelIds, parseJsonl, type RawLine } from "./savings-oracle.mjs";
 
 export type ProviderId = "vscode" | "claude-code" | "pi-agent";
@@ -337,6 +342,20 @@ export function addTurn(cell: Cell, turn: OracleTurn, book: readonly BookVersion
   }
 }
 
+// A turn's parts priced apart (10.19: each cost line is explained on its own
+// model, so a turn with one unknown part still has its other parts' costs).
+export function pricedParts(turn: OracleTurn, book: readonly BookVersion[]): { known: { amount: number; currency: Currency }[]; unknown: number } {
+  const currency: Currency = turn.channel === "github-copilot" ? "AI_CREDITS" : "USD";
+  const out = { known: [] as { amount: number; currency: Currency }[], unknown: 0 };
+  if (turn.parts.length === 0 || turn.channel === null) return { known: [], unknown: 1 };
+  for (const part of turn.parts) {
+    const priced = pricePart(turn, part, book);
+    if (priced === null) out.unknown += 1;
+    else out.known.push({ amount: priced.amount, currency });
+  }
+  return out;
+}
+
 export const monthOf = (at: string): string => new Date(Date.parse(at)).toISOString().slice(0, 7);
 
 // ------------------------------------------------------- Claude Code reader
@@ -391,27 +410,35 @@ export interface ReadTurns {
   prompts: string[];
 }
 
+const UNKNOWN_PART: Part = { model: null, requests: 0, tokens: null };
+
+function runPart(run: PlacedRun): Part {
+  const t = run.tokens;
+  return { model: run.model, requests: run.rounds, tokens: t === null ? null : { uncached: t.uncached, cacheRead: t.cacheRead, cacheWrite: t.cacheWrite, cacheWrite1h: t.cacheWrite1h, output: t.output } };
+}
+
 export function claudeCodeTurns(text: string, file: string): ReadTurns {
-  const branch = activeBranch(parseJsonl(text));
-  const sessionFolder = branch.map((l) => str(l.cwd)).find((cwd) => cwd !== null) ?? null;
-  const sessionStart = branch.map((l) => str(l.timestamp)).filter((t): t is string => t !== null).sort()[0] ?? null;
+  const sessionLines = parseJsonl(text);
+  const chain = activeBranch(sessionLines);
+  const sessionFolder = chain.map((l) => str(l.cwd)).find((cwd) => cwd !== null) ?? null;
+  const sessionStart = chain.map((l) => str(l.timestamp)).filter((t): t is string => t !== null).sort()[0] ?? null;
   const turns: OracleTurn[] = [];
   const prompts: string[] = [];
+  const windows: TurnWindow[] = [];
+  const mains: { prompt: RawLine; part: Part }[] = [];
   let current: { prompt: RawLine; lines: RawLine[] } | undefined;
   const flush = () => {
     if (!current) return;
     const rounds = new Map<string, Record<string, unknown>>();
-    let model: string | null = null;
     for (const line of current.lines) {
       const message = messageOf(line);
       const id = line.type === "assistant" ? str(message?.id) : null;
       if (id === null || message?.model === "<synthetic>") continue;
       if (!rounds.has(id)) rounds.set(id, message!);
-      model = str(message?.model) ?? model;
     }
     // A round's model: the first entry carrying one; the turn's: its last round's.
     const list = [...rounds.values()];
-    model = list.length > 0 ? str(list.at(-1)!.model) : null;
+    const model = list.length > 0 ? str(list.at(-1)!.model) : null;
     let tokens: Tokens | null = { uncached: 0, cacheRead: 0, cacheWrite: 0, cacheWrite1h: 0, output: 0 };
     for (const message of list) {
       const usage = isRecord(message.usage) ? message.usage : {};
@@ -427,28 +454,40 @@ export function claudeCodeTurns(text: string, file: string): ReadTurns {
       tokens.output += output;
       tokens.cacheWrite1h = tokens.cacheWrite1h === null ? null : split !== undefined ? tokens.cacheWrite1h + split : write === 0 ? tokens.cacheWrite1h : null;
     }
-    const at = str(current.prompt.timestamp) ?? sessionStart;
-    turns.push({
-      provider: "claude-code",
-      session: file,
-      turnKey: `${file}#${turns.length}`,
-      at,
-      folder: str(current.prompt.cwd) ?? sessionFolder,
-      recordedRepository: null,
-      channel: "anthropic-api",
-      parts: [{ model, requests: list.length, tokens }],
-      billed: undefined,
-      reported: undefined,
-    });
+    windows.push({ index: chain.indexOf(current.prompt), ms: Date.parse(str(current.prompt.timestamp) ?? "") || null });
+    mains.push({ prompt: current.prompt, part: { model, requests: list.length, tokens } });
     prompts.push(promptText(messageOf(current.prompt)?.content));
   };
-  for (const line of branch) {
+  for (const line of chain) {
     if (isRealPrompt(line)) {
       flush();
       current = { prompt: line, lines: [line] };
     } else current?.lines.push(line);
   }
   flush();
+
+  const runs = placeRuns({ branch: chain, sessionLines, turns: windows, runs: readRunFolder(file), heldElsewhere: idsHeldByOtherSessions(file) });
+  // A session-level reason sits on the session's first turn (the product's
+  // first turn with usage counts a turn with no request, whose zeros are known).
+  mains.forEach(({ prompt, part }, index) => {
+    const own = runs.byTurn.get(index);
+    const parts: Part[] = [];
+    if (part.requests > 0 || !own || own.runs.length === 0) parts.push(part);
+    for (const run of own?.runs ?? []) parts.push(runPart(run));
+    if (own?.unknown || (runs.sessionUnknown && index === 0)) parts.push(UNKNOWN_PART);
+    turns.push({
+      provider: "claude-code",
+      session: file,
+      turnKey: `${file}#${index}`,
+      at: str(prompt.timestamp) ?? sessionStart,
+      folder: str(prompt.cwd) ?? sessionFolder,
+      recordedRepository: null,
+      channel: "anthropic-api",
+      parts,
+      billed: undefined,
+      reported: undefined,
+    });
+  });
   return { start: sessionStart, turns, prompts };
 }
 

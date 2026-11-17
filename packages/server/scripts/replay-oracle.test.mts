@@ -103,17 +103,38 @@ describe("claudeCodeSessionOf", () => {
     expect(session.prompts).toEqual(["first question here", "a slash command only", "third question", "fourth question"]);
   });
 
-  it("counts the subagent runs written into the session file as sidechains", () => {
-    const main = chain([(p) => user(p, "q", 0), (p) => assistant(p, "m1", 1, { input: 1, read: 0, write: 0, output: 1 })]);
-    const side: RawLine[] = [
-      { type: "assistant", isSidechain: true, agentId: "a1", uuid: uuid(), parentUuid: null, message: {} },
-      { type: "assistant", isSidechain: true, agentId: "a1", uuid: uuid(), parentUuid: null, message: {} },
-      { type: "assistant", isSidechain: true, agentId: "a2", uuid: uuid(), parentUuid: null, message: {} },
-    ];
-    const marker: RawLine = { type: "last-prompt", leafUuid: main.at(-1)!.uuid };
-    const session = claudeCodeSessionOf([...main, ...side, marker]);
-    expect(session.subagentRuns).toBe(2);
-    expect(session.requests).toHaveLength(1);
+  describe("subagent runs (C15: counted from the subagents/ folder, left out of the replay)", () => {
+    const callTurn = () =>
+      chain([
+        (p) => user(p, "q", 0),
+        (p) => ({ ...assistant(p, "m1", 1, { input: 1, read: 0, write: 0, output: 1 }), message: { id: "m1", model: "claude-sonnet-5-5-20261001", content: [{ type: "tool_use", id: "call-1", name: "Agent", input: {} }], usage: { input_tokens: 1, cache_read_input_tokens: 0, cache_creation_input_tokens: 0, output_tokens: 1 } } }),
+      ]);
+    const run = (id: string, minutes: number, input: number): RawLine => ({ type: "assistant", uuid: uuid(), timestamp: at(minutes), requestId: `r-${id}`, message: { id, model: "claude-haiku-5-5", usage: { input_tokens: input, cache_read_input_tokens: 2 * input, cache_creation_input_tokens: 3 * input, output_tokens: 4 * input } } });
+
+    it("counts a linked run and sums its tokens; the main chain keeps its own request", () => {
+      const session = claudeCodeSessionOf(callTurn(), { runs: [{ agentId: "aaa", toolUseId: "call-1", lines: [run("x1", 3, 5), run("x2", 4, 7)] }] });
+      expect(session.subagentRuns).toBe(1);
+      expect(session.subagentTokens).toEqual({ uncached: 12, cacheWrite: 36, cacheRead: 24, output: 48 });
+      expect(session.requests).toHaveLength(1);
+    });
+
+    it("lists no run for a session without an Agent call, and an unknown run's tokens as null", () => {
+      const plain = claudeCodeSessionOf(chain([(p) => user(p, "q", 0), (p) => assistant(p, "m1", 1, { input: 1, read: 0, write: 0, output: 1 })]));
+      expect(plain.subagentRuns).toBe(0);
+      expect(plain.subagentTokens).toBeUndefined();
+      const missing = claudeCodeSessionOf(callTurn());
+      expect(missing.subagentRuns).toBe(1);
+      expect(missing.subagentTokens).toBeNull();
+    });
+
+    it("does not count a run whose call is off the active branch", () => {
+      const main = callTurn();
+      const off: RawLine = { type: "assistant", uuid: uuid(), parentUuid: main[0]!.uuid as string, timestamp: at(9), message: { id: "m9", model: "claude-sonnet-5-5-20261001", content: [{ type: "tool_use", id: "call-off", name: "Agent", input: {} }] } };
+      const marker: RawLine = { type: "last-prompt", leafUuid: main.at(-1)!.uuid };
+      const session = claudeCodeSessionOf([...main, off, marker], { runs: [{ agentId: "aaa", toolUseId: "call-1", lines: [run("x1", 3, 5)] }, { agentId: "bbb", toolUseId: "call-off", lines: [run("y1", 9, 9)] }] });
+      expect(session.subagentRuns).toBe(1);
+      expect(session.subagentTokens).toEqual({ uncached: 5, cacheWrite: 15, cacheRead: 10, output: 20 });
+    });
   });
 });
 
