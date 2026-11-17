@@ -46,6 +46,7 @@ const prompts: Record<string, RegExp> = {
   M5: /risky.*October/,
   M6: /scratch.*30 October.*Haiku.*Luna/,
   M7: /ten more active days.*Mobile app/,
+  M8: /^What could I have saved on my coding agents in October\?$/,
 };
 // Chromium wheel notches are not exact, so a scroll is never the only way to a click target: the target
 // is within the last screenful, and the scene overshoots to the bottom of the view.
@@ -111,8 +112,8 @@ describe("prompts", () => {
     const prompt = DESKTOP_SCENES[id]!.steps.find((s) => s.action.kind === "prompt")!.action as { text: string };
     expect(prompt.text).toMatch(pattern);
   });
-  it("covers M1 to M7", () => {
-    expect(Object.keys(DESKTOP_SCENES)).toEqual(["M1", "M2", "M3", "M4", "M5", "M6", "M7"]);
+  it("covers M1 to M8", () => {
+    expect(Object.keys(DESKTOP_SCENES)).toEqual(["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8"]);
   });
 });
 
@@ -135,7 +136,7 @@ describe("scene specifics", () => {
     const analyse = steps.findIndex((a) => a.kind === "click" && a.template === "analyse-button");
     expect(steps[analyse + 1]).toEqual({ kind: "click", template: "composer-send" });
   });
-  it.each(["M2", "M3", "M4", "M5", "M6", "M7"])("%s opens the pane of its own view, found by its kicker: Claude may show other views", (id) => {
+  it.each(["M2", "M3", "M4", "M5", "M6", "M7", "M8"])("%s opens the pane of its own view, found by its kicker: Claude may show other views", (id) => {
     const open = DESKTOP_SCENES[id]!.steps.find((s) => s.label === "Open the host side pane")!.action;
     expect(open).toMatchObject({ kind: "click", template: expect.stringMatching(/-kicker$/), at: { x: 1086, dy: -54 } });
   });
@@ -152,6 +153,32 @@ describe("scene specifics", () => {
     const open = DESKTOP_SCENES.M6!.steps.findIndex((s) => s.label === "Open the host side pane");
     expect(steps.indexOf("click:model-haiku")).toBeGreaterThan(open);
     expect(steps.at(-1)).toBe("click:back-to-model-comparison");
+  });
+});
+
+describe("M8", () => {
+  it("opens the pane from the savings kicker, then the unused-tools row, Open cost, the cost view and Back, in that order", () => {
+    expect(order("M8").slice(4)).toEqual([
+      "waitFor:savings-kicker",
+      "waitAnswerDone",
+      "click:savings-kicker",
+      "click:unused-tools-row",
+      "click:open-cost",
+      "waitFor:session-cost-kicker",
+      "click:back-to-savings",
+    ]);
+  });
+  it("opens the pane at the kicker offset", () => {
+    const open = DESKTOP_SCENES.M8!.steps.find((s) => s.label === "Open the host side pane")!.action;
+    expect(open).toMatchObject({ kind: "click", template: "savings-kicker", at: { x: 1086, dy: -54 }, opensPane: true });
+  });
+  it("needs only the pre-approved tools get_savings_report and get_session_cost", () => {
+    expect(sceneTemplates(DESKTOP_SCENES.M8!)).not.toContain("composer-send");
+  });
+  it("ends within 25 s", () => {
+    const steps = DESKTOP_SCENES.M8!.steps;
+    const start = steps.findIndex((s) => s.action.kind === "startRecording");
+    expect(steps.slice(start).reduce((sum, s) => sum + s.beatMs, 0)).toBeLessThanOrEqual(25000);
   });
 });
 

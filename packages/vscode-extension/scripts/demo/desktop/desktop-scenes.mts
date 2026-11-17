@@ -165,7 +165,27 @@ const M7: DesktopScene = {
   ],
 };
 
-export const DESKTOP_SCENES: Record<string, DesktopScene> = { M1, M2, M3, M4, M5, M6, M7 };
+// M8 (docs/plans/demo-recordings-1.0.md §3.2). The row opens in place in the pane, so the take stays in one
+// view: the unused-tools row, Open cost on one of its sessions (U1 in place), Back to savings. The two tools
+// (get_savings_report, get_session_cost) are approved through the always-allow prompt like the other scenes' (D16).
+// The beats after the recording starts add up to 20 s.
+const M8: DesktopScene = {
+  id: "M8",
+  slug: "savings",
+  title: "Possible savings in Claude Desktop",
+  steps: [
+    ...opening("What could I have saved on my coding agents in October?"),
+    step("Wait for the savings view", { kind: "waitFor", template: "savings-kicker" }, 1500),
+    step("Wait for the answer", { kind: "waitAnswerDone" }, 1500),
+    step("Open the host side pane", { kind: "click", template: "savings-kicker", at: PANE_FROM_KICKER, opensPane: true }, 3500),
+    step("Open the unused-tools row", { kind: "click", template: "unused-tools-row" }, 5000),
+    step("Open the cost of a session", { kind: "click", template: "open-cost" }, 1500),
+    step("Wait for the session cost", { kind: "waitFor", template: "session-cost-kicker" }, 4000),
+    step("Back", { kind: "click", template: "back-to-savings" }, 2500),
+  ],
+};
+
+export const DESKTOP_SCENES: Record<string, DesktopScene> = { M1, M2, M3, M4, M5, M6, M7, M8 };
 
 export function sceneTemplates(scene: DesktopScene): string[] {
   const names = new Set<string>();
