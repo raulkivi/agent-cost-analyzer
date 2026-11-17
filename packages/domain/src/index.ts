@@ -533,6 +533,7 @@ export {
   savingsNotAnalysedSchema,
   savingsLeftOutSchema,
   savingsReportSchema,
+  mergeNotAnalysedReasons,
   type SavingsOpportunityKind,
   type SavingsBasis,
   type SavingsLabel,

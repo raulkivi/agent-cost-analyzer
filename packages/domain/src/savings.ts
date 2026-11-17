@@ -273,3 +273,11 @@ export type SavingsNotAnalysed = z.infer<typeof savingsNotAnalysedSchema>;
 export type SavingsReport = z.infer<typeof savingsReportSchema>;
 export type SavingsWindow = z.infer<typeof savingsWindowSchema>;
 export type SavingsSessionRef = z.infer<typeof savingsSessionRefSchema>;
+
+// A row's coverage lists each reason once: entries with the same reason text
+// merge into the first one's place with the summed count.
+export function mergeNotAnalysedReasons(entries: SavingsCoverage["notAnalysed"]): SavingsCoverage["notAnalysed"] {
+  const merged = new Map<string, number>();
+  for (const { reason, sessions } of entries) merged.set(reason, (merged.get(reason) ?? 0) + sessions);
+  return [...merged].map(([reason, sessions]) => ({ reason, sessions }));
+}

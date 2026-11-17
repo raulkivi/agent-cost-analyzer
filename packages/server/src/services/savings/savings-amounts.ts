@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { unionSorted, type Currency, type SavingsAmount, type SavingsCoverage, type SavingsNotAnalysed, type SavingsOpportunityKind, type SavingsSessionRef, type SavingsWindow } from "@agent-cost-analyzer/domain";
+import { mergeNotAnalysedReasons, unionSorted, type Currency, type SavingsAmount, type SavingsCoverage, type SavingsNotAnalysed, type SavingsOpportunityKind, type SavingsSessionRef, type SavingsWindow } from "@agent-cost-analyzer/domain";
 import type { SavingsSessionInput } from "./savings-detector.js";
 
 // Phase 16 SR5: the small arithmetic every detector shares, so no detector
@@ -98,15 +98,18 @@ export class NotAnalysedLedger {
   // Coverage of one opportunity: the window's sessions, less those listed
   // here and those in `extra` (sessions this opportunity alone could not use).
   coverage(total: number, extra?: ReadonlyMap<string, Set<SavingsSessionInput>>): SavingsCoverage {
-    const notAnalysed = [...this.byReason.values()]
-      .map((entry) => ({ reason: entry.reason, sessions: entry.sessions.size }))
-      .sort((a, b) => a.reason.localeCompare(b.reason));
+    // The ledger splits a reason by provider; a row has no provider column.
+    const notAnalysed = mergeNotAnalysedReasons(
+      [...this.byReason.values()]
+        .map((entry) => ({ reason: entry.reason, sessions: entry.sessions.size }))
+        .sort((a, b) => a.reason.localeCompare(b.reason)),
+    );
     const seen = new Set<SavingsSessionInput>([...this.byReason.values()].flatMap((entry) => [...entry.sessions]));
     for (const [reason, sessions] of extra ?? []) {
       const fresh = [...sessions].filter((session) => !seen.has(session));
       fresh.forEach((session) => seen.add(session));
       if (fresh.length > 0) notAnalysed.push({ reason, sessions: fresh.length });
     }
-    return { sessionsInWindow: total, sessionsAnalysed: total - seen.size, notAnalysed };
+    return { sessionsInWindow: total, sessionsAnalysed: total - seen.size, notAnalysed: mergeNotAnalysedReasons(notAnalysed) };
   }
 }

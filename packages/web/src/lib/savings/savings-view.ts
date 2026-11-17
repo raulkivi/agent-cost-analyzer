@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import {
+  mergeNotAnalysedReasons,
   savingsActionText,
   unlistedTools,
   type Currency,
@@ -145,7 +146,7 @@ export function toolListOf(opportunity: Pick<SavingsOpportunity, "tools" | "tool
 }
 
 export function coverageText(coverage: SavingsCoverage): string {
-  const gaps = coverage.notAnalysed.map((gap) => `${gap.sessions} not analysed: ${gap.reason}`);
+  const gaps = mergeNotAnalysedReasons(coverage.notAnalysed).map((gap) => `${gap.sessions} not analysed: ${gap.reason}`); // codespell:ignore analysed
   return [`${coverage.sessionsAnalysed} of ${coverage.sessionsInWindow} sessions`, ...gaps].join("; ");
 }
 

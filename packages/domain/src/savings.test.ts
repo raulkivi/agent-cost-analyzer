@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
 import * as domain from "./index.js";
-import { savingsAmountSchema, savingsOpportunitySchema, savingsReportSchema, type SavingsOpportunity, type SavingsReport } from "./savings.js";
+import { savingsAmountSchema, savingsOpportunitySchema, savingsReportSchema, mergeNotAnalysedReasons, type SavingsOpportunity, type SavingsReport } from "./savings.js";
 
 // Phase 16 step SR1 (docs/plans/savings-report.md §5.2, §7): a saving is a
 // range or an upper bound (priced) or a Simulated figure, never a bare
@@ -304,5 +304,25 @@ describe("unlistedTools", () => {
 
   it("leaves the tokens out, never 0, when a listed tool was loaded in only some of the sessions", () => {
     expect(domain.unlistedTools([tool(5), tool(4)], 4, total, 5)).toEqual({ count: 2, tokens: null });
+  });
+});
+
+describe("mergeNotAnalysedReasons", () => {
+  it("lists each reason once with the summed count, in the order of first occurrence", () => {
+    expect(
+      mergeNotAnalysedReasons([
+        { reason: "No inventory.", sessions: 5 },
+        { reason: "No requests.", sessions: 2 },
+        { reason: "No inventory.", sessions: 8 },
+      ]),
+    ).toEqual([
+      { reason: "No inventory.", sessions: 13 },
+      { reason: "No requests.", sessions: 2 },
+    ]);
+  });
+
+  it("leaves distinct reasons and an empty list as they are", () => {
+    expect(mergeNotAnalysedReasons([])).toEqual([]);
+    expect(mergeNotAnalysedReasons([{ reason: "a", sessions: 1 }, { reason: "b", sessions: 1 }])).toHaveLength(2);
   });
 });

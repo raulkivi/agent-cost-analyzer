@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { Currency, SavingsAmount, SavingsCoverage, SavingsEvidence, SavingsNotAnalysed, SavingsLeftOut, SavingsOpportunity, SavingsSessionRef, SavingsSimulation, SavingsWindow } from "@agent-cost-analyzer/domain";
+import { mergeNotAnalysedReasons, type Currency, SavingsAmount, SavingsCoverage, SavingsEvidence, SavingsNotAnalysed, SavingsLeftOut, SavingsOpportunity, SavingsSessionRef, SavingsSimulation, SavingsWindow } from "@agent-cost-analyzer/domain";
 import { amountText, barSegments, CURRENCY_TITLES, KIND_TITLES, notPricedReasons, sessionDateText, sessionSavingText, toolListOf, type ToolListView } from "@agent-cost-analyzer/web/lib/savings/savings-view";
 import { isPlainModelId } from "../views/replay/model-id.js";
 import { pluralize } from "./format.js";
@@ -125,7 +125,7 @@ function coverageText(row: SavingsRowInput): string {
 }
 
 function gapText(coverage: SavingsCoverage): string {
-  const gaps = coverage.notAnalysed.map((gap) => `${gap.sessions} not analysed: ${gap.reason}`); // codespell:ignore analysed
+  const gaps = mergeNotAnalysedReasons(coverage.notAnalysed).map((gap) => `${gap.sessions} not analysed: ${gap.reason}`); // codespell:ignore analysed
   return [`${coverage.sessionsAnalysed} of ${coverage.sessionsInWindow} sessions`, ...gaps].join(" · ");
 }
 

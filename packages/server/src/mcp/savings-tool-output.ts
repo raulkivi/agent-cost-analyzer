@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   MAX_SAVINGS_NAME_LENGTH,
   MAX_SAVINGS_TOOLS,
+  mergeNotAnalysedReasons,
   pricingModeSchema,
   savingsActionText,
   savingsAmountSchema,
@@ -137,7 +138,7 @@ function viewOf(opportunity: SavingsOpportunity): OpportunityView {
     evidence: evidenceOf(opportunity.evidence),
     perWeek: amountOf(opportunity.perWeek),
     perWindow: amountOf(opportunity.perWindow),
-    coverage: { ...opportunity.coverage, notAnalysed: opportunity.coverage.notAnalysed.map((entry) => ({ ...entry, reason: sentence(entry.reason) })) },
+    coverage: { ...opportunity.coverage, notAnalysed: mergeNotAnalysedReasons(opportunity.coverage.notAnalysed.map((entry) => ({ ...entry, reason: sentence(entry.reason) }))) },
     action: actionOf(opportunity),
     inferred: opportunity.inferred,
     ...(opportunity.tools === undefined ? {} : { tools: opportunity.tools.slice(0, MAX_SAVINGS_TOOL_TOOLS).map(toolOf) }),

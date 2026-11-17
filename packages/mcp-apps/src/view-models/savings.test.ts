@@ -83,6 +83,12 @@ describe("toSavingsViewModel", () => {
     expect(rowOf(toSavingsViewModel(savingsOutput({ opportunities: [gaps], opportunitiesTotal: 1 })), "g").coverageText).toBe("6 of 10 sessions · 3 not analysed: no tool inventory · 1 not analysed: The log records no request trace."); // codespell:ignore analysed
   });
 
+  it("lists a reason once with the summed count", () => {
+    const gap = "The log records no tool inventory for this session.";
+    const merged = row({ key: "m", kind: "unused-tools", subject: "x", coverage: { sessionsInWindow: 17, sessionsAnalysed: 4, notAnalysed: [{ reason: gap, sessions: 5 }, { reason: gap, sessions: 8 }] } });
+    expect(rowOf(toSavingsViewModel(savingsOutput({ opportunities: [merged], opportunitiesTotal: 1 })), "m").coverageText).toBe(`4 of 17 sessions · 13 not analysed: ${gap}`); // codespell:ignore analysed
+  });
+
   // V24 (boards Savings.dc.html frames 5 and 6, D19): date and saving per shown session, ids only.
   describe("each shown session's date and saving", () => {
     it("carries the date and the saving over the window, with the row's label", () => {
