@@ -1,6 +1,6 @@
 # User Guide
 
-**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 A walkthrough of the Agent Cost Analyzer's two modes — **Learn** (guided,
 bundled example sessions) and **Analyze** (your own real sessions from VS
@@ -238,7 +238,9 @@ header area also holds the **Retention** field described below:
   logger's record alone.
   Tool-call and vision token breakdowns, plus AI Credits (a GitHub
   Copilot-specific billing unit pi has no equivalent of), aren't available
-  for pi sessions.
+  for pi sessions. Known limitation: pi's `/fork` starts a new session file
+  that repeats the parent's earlier turns, so a total over both files counts
+  those turns twice.
 
 Switching the source clears the currently-selected session and reloads the
 session list from the newly active provider. A provider shows

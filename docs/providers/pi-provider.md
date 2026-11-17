@@ -1,6 +1,6 @@
 # pi coding-agent LogProvider — working notes
 
-**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Internal engineering summary of the `PiAgentLogProvider`, kept alongside the
 authoritative description in
@@ -339,7 +339,9 @@ usage totals (`docs/session-format.md` "ContextEditEntry"). So:
   sidecar record; the matcher picks the latest at or before the branch end
   (S2, S3).
 
-## Open items
+## Known limitations
+
+Accepted by the owner for 1.0 on 2026-11-17 (C2).
 
 - Fork double counting: `/fork` writes a new file that repeats the parent's
   earlier entries with the same ids and usage (S4), so listing both files
