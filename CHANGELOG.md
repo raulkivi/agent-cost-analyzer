@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-17
+
 ### Added
 - Prices for Claude Fable 5.2, Gemini 4 Carbon and Gemini 4 Hydrogen, from the Copilot price table that GitHub publishes (checked 2026-11-16). Gemini 4 Carbon is a promotional price until 2026-12-01.
 - A GitHub Copilot Chat session's turn now lists the tool calls of the subagent runs it started, after the main agent's calls, each marked with the run it belongs to, so the tool-call counts and failures include them. A run whose log is missing, unreadable or empty, a run started by another subagent, and a subagent tool that writes no log are named with the reason their tool calls are unknown, never counted as zero. A call that appears in both the main log and a run's log is counted once.
@@ -42,6 +44,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The chat's savings view names pi "pi" in a currency list's heading and in the list of sessions it could not check, instead of its provider id "pi-agent".
 - `get_savings_report`'s text answer says "1 of 1 session" and "1 session." instead of "1 of 1 sessions" and "1 sessions." in a row's coverage and in the lists of sessions not checked or left out.
 - `get_savings_report`'s description now tells the model that each listed session carries its start and its own saving over the window (not per week), and that an unused-tools row lists up to 20 of its tools with estimated tokens.
+
+### Known limitations
+- pi: a session forked with `/fork` starts a new session file that repeats the parent's earlier turns, so a total over both files counts those turns twice.
 
 ## [0.16.1] - 2026-11-16
 

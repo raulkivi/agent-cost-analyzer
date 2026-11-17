@@ -152,7 +152,7 @@ describe("GET /api/health", () => {
     const response = await request(app).get("/api/health");
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ app: "agent-cost-analyzer", status: "ok", version: "0.16.1" });
+    expect(response.body).toEqual({ app: "agent-cost-analyzer", status: "ok", version: "1.0.0" });
   });
 
   // Mounted in the npm package's server (web-app-server.ts), this app's own
