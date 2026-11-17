@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { CostFigure, SubagentRunUsage, SubagentSpend, TokenCount, Turn, TurnUsage } from "@agent-cost-analyzer/domain";
+import type { CostFigure, SubagentRunUsage, SubagentSpend, SubagentTokens, TokenCount, Turn, TurnCostFigures, TurnUsage } from "@agent-cost-analyzer/domain";
 import { formatUsd } from "./ai-credits-usd.js";
 
 // Step CS13 (docs/plans/claude-code-subagents.md §5.6, CS2 boards): what a
@@ -249,4 +249,18 @@ export function pricedTurnFigures(usage: TurnUsage): { tokens: PricedFigure; cos
   const cost = costOf(usage.pricedCost);
   const reason = tokens.unknown[0]?.reason ?? (cost.amount === null ? cost.reason : undefined);
   return { tokens: tokenFigure(tokens), cost: costFigure(cost), ...(reason === undefined ? {} : { reason }) };
+}
+
+// The runs a replay leaves out (Claude Code, no AI Credits): their priced cost
+// and tokens as a sentence for the replay summary. Undefined without a priced
+// figure, so the caller keeps its AI Credits wording. Unknown is never 0.
+export function pricedRunsSentence(tokens: SubagentTokens | undefined, cost: TurnCostFigures | undefined): string | undefined {
+  if (cost === undefined) return undefined;
+  const priced = costOf(cost.priced);
+  if (priced.amount === null) return `Their priced cost is unknown: ${priced.reason}`;
+  const lead = `Their priced cost is ${formatUsd(priced.amount)}`;
+  if (tokens === undefined) return `${lead}.`;
+  const summed = sumTokens([tokens]);
+  if (summed.value === null) return `${lead}; their tokens are unknown: ${summed.unknown[0]!.reason}`;
+  return `${lead} for ${formatTokenTotal(summed.value)} tokens.`;
 }

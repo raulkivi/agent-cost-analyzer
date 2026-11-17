@@ -80,6 +80,44 @@ describe("replay formatting (step 14.7)", () => {
     expect(subagentRunsCostSentence({ runs: 0, costAiCredits: { known: true, value: 0 } })).toBeUndefined();
   });
 
+  describe("runs without AI Credits (Claude Code): the priced cost and tokens", () => {
+    const unknownCredits = { known: false as const, reason: "AI Credits are Copilot's own billing unit: a Claude Code CLI session has no AI Credits conversion." };
+    const known = (n: number) => ({ known: true as const, value: n });
+    const tokens = { uncachedInput: known(1_000), cacheWrite: known(2_000), cacheRead: known(30_000_000), output: known(1_400_000) };
+    const figure = (amount: number) => ({ known: true as const, amount, currency: "USD" as const, basis: "priced" as const });
+    const cost = (priced: ReturnType<typeof figure> | { known: false; reason: string }) => ({ billed: { known: false as const, reason: "no billing" }, reported: { known: false as const, reason: "none" }, priced });
+
+    it("words the priced cost and tokens when the AI Credits are unknown", () => {
+      const runs = { runs: 2, costAiCredits: unknownCredits, tokens, cost: cost(figure(9.2)) };
+      expect(subagentRunsCostSentence(runs)).toBe("Their priced cost is $9.20 for 31.4M tokens.");
+    });
+
+    it("keeps the AI Credits sentence when they are known, even beside a priced cost", () => {
+      const runs = { runs: 2, costAiCredits: known(42.5), tokens, cost: cost(figure(9.2)) };
+      expect(subagentRunsCostSentence(runs)).toBe("Their cost is 42.50 AI Credits.");
+    });
+
+    it("says the priced cost is unknown with its reason, never 0", () => {
+      const runs = { runs: 1, costAiCredits: unknownCredits, tokens, cost: cost({ known: false, reason: "no price for the model" }) };
+      const sentence = subagentRunsCostSentence(runs);
+      expect(sentence).toBe("Their priced cost is unknown: no price for the model");
+      expect(sentence).not.toContain("$0");
+    });
+
+    it("keeps an unknown token count's reason beside a known priced cost", () => {
+      const runs = { runs: 1, costAiCredits: unknownCredits, tokens: { ...tokens, output: { known: false as const, reason: "a run log is missing" } }, cost: cost(figure(0.5)) };
+      expect(subagentRunsCostSentence(runs)).toBe("Their priced cost is $0.50; their tokens are unknown: a run log is missing");
+    });
+
+    it("words a priced cost without a token count", () => {
+      expect(subagentRunsCostSentence({ runs: 1, costAiCredits: unknownCredits, cost: cost(figure(0.5)) })).toBe("Their priced cost is $0.50.");
+    });
+
+    it("falls back to the unknown AI Credits when no priced cost came", () => {
+      expect(subagentRunsCostSentence({ runs: 1, costAiCredits: unknownCredits })).toBe(`Their cost is unknown: ${unknownCredits.reason}`);
+    });
+  });
+
   it("words the self-check both ways, and never rounds a failure up to 100%", () => {
     const passed = { model: "claude-opus-5.5", models: ["claude-opus-5.5"], requests: 40, matching: 40, readTolerancePercent: 5, passed: true };
     expect(selfCheckSentence(passed)).toBe("Replay matches the log on claude-opus-5.5: 100% of compared requests");
