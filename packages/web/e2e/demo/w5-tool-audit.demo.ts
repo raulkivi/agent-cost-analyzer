@@ -1,10 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { homedir, userInfo } from "node:os";
 import type { Page } from "@playwright/test";
-import { findForbidden, forbiddenTerms } from "../../../vscode-extension/scripts/demo/privacy-probe.mts";
 import { expect, test } from "../support/app-fixture.js";
 import { AUDIT_READ_SESSION_TITLE } from "../support/fixture-home.mts";
+import { assertPrivate, probed } from "./support/privacy-probe.js";
 import { play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
 
 // W5, "Tool audit with subagent calls" (docs/plans/demo-recordings-1.0.md §3.2): Analyze on the
@@ -18,26 +17,6 @@ const callsTable = (page: Page) => page.getByRole("table", { name: "Tool calls" 
 const runsTable = (page: Page) => page.getByRole("table", { name: "Subagent runs" });
 const agentFilter = (page: Page) => page.getByRole("group", { name: "Agent", exact: true });
 const toolsKpi = (page: Page) => page.getByRole("group", { name: "Tool calls", exact: true }).first();
-
-// The privacy probe: after every step, nothing on screen may carry an owner-private term
-// (home directory, user name, DEMO_FORBIDDEN) or a shared-fixture "fixture-" model name.
-async function assertPrivate(page: Page): Promise<void> {
-  const text = await page.evaluate(() => document.body.innerText);
-  const terms = [...forbiddenTerms(process.env.DEMO_FORBIDDEN, { homedir: homedir(), username: userInfo().username }), "fixture-"];
-  const hits = findForbidden([{ source: "app page", text: `${text}\n${page.url()}` }], terms);
-  if (hits.length > 0) throw new Error(`Forbidden text on screen: ${hits.map((hit) => `${hit.match} in ${hit.source}`).join(", ")}`);
-}
-
-const probed = (scene: DemoScene): DemoScene => ({
-  ...scene,
-  steps: scene.steps.map((step) => ({
-    ...step,
-    action: async (page, pointer) => {
-      await step.action(page, pointer);
-      await assertPrivate(page);
-    },
-  })),
-});
 
 export const W5: DemoScene = {
   id: "W5",
