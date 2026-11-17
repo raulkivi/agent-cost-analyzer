@@ -3,10 +3,10 @@
 // The real-data checks' view of the Claude Code projects folder
 // (claude-code-view.mts), over a temporary folder standing in for it.
 import { lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { buildClaudeCodeView } from "./claude-code-view.mjs";
+import { buildClaudeCodeView, createViewDir, viewParentDir } from "./claude-code-view.mjs";
 
 const LIVE_MS = 15 * 60_000;
 const NOW = Date.parse("2026-11-16T12:00:00Z");
@@ -79,5 +79,30 @@ describe("buildClaudeCodeView", () => {
   it("returns an empty view for a source that does not exist", () => {
     const { dir } = setup();
     expect(buildClaudeCodeView(path.join(dir, "..", "nowhere"), dir, NOW, LIVE_MS)).toEqual({ dir, files: [], targets: [], sessions: [], live: 0 });
+  });
+});
+
+describe("where a view lives (REAL_DATA_VIEW_PARENT, never RAM-backed tmpdir by default)", () => {
+  const roots: string[] = [];
+  afterEach(() => {
+    for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+  });
+
+  it("defaults to ~/.cache and takes REAL_DATA_VIEW_PARENT when set", () => {
+    expect(viewParentDir({})).toBe(path.join(homedir(), ".cache"));
+    expect(viewParentDir({ REAL_DATA_VIEW_PARENT: "/somewhere/else" })).toBe("/somewhere/else");
+    expect(viewParentDir({ REAL_DATA_VIEW_PARENT: "" })).toBe(path.join(homedir(), ".cache"));
+  });
+
+  it("makes a fresh folder under the parent, creating the parent when it is missing", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "view-parent-"));
+    roots.push(root);
+    const parent = path.join(root, "not", "yet");
+    const first = createViewDir("check-claude-", parent);
+    const second = createViewDir("check-claude-", parent);
+    expect(path.dirname(first)).toBe(parent);
+    expect(first).not.toBe(second);
+    expect(path.basename(first).startsWith("check-claude-")).toBe(true);
+    expect(lstatSync(first).isDirectory()).toBe(true);
   });
 });

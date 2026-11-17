@@ -29,6 +29,9 @@
 // user message is turn N); a session whose log and store disagree on the turn
 // count is reported and left out of the per-turn checks.
 //
+// REAL_DATA_VIEW_PARENT=<dir> (default ~/.cache): where the snapshot copy of Claude Code's
+// logs is made (about 4 GB; not tmpdir, which may be RAM). Removed when the check ends.
+//
 // Claude Code's subagent runs (C15, plan claude-code-subagents.md) are asserted
 // like Copilot local's: coverage.subagentRuns lists them, with the runs' tokens,
 // as the oracle reads them from the subagents/ folder (the check's view holds a
@@ -39,8 +42,8 @@
 // money figures and tolerances: never a prompt, response, title, file content
 // or path. Read-only (fingerprints before and after, as savings-exit does).
 import { createHash } from "node:crypto";
-import { existsSync, lstatSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
-import { homedir, tmpdir } from "node:os";
+import { existsSync, lstatSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
+import { homedir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -68,7 +71,7 @@ import { resolveAppSettingsDir } from "../src/platform/app-settings-dir/resolve-
 import type { ApiService } from "../src/services/api/api-service.js";
 import { InMemoryAppSettingsStore } from "../src/test-support/in-memory-app-settings-store.js";
 import { FIXTURE_VENDOR_PROFILES_DIR } from "../src/test-support/vendor-profiles-dir.js";
-import { buildClaudeCodeView } from "./claude-code-view.mjs";
+import { buildClaudeCodeView, createViewDir } from "./claude-code-view.mjs";
 import { compareLogs, statLogs, type LogStat } from "./log-write-check.mjs";
 import { idsHeldByOtherSessions, readRunFolder } from "./claude-subagent-runs-oracle.mjs";
 import {
@@ -174,12 +177,12 @@ interface ClaudeView {
   live: number;
 }
 
-// The view the products read (claude-code-view.mts: a symlink per stable session
-// file, a copy of its subagents/ folder), so the oracle and the products read
+// The view the products read (claude-code-view.mts: a snapshot copy of each stable
+// session file and of its subagents/ folder), so the oracle and the products read
 // the same bytes. The products name a session by sha256("<file path>:<mtimeMs>")[0..16]
 // (the log's identity, not a figure).
 function buildClaudeView(now: number): ClaudeView {
-  const dir = mkdtempSync(path.join(tmpdir(), "replay-exit-claude-"));
+  const dir = createViewDir("replay-exit-claude-");
   const view = buildClaudeCodeView(CLAUDE_PROJECTS, dir, now, LIVE_MS);
   const candidates: Candidate[] = view.sessions.map(({ link, source: target, runSources }) => {
     const mtimeMs = statSync(link).mtimeMs; // the copy's: the product hashes what it stats

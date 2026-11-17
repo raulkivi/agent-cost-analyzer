@@ -24,6 +24,9 @@
 // session's subagents/ folder, claude-code-view.mts). Copilot's stores are read in
 // place; files of theirs written in the last 15 minutes are counted.
 //
+//   REAL_DATA_VIEW_PARENT=<dir>   (default ~/.cache: where the snapshot copies of the Claude Code
+//   and pi logs are made, about 4 GB; not tmpdir, which may be RAM; removed when the check ends)
+//
 // pi is in scope of §15, but Phase 11 hasn't pinned its provider yet: its
 // figures are checked in their own test, so its result reads apart, and the
 // release procedure reruns this check after Phase 11.
@@ -92,7 +95,7 @@ import {
   type StoreSession,
   type StoreTurn,
 } from "./cost-by-project-oracle.mjs";
-import { buildClaudeCodeView, copyKeepingTime } from "./claude-code-view.mjs";
+import { buildClaudeCodeView, copyKeepingTime, createViewDir } from "./claude-code-view.mjs";
 import { compareLogs, statLogs, type LogStat } from "./log-write-check.mjs";
 import { parseJsonl } from "./savings-oracle.mjs";
 
@@ -432,6 +435,7 @@ const SESSION_TITLE_AT = /\.provenance\.sessions\.\d+\.title$/;
   const book: BookVersion[] = loadBook(PRICE_BOOK_DIR);
 
   let tmpRoot = "";
+  let viewRoot = "";
   let settingsDir = "";
   let before = "";
   let stableFiles: string[] = [];
@@ -537,8 +541,10 @@ const SESSION_TITLE_AT = /\.provenance\.sessions\.\d+\.title$/;
     tmpRoot = mkdtempSync(path.join(tmpdir(), "cost-by-project-exit-"));
     settingsDir = path.join(tmpRoot, "settings");
     mkdirSync(settingsDir);
-    claudeView = buildClaudeCodeView(CLAUDE_PROJECTS, path.join(tmpRoot, "claude"), startedAt, LIVE_MS);
-    piView = buildView(PI_SESSIONS, path.join(tmpRoot, "pi"), startedAt);
+    // The snapshot copies go under REAL_DATA_VIEW_PARENT (default ~/.cache), not a RAM-backed tmpdir.
+    viewRoot = createViewDir("cost-by-project-view-");
+    claudeView = buildClaudeCodeView(CLAUDE_PROJECTS, path.join(viewRoot, "claude"), startedAt, LIVE_MS);
+    piView = buildView(PI_SESSIONS, path.join(viewRoot, "pi"), startedAt);
     copilotRaw = readCopilotRaw(USER_DATA, startedAt);
     agentHostRaw = readAgentHostRaw(USER_DATA, startedAt);
     stableFiles = [...claudeView.targets, ...piView.targets, ...copilotRaw.logFiles, ...agentHostRaw.files];
@@ -643,6 +649,7 @@ const SESSION_TITLE_AT = /\.provenance\.sessions\.\d+\.title$/;
 
   afterAll(() => {
     if (tmpRoot) rmSync(tmpRoot, { recursive: true, force: true });
+    if (viewRoot) rmSync(viewRoot, { recursive: true, force: true });
     console.log(["", "Phase 15 exit-criterion summary (automated check, C4)", ...summary].join("\n"));
   });
 

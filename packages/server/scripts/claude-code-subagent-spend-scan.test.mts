@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { MAX_RUN_FILES } from "./claude-code-subagent-spend-lib.mjs";
-import { hardLinkView, listClaudeSessions, readOracleInput } from "./claude-code-subagent-spend-scan.mjs";
+import { listClaudeSessions, readOracleInput } from "./claude-code-subagent-spend-scan.mjs";
 
 const NOW = Date.parse("2026-11-16T12:00:00Z");
 const MINUTE = 60_000;
@@ -130,41 +130,6 @@ describe("Claude Code projects folder scan", () => {
       sub("q", "s3", "agent-ee1.jsonl", "{}\n");
       const held = readOracleInput(path.join(root, "p", "s1.jsonl"), [path.join(root, "p", "s2.jsonl"), path.join(root, "q", "s3.jsonl")]).heldElsewhere;
       expect([...held!].sort()).toEqual(["dd1", "toolu_9"]);
-    });
-  });
-
-  describe("hardLinkView", () => {
-    it("links each given session's file and subagent files into the view without copying, and leaves the originals untouched", () => {
-      session("p", "s1");
-      sub("p", "s1", "agent-aa1.jsonl", "run\n");
-      sub("p", "s1", "agent-aa1.meta.json", "{}");
-      sub("p", "s1", "agent-aa1.forked-skill.json", "{}");
-      write(path.join(root, "p", "s1", "tool-results", "big.txt"), "x");
-      session("p", "live", 1);
-      const { stable } = listClaudeSessions(root, NOW);
-      const view = path.join(root, "view");
-
-      hardLinkView(stable, view);
-
-      const linked = path.join(view, "p", "s1", "subagents", "agent-aa1.jsonl");
-      expect(readFileSync(linked, "utf8")).toBe("run\n");
-      expect(statSync(linked).ino).toBe(statSync(path.join(root, "p", "s1", "subagents", "agent-aa1.jsonl")).ino);
-      expect(statSync(linked).mtimeMs).toBe(statSync(path.join(root, "p", "s1", "subagents", "agent-aa1.jsonl")).mtimeMs);
-      expect(existsSync(path.join(view, "p", "s1.jsonl"))).toBe(true);
-      expect(existsSync(path.join(view, "p", "s1", "subagents", "agent-aa1.meta.json"))).toBe(true);
-      expect(existsSync(path.join(view, "p", "s1", "subagents", "agent-aa1.forked-skill.json"))).toBe(true);
-      expect(existsSync(path.join(view, "p", "s1", "tool-results"))).toBe(false);
-      expect(existsSync(path.join(view, "p", "live.jsonl"))).toBe(false);
-
-      rmSync(view, { recursive: true });
-      expect(readFileSync(path.join(root, "p", "s1", "subagents", "agent-aa1.jsonl"), "utf8")).toBe("run\n");
-    });
-
-    it("fails with the way out when the view can't hold hard links", () => {
-      session("p", "s1");
-      const { stable } = listClaudeSessions(root, NOW);
-      // A link name that can't be created stands in for a different file system.
-      expect(() => hardLinkView(stable, path.join(root, "p", "s1.jsonl", "view"))).toThrow(/same file system|REAL_DATA_VIEW_PARENT/);
     });
   });
 });

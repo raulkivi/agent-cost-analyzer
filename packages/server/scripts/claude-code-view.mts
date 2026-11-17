@@ -10,8 +10,22 @@
 // (plan claude-code-subagents.md §5.3), and without the folder every Agent call
 // reads as a missing run and its turn as unknown (1.0 criterion C15). The
 // owner's files are only read.
-import { copyFileSync, lstatSync, mkdirSync, readdirSync, statSync, utimesSync } from "node:fs";
+import { copyFileSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, statSync, utimesSync } from "node:fs";
+import { homedir } from "node:os";
 import path from "node:path";
+
+// Where the checks put their views: the whole of the owner's logs is copied, so
+// not into a RAM-backed tmpdir (REAL_DATA_VIEW_PARENT, default ~/.cache). A check
+// removes its folders when it ends.
+export function viewParentDir(env: Record<string, string | undefined> = process.env): string {
+  const set = env.REAL_DATA_VIEW_PARENT;
+  return set !== undefined && set !== "" ? set : path.join(homedir(), ".cache");
+}
+
+export function createViewDir(prefix: string, parent: string = viewParentDir()): string {
+  mkdirSync(parent, { recursive: true });
+  return mkdtempSync(path.join(parent, prefix));
+}
 
 export interface ClaudeCodeView {
   dir: string;
