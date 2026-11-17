@@ -39,7 +39,7 @@
 // money figures and tolerances: never a prompt, response, title, file content
 // or path. Read-only (fingerprints before and after, as savings-exit does).
 import { createHash } from "node:crypto";
-import { existsSync, lstatSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync, statSync } from "node:fs";
+import { existsSync, lstatSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -69,6 +69,7 @@ import type { ApiService } from "../src/services/api/api-service.js";
 import { InMemoryAppSettingsStore } from "../src/test-support/in-memory-app-settings-store.js";
 import { FIXTURE_VENDOR_PROFILES_DIR } from "../src/test-support/vendor-profiles-dir.js";
 import { buildClaudeCodeView } from "./claude-code-view.mjs";
+import { compareLogs, statLogs, type LogStat } from "./log-write-check.mjs";
 import { idsHeldByOtherSessions, readRunFolder } from "./claude-subagent-runs-oracle.mjs";
 import {
   agentHostSessionOf,
@@ -139,16 +140,12 @@ function listFiles(dir: string): string[] {
   return out;
 }
 
-function fingerprint(settingsFiles: string[], configDirs: string[], logs: string[]): string {
+function fingerprint(settingsFiles: string[], configDirs: string[]): string {
   const lines: string[] = [];
   for (const file of settingsFiles) lines.push(`${file}|${existsSync(file) ? sha256(file) : "absent"}`);
   for (const dir of configDirs) {
     lines.push(`${dir}|${isDir(dir) ? "present" : "absent"}`);
     for (const file of listFiles(dir)) lines.push(`${file}|${sha256(file)}`);
-  }
-  for (const file of logs) {
-    const s = statSync(file);
-    lines.push(`${file}|${s.size}|${s.mtimeMs}`);
   }
   return lines.join("\n");
 }
@@ -184,14 +181,13 @@ interface ClaudeView {
 function buildClaudeView(now: number): ClaudeView {
   const dir = mkdtempSync(path.join(tmpdir(), "replay-exit-claude-"));
   const view = buildClaudeCodeView(CLAUDE_PROJECTS, dir, now, LIVE_MS);
-  const candidates: Candidate[] = view.files.map((link) => {
-    const target = realpathSync(link);
+  const candidates: Candidate[] = view.sessions.map(({ link, source: target, runSources }) => {
     const mtimeMs = statSync(target).mtimeMs;
     return {
       kind: "Claude Code",
       provider: "claude-code",
       id: createHash("sha256").update(`${link}:${mtimeMs}`).digest("hex").slice(0, 16),
-      files: [target],
+      files: [target, ...runSources],
       mtimeMs,
       read: () => claudeCodeSessionOf(readLines(link), { runs: readRunFolder(link), heldElsewhere: idsHeldByOtherSessions(link) }),
     };
@@ -398,6 +394,7 @@ const say = (line: string) => {
 
   let view: ClaudeView;
   let before = "";
+  let logsBefore = new Map<string, LogStat>();
   const logs: string[] = [];
   const sampled: Sampled[] = [];
   const skipped = new Map<string, number>();
@@ -438,7 +435,8 @@ const say = (line: string) => {
     live.set("Claude Code", view.live);
     const editions = userDataDirs.map((userData) => ({ userData, local: localCandidates(userData, startedAt), host: agentHostCandidates(userData, startedAt) }));
     const allLogs = [...view.candidates, ...editions.flatMap((e) => [...e.local.candidates, ...e.host.candidates])].flatMap((c) => c.files);
-    before = fingerprint(settingsFiles, configDirs, allLogs);
+    before = fingerprint(settingsFiles, configDirs);
+    logsBefore = statLogs(allLogs);
 
     const claude = await composeProducts(view.dir, undefined, appSettingsDir);
     clients.push(claude.mcp);
@@ -787,10 +785,14 @@ const say = (line: string) => {
   });
 
   it("changed no setting and no log", () => {
-    const after = fingerprint(settingsFiles, configDirs, logs);
-    const changed = before.split("\n").filter((line, i) => line !== after.split("\n")[i]).length;
+    // The run lasts many minutes beside live sessions: a log written after the run began
+    // was written by its own session (log-write-check.mts); a vanished log, or a change
+    // with an older write time, would be a write by this check. Settings never change.
+    const report = compareLogs(logsBefore, statLogs(logs), startedAt);
+    const settingsChanged = fingerprint(settingsFiles, configDirs) !== before;
     say("");
-    say(`Read-only: ${before.split("\n").length} fingerprints (settings and the app's config dir by content hash, ${logs.length} raw logs by size and mtime) identical before and after: ${changed === 0 ? "PASS" : `FAIL (${changed} changed)`}`);
-    expect(changed, "files changed during the run").toBe(0);
+    say(`Read-only: ${logsBefore.size} raw logs by size and mtime: ${report.unchanged} unchanged, ${report.writtenDuringRun} written by their own session during the run, ${report.violations.length} changed or vanished without such a write time; settings and the app's config dir by content hash ${settingsChanged ? "CHANGED" : "unchanged"}: ${report.violations.length === 0 && !settingsChanged ? "PASS" : "FAIL"}`);
+    expect(report.violations).toEqual([]);
+    expect(settingsChanged, "settings changed during the run").toBe(false);
   });
 });

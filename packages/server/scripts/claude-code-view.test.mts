@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 // The real-data checks' view of the Claude Code projects folder
 // (claude-code-view.mts), over a temporary folder standing in for it.
-import { lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
+import { lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -31,7 +31,7 @@ describe("buildClaudeCodeView", () => {
     utimesSync(file, when, when);
   };
 
-  it("links a stable session file and copies its run files as real files in a real folder", () => {
+  it("copies a stable session file and its run files as real files in a real folder, keeping their write times", () => {
     const { source, dir } = setup();
     write(path.join(source, "p1", "s1.jsonl"), "session", old);
     write(path.join(source, "p1", "s1", "subagents", "agent-aaa.jsonl"), "run", old);
@@ -40,12 +40,18 @@ describe("buildClaudeCodeView", () => {
     const view = buildClaudeCodeView(source, dir, NOW, LIVE_MS);
     const runDir = path.join(dir, "p1", "s1", "subagents");
     expect(view.files).toEqual([path.join(dir, "p1", "s1.jsonl")]);
-    expect(lstatSync(view.files[0]!).isSymbolicLink()).toBe(true);
+    expect(lstatSync(view.files[0]!).isFile()).toBe(true);
+    expect(readFileSync(view.files[0]!, "utf-8")).toBe("session");
+    expect(statSync(view.files[0]!).mtimeMs).toBe(old.getTime());
+    // A later append to the original does not reach the snapshot.
+    writeFileSync(path.join(source, "p1", "s1.jsonl"), "session grown");
+    expect(readFileSync(view.files[0]!, "utf-8")).toBe("session");
     expect(lstatSync(path.dirname(runDir)).isDirectory()).toBe(true);
     expect(readdirSync(runDir).sort()).toEqual(["agent-aaa.jsonl", "agent-aaa.meta.json"]);
     expect(lstatSync(path.join(runDir, "agent-aaa.jsonl")).isFile()).toBe(true);
     expect(readFileSync(path.join(runDir, "agent-aaa.jsonl"), "utf-8")).toBe("run");
     expect(view.targets).toHaveLength(3);
+    expect(view.sessions.map((x) => [x.link, x.source, x.runSources.length])).toEqual([[view.files[0], path.join(source, "p1", "s1.jsonl"), 2]]);
     expect(view.live).toBe(0);
   });
 
@@ -72,6 +78,6 @@ describe("buildClaudeCodeView", () => {
 
   it("returns an empty view for a source that does not exist", () => {
     const { dir } = setup();
-    expect(buildClaudeCodeView(path.join(dir, "..", "nowhere"), dir, NOW, LIVE_MS)).toEqual({ dir, files: [], targets: [], live: 0 });
+    expect(buildClaudeCodeView(path.join(dir, "..", "nowhere"), dir, NOW, LIVE_MS)).toEqual({ dir, files: [], targets: [], sessions: [], live: 0 });
   });
 });

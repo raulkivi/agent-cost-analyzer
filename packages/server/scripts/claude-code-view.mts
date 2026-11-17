@@ -1,23 +1,26 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // The view of Claude Code's projects folder the real-data checks hand to the
-// products. A session file is a symlink to the owner's file (a file written
-// in the last LIVE_MS is a live session, left out and counted). The session's
-// subagents/ folder is a real folder of regular-file copies: the product
-// refuses a symlinked folder or transcript on purpose (plan
-// claude-code-subagents.md §5.3), and without the folder every Agent call reads
-// as a missing run and its turn as unknown (1.0 criterion C15). The copies are
-// a snapshot, so the product and the oracle read the same bytes. The owner's
-// files are only read.
-import { copyFileSync, lstatSync, mkdirSync, readdirSync, statSync, symlinkSync } from "node:fs";
+// products and oracles. Every file in it is a regular-file copy (with the
+// original's write time), a frozen snapshot: a stable session can still be
+// resumed and grow while a check runs for many minutes, and the product and the
+// oracle must read the same bytes. A session written in the last LIVE_MS is a
+// live session, left out and counted. The session's subagents/ folder is a real
+// folder too: the product refuses a symlinked folder or transcript on purpose
+// (plan claude-code-subagents.md §5.3), and without the folder every Agent call
+// reads as a missing run and its turn as unknown (1.0 criterion C15). The
+// owner's files are only read.
+import { copyFileSync, lstatSync, mkdirSync, readdirSync, statSync, utimesSync } from "node:fs";
 import path from "node:path";
 
 export interface ClaudeCodeView {
   dir: string;
-  // The symlinks the products and oracles read.
+  // The snapshot copies the products and oracles read.
   files: string[];
-  // The owner's files behind them (sessions and subagent files), for the read-only fingerprint.
+  // The owner's files behind them (sessions and subagent files), for the read-only check.
   targets: string[];
+  // Per session: its copy, its original and its run files' originals.
+  sessions: { link: string; source: string; runSources: string[] }[];
   // Sessions left out because the session file or one of its run files is live.
   live: number;
 }
@@ -37,8 +40,15 @@ const runFilesOf = (sessionFile: string): string[] => {
   return isDir(dir) ? readdirSync(dir).filter((name) => RUN_FILE.test(name) && statSync(path.join(dir, name)).isFile()).map((name) => path.join(dir, name)) : [];
 };
 
+// The original's write time stays, so a session keeps its place by age.
+export function copyKeepingTime(from: string, to: string): void {
+  copyFileSync(from, to);
+  const { atime, mtime } = statSync(from);
+  utimesSync(to, atime, mtime);
+}
+
 export function buildClaudeCodeView(source: string, dir: string, now: number, liveMs: number): ClaudeCodeView {
-  const view: ClaudeCodeView = { dir, files: [], targets: [], live: 0 };
+  const view: ClaudeCodeView = { dir, files: [], targets: [], sessions: [], live: 0 };
   mkdirSync(dir, { recursive: true });
   if (!isDir(source)) return view;
   for (const folder of readdirSync(source).sort()) {
@@ -54,14 +64,15 @@ export function buildClaudeCodeView(source: string, dir: string, now: number, li
       }
       mkdirSync(path.join(dir, folder), { recursive: true });
       const link = path.join(dir, folder, name);
-      symlinkSync(target, link);
+      copyKeepingTime(target, link);
       if (runFiles.length > 0) {
         const runDir = path.join(link.replace(/\.jsonl$/i, ""), "subagents");
         mkdirSync(runDir, { recursive: true });
-        for (const file of runFiles) copyFileSync(file, path.join(runDir, path.basename(file)));
+        for (const file of runFiles) copyKeepingTime(file, path.join(runDir, path.basename(file)));
       }
       view.files.push(link);
       view.targets.push(target, ...runFiles);
+      view.sessions.push({ link, source: target, runSources: runFiles });
     }
   }
   return view;

@@ -19,7 +19,7 @@
 // temporary settings folder holding a projects file this check writes (two
 // projects over the repositories with the most turns), and that folder also
 // receives the statement this check issues. Claude Code and pi are read
-// through a view of their stable files (a file written in the last 15 minutes
+// through a view of snapshot copies of their stable files (a file written in the last 15 minutes
 // is a live session, left out and counted; Claude Code's holds copies of each
 // session's subagents/ folder, claude-code-view.mts). Copilot's stores are read in
 // place; files of theirs written in the last 15 minutes are counted.
@@ -31,7 +31,7 @@
 // Output carries counts, months, rounded totals and hashed repository and
 // session ids, never a prompt, title, path or file content. Read-only.
 import { createHash } from "node:crypto";
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -92,7 +92,8 @@ import {
   type StoreSession,
   type StoreTurn,
 } from "./cost-by-project-oracle.mjs";
-import { buildClaudeCodeView } from "./claude-code-view.mjs";
+import { buildClaudeCodeView, copyKeepingTime } from "./claude-code-view.mjs";
+import { compareLogs, statLogs, type LogStat } from "./log-write-check.mjs";
 import { parseJsonl } from "./savings-oracle.mjs";
 
 const REAL_DATA = process.env.REAL_DATA === "1";
@@ -161,7 +162,7 @@ function buildView(source: string, dir: string, now: number): View {
       }
       mkdirSync(path.join(dir, folder), { recursive: true });
       const link = path.join(dir, folder, name);
-      symlinkSync(target, link);
+      copyKeepingTime(target, link);
       view.files.push(link);
       view.targets.push(target);
     }
@@ -338,16 +339,13 @@ function listFiles(dir: string): string[] {
   return out;
 }
 
-function fingerprint(contentFiles: string[], configDirs: string[], stableFiles: string[]): string {
+// The settings files and the app's config dir by content (a check never writes them).
+function fingerprint(contentFiles: string[], configDirs: string[]): string {
   const lines: string[] = [];
   for (const file of contentFiles) lines.push(`${file}|${existsSync(file) ? sha256(readFileSync(file)) : "absent"}`);
   for (const dir of configDirs) {
     lines.push(`${dir}|${isDir(dir) ? "present" : "absent"}`);
     for (const file of listFiles(dir)) lines.push(`${file}|${sha256(readFileSync(file))}`);
-  }
-  for (const file of stableFiles) {
-    const s = statSync(file);
-    lines.push(`${file}|${s.size}|${s.mtimeMs}`);
   }
   return lines.join("\n");
 }
@@ -437,6 +435,7 @@ const SESSION_TITLE_AT = /\.provenance\.sessions\.\d+\.title$/;
   let settingsDir = "";
   let before = "";
   let stableFiles: string[] = [];
+  let logsBefore = new Map<string, LogStat>();
   let claudeView: View;
   let piView: View;
   let copilotRaw: CopilotRaw;
@@ -501,6 +500,8 @@ const SESSION_TITLE_AT = /\.provenance\.sessions\.\d+\.title$/;
     ...(provider ? { provider } : {}),
   });
 
+  // Both sides read the same frozen input; their session lists per line are compared and counted.
+  const sessionLists = { lines: 0, sessions: 0, differ: 0 };
   // Every series line and monthly point against the oracle's cells.
   const compareSeries = (where: string, series: CostSeries, basis: Basis, cells: Map<string, Map<string, Cell>>, totals: Map<string, Cell>, problems: string[], label: (key: string) => string) => {
     const lines = new Map<string, CostSeries["series"]>();
@@ -516,6 +517,9 @@ const SESSION_TITLE_AT = /\.provenance\.sessions\.\d+\.title$/;
       // Two local repositories with one folder name are two lines under one shown key.
       const line = productLines.length === 1 ? productLines[0]! : mergeLines(productLines);
       compareTotal(`${where} ${label(key)}`, line.total, total, basis, problems);
+      sessionLists.lines += 1;
+      sessionLists.sessions += total.sessions.size;
+      if (line.sessions !== total.sessions.size) sessionLists.differ += 1;
       if (line.sessions !== total.sessions.size) problems.push(`${where} ${label(key)}: sessions ${line.sessions} vs oracle ${total.sessions.size}`);
       for (const point of line.points) {
         const cell = cells.get(key)?.get(point.period);
@@ -538,7 +542,8 @@ const SESSION_TITLE_AT = /\.provenance\.sessions\.\d+\.title$/;
     copilotRaw = readCopilotRaw(USER_DATA, startedAt);
     agentHostRaw = readAgentHostRaw(USER_DATA, startedAt);
     stableFiles = [...claudeView.targets, ...piView.targets, ...copilotRaw.logFiles, ...agentHostRaw.files];
-    before = fingerprint(contentFiles, [ownerSettingsDir], stableFiles);
+    before = fingerprint(contentFiles, [ownerSettingsDir]);
+    logsBefore = statLogs(stableFiles);
 
     // ---- the oracle: every turn of every session started in the window ----
     const add = (turns: OracleTurn[], start: string | null, counter: { sessions: number; turns: number }) => {
@@ -660,6 +665,7 @@ const SESSION_TITLE_AT = /\.provenance\.sessions\.\d+\.title$/;
   for (const provider of mainProviders) {
     it(`${provider}: each repository's and project's cost per month, per basis and currency, equals the oracle's`, async () => {
       const problems: string[] = [];
+      Object.assign(sessionLists, { lines: 0, sessions: 0, differ: 0 });
       const keep = (a: Attributed) => a.turn.provider === provider;
       const byRepo = cellsBy((a) => (a.key === null ? null : redactKey(a.key)), keep);
       const byProject = cellsBy(projectIdOf, keep);
@@ -678,6 +684,7 @@ const SESSION_TITLE_AT = /\.provenance\.sessions\.\d+\.title$/;
         return acc;
       }, {} as Record<string, number>);
       say(`${provider}: ${byRepo.totals.size} repositories, ${cells} repository-months x 4 bases compared; preferred total ${round(preferred.AI_CREDITS)} AI Credits + ${round(preferred.USD)} USD; ${problems.length} differences`);
+      say(`  ${provider} session lists: ${sessionLists.lines} repository and project lines compared over ${sessionLists.sessions} sessions on the frozen view, ${sessionLists.differ} lines with a different session count`);
       for (const p of problems.slice(0, 15)) say(`  ${p}`);
       expect(problems, problems.slice(0, 20).join("\n")).toEqual([]);
     }, 1_800_000);
@@ -925,9 +932,13 @@ const SESSION_TITLE_AT = /\.provenance\.sessions\.\d+\.title$/;
   });
 
   it("changed no file on the machine", () => {
-    const after = fingerprint(contentFiles, [ownerSettingsDir], stableFiles);
-    const changed = before.split("\n").filter((line, i) => line !== after.split("\n")[i]);
-    say(`read-only: ${before.split("\n").length} fingerprints (the app's own settings folder by content, ${stableFiles.length} session logs by size and mtime) identical before and after; the projects file and the statement lived in a temporary folder`);
-    expect(after === before, `files changed: ${changed.length}`).toBe(true);
+    // The run lasts many minutes beside live sessions: a log written after the run began
+    // was written by its own session (log-write-check.mts); a vanished log, or a change
+    // with an older write time, would be a write by this check. Settings never change.
+    const logs = compareLogs(logsBefore, statLogs(stableFiles), startedAt);
+    const settingsChanged = fingerprint(contentFiles, [ownerSettingsDir]) !== before;
+    say(`read-only: ${logsBefore.size} session logs by size and mtime: ${logs.unchanged} unchanged, ${logs.writtenDuringRun} written by their own session during the run, ${logs.violations.length} changed or vanished without such a write time; the app's settings folder by content ${settingsChanged ? "CHANGED" : "unchanged"}: ${logs.violations.length === 0 && !settingsChanged ? "PASS" : "FAIL"}`);
+    expect(logs.violations).toEqual([]);
+    expect(settingsChanged, "the app's settings folder changed").toBe(false);
   });
 });
