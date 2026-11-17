@@ -24,6 +24,7 @@ const VIEWS_HTML = path.join(MCP_APPS, "dist/views.html");
 const CARD = { width: 640 };
 const OCTOBER = { since: "2026-10-01", until: "2026-10-31" };
 const BEFORE = { since: "2026-10-01", until: "2026-10-06" };
+const SAVINGS = { since: "2026-10-01", until: "2026-10-31" };
 const AFTER = { since: "2026-10-07", until: "2026-10-31" };
 
 interface Cut {
@@ -86,7 +87,37 @@ const CUTS: Cut[] = [
     },
   },
   { template: "estimate-kicker", prepare: async (c) => kicker(await c.show("estimate_cost", { projectId: "mobile", activeDays: 10 })) },
+  { template: "savings-kicker", prepare: async (c) => kicker(await c.show("get_savings_report", SAVINGS)) },
+  // The row's text block (title, subject, coverage) without its amount: the amount column changes with the data. Subject "acmedocs"
+  // tells it from the pi row with the same title.
+  { template: "unused-tools-row", prepare: async (c) => (await c.show("get_savings_report", SAVINGS)).content.locator(".sv-main", { hasText: /Tools loaded but never used\s*acmedocs/ }).first() },
+  { template: "open-cost", prepare: async (c) => openCostButton(await openUnusedToolsRow(c)) },
+  {
+    template: "session-cost-kicker",
+    prepare: async (c) => {
+      const view = await openUnusedToolsRow(c);
+      await openCostButton(view).click();
+      await view.backButton("Back to savings").waitFor();
+      return kicker(view);
+    },
+  },
+  {
+    template: "back-to-savings",
+    prepare: async (c) => {
+      const view = await openUnusedToolsRow(c);
+      await openCostButton(view).click();
+      return view.backButton("Back to savings");
+    },
+  },
 ];
+
+async function openUnusedToolsRow(c: Ctx): Promise<ViewFrame> {
+  const view = await c.show("get_savings_report", SAVINGS);
+  await view.content.getByRole("button", { name: /Tools loaded but never used\s*acmedocs/ }).click();
+  return view;
+}
+
+const openCostButton = (view: ViewFrame): Locator => view.content.getByRole("button", { name: /^Open cost for session / }).first();
 
 // The session view reached from the rollup, as M1's frames show it: what the fake-host-vs-Desktop scores compare.
 const REFERENCE_CUTS: Cut[] = [
