@@ -182,7 +182,7 @@ function buildClaudeView(now: number): ClaudeView {
   const dir = mkdtempSync(path.join(tmpdir(), "replay-exit-claude-"));
   const view = buildClaudeCodeView(CLAUDE_PROJECTS, dir, now, LIVE_MS);
   const candidates: Candidate[] = view.sessions.map(({ link, source: target, runSources }) => {
-    const mtimeMs = statSync(target).mtimeMs;
+    const mtimeMs = statSync(link).mtimeMs; // the copy's: the product hashes what it stats
     return {
       kind: "Claude Code",
       provider: "claude-code",
