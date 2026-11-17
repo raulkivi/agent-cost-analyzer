@@ -32,9 +32,10 @@ async function fromContextMenu(driver: DemoDriver, title: string, item: string):
   await openContextMenu(await sessionRow(title));
   const entry = await menuItem(item);
   await driver.click(await entry.getElement());
-  await browser.action("pointer").move({ x: 760, y: 700 }).perform();
   const workbench = await browser.getWorkbench();
   await browser.waitUntil(async () => (await workbench.getAllWebviews()).length > 0, { timeout: WAIT_MS, timeoutMsg: "the panel did not open" });
+  // The real pointer rests on the title bar's blank strip: left on the row, it keeps the row's hover tooltip up for the rest of the take.
+  await browser.action("pointer").move({ x: 1000, y: 12 }).perform();
 }
 
 // Texts of the Agent column's cells, one per row of the calls table.
@@ -56,7 +57,6 @@ const scene: DemoScene = {
       action: async () => {
         await host.command("workbench.view.extension.aiCreditsAnalyzer");
         await sidebar.showAlone("sessions");
-        await sessionRow(fixture.auditSession.title);
         await sessionRow(fixture.readSession.title);
       },
     },
@@ -64,18 +64,10 @@ const scene: DemoScene = {
       label: "Show Tool Audit from the context menu",
       beatMs: e8BeatMs("Show Tool Audit from the context menu"),
       action: async (driver) => {
-        await fromContextMenu(driver, fixture.auditSession.title, "Show Tool Audit");
-        await panel.inside((view) => view.waitForText("Retried commands"));
-        await driver.probePrivacy();
-      },
-    },
-    {
-      label: "Show Tool Audit on the session with subagent runs",
-      beatMs: e8BeatMs("Show Tool Audit on the session with subagent runs"),
-      action: async (driver) => {
         await fromContextMenu(driver, fixture.readSession.title, "Show Tool Audit");
-        const { calls, runs } = fixture.readSession.subagentAudit;
-        await panel.inside((view) => view.waitForText(`incl. ${calls} calls from ${runs - fixture.readSession.subagentAudit.unread} of ${runs} subagent runs`));
+        const { calls, runs, unread } = fixture.readSession.subagentAudit;
+        await panel.inside((view) => view.waitForText(`incl. ${calls} calls from ${runs - unread} of ${runs} subagent runs`));
+        await driver.probePrivacy();
       },
     },
     {
@@ -116,12 +108,15 @@ const scene: DemoScene = {
       },
     },
     {
-      label: "Copy Advice Bundle: dialog",
-      beatMs: e8BeatMs("Copy Advice Bundle: dialog"),
-      // The take ran over 20 s with the preview, so the dialog is shown but not previewed (docs/plans/demo-recordings-1.0.md §3.3).
+      label: "Copy Advice Bundle: preview",
+      beatMs: e8BeatMs("Copy Advice Bundle: preview"),
       action: async (driver) => {
-        await fromContextMenu(driver, fixture.auditSession.title, "Copy Advice Bundle");
-        await panel.inside((view) => view.waitForText("Export advice bundle"));
+        await fromContextMenu(driver, fixture.readSession.title, "Copy Advice Bundle");
+        await panel.inside(async (view) => {
+          await view.waitForText("Export advice bundle");
+          await driver.click(await (await browser.$("button=Preview")).getElement());
+          await browser.$("[data-testid='advice-preview']").waitForExist({ timeout: WAIT_MS });
+        });
         await driver.probePrivacy();
       },
     },

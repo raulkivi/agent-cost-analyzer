@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: MIT
 // Free demo scene E3 on made-up data: `npm run demo:record`. Pick a session in the
 // Sessions view; read its turns, the Explanation tab, the subagent marker and runs, the
-// turn inspector and the system prompt (docs/plans/docs-refresh-and-demo-recordings.md §4.1).
+// system prompt tab and the prompt in an editor (docs/plans/docs-refresh-and-demo-recordings.md §4.1).
+// The turn inspector and "back to the session" beats are out: with them the take runs about 22 s of
+// content, over the 20 s GIF budget (DR10).
 import { browser, expect } from "@wdio/globals";
 import { DEMO_FIXTURE_ENV, parseDemoFixture } from "../../../scripts/ui-automation/demo-fixture.mts";
 import { AnalyzerPanel } from "../support/analyzer-panel.js";
@@ -83,26 +85,6 @@ const scene: DemoScene = {
         });
         await driver.probePrivacy();
       },
-    },
-    {
-      label: "open the turn inspector",
-      beatMs: 1_200,
-      action: async (driver) => {
-        await panel.inside(async (view) => {
-          await driver.click(await browser.$(button("Inspect request/response")).getElement());
-          await view.waitForText("inspector");
-        });
-        await driver.probePrivacy();
-      },
-    },
-    {
-      label: "back to the session",
-      beatMs: 400,
-      action: (driver) =>
-        panel.inside(async (view) => {
-          await driver.click(await browser.$(button("← Back to session")).getElement());
-          await view.waitForTurnRows(fixture.readSession.turns);
-        }),
     },
     {
       label: "System prompt tab",
