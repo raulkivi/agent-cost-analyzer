@@ -2,10 +2,12 @@
 
 **Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress**: DR1–DR5 and DR9–DR12 done 2026-11-17 (PRs #394,
-#396–#399, #404–#406, #408); DR6 and DR7 wait for the owner. Approved (owner interview 2026-11-16: D29–D43, all
+Status: **in progress**: DR1–DR6 and DR9–DR12 done 2026-11-17 (PRs #394,
+#396–#399, #404–#406, #408, #415, and DR6's live takes); DR7: the owner approved the nine drafts, and the M1, M4
+and M8 takes wait for review. Approved (owner interview 2026-11-16: D29–D43, all
 recommended options accepted). Owner interview 2026-11-17: D44–D51 (GIFs up to
-25 s, retakes of N1, W3, W5 and E3, the recorder stops before the end checks). Tracked as step 10.24 in
+25 s, retakes of N1, W3, W5 and E3, the recorder stops before the end checks), then D52–D55 (drafts
+approved, the tool-audit chip fix before 1.0, DR6 recorded, the version bump after DR7 and C2). Tracked as step 10.24 in
 [implementation-plan.md](../implementation-plan.md) and in the
 [Gantt](../implementation-plan-gantt.md). **Start condition:** recording
 work starts after C9 (the monthly allowance in the standalone app, MA13)
@@ -176,6 +178,14 @@ saved on my coding agents in October?"
   since fake-host crops of buttons scored too low live (step 2.3).
   Pre-approve `get_savings_report` and `get_session_cost` in the profile
   (D16).
+
+**As built (DR6, 2026-11-17).** M8's templates were cut from the fake host (PR #415) and matched live. M8 opens
+the pane as soon as the savings view arrives: Claude writes on for about 15 s, and waiting for the answer made a
+38.5 s master. M4's send button and the session audit are in the chat column while the pane is open, so the click
+and the wait search the whole frame (`inChat`). The recorder stops before it launches Desktop when the keyring is
+unreachable: a shell with a stale D-Bus address started Desktop signed out and dropped the profile's sign-in.
+Each tool's first use shows a permission prompt (Always allow keeps it), so a take with a prompt is retaken.
+GIFs on Desktop 5.11492.5: M1 22.5 s 1.92 MB, M4 24.5 s 1.99 MB, M8 24.0 s 1.95 MB.
 
 **F4: savings view close-up** (fake host, free)
 
@@ -386,3 +396,7 @@ apt. The last column names the tasks (§6) each answer feeds.
 | D49 | W2's marker tooltip | Owner, 2026-11-17: **a custom, accessible tooltip on the Turn-cell marker after 1.0**, then a W2 retake; the native `title` tooltip doesn't show in an x11grab take, and the Explanation panel shows the same figures. Recommended was to accept it as is | after 1.0 |
 | D50 | The recorder's tail | Accepted (owner, 2026-11-17): **stop the recording before the end-state checks and privacy probe** in every demo driver, before the final takes; today they add about 5 s of still frames that a trim cuts | DR13 |
 | D51 | Draft review | Accepted (owner, 2026-11-17): **drafts copied to a folder in the owner's home** with an index of what each shows and what to check | DR7 |
+| D52 | The nine drafts (E3, E5, E8, F4, N1, W2–W5) | Accepted (owner, 2026-11-17): **all nine approved**; the final takes come from the 1.0 build (DR13) | DR7 |
+| D53 | W5's chip read "Succeeded 4" beside 3 subagent calls | Accepted (owner, 2026-11-17): **fix before 1.0**: the status chips count only the calls the Agent filter shows (PR #416, app and extension); W5 and E8 retaken | DR11 follow-up |
+| D54 | DR6's timing | Owner, 2026-11-17: **record now**, the demo profile signed in; M8, M4 and M1 recorded the same evening | DR6 |
+| D55 | When the version bump (V30) goes up | Accepted (owner, 2026-11-17): **after DR7 and C2** (the owner's Phase 11 review), so the bump is the last code change | V30 |

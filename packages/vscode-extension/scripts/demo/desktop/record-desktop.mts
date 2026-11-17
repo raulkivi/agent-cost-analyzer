@@ -23,6 +23,7 @@ import { buildDesktopConfig, type DesktopConfig } from "./desktop-config.mts";
 import { parseDesktopArgs } from "./desktop-args.mts";
 import { DESKTOP_SCENES, sceneTemplates } from "./desktop-scenes.mts";
 import { profileInUse, startDesktopSession } from "./desktop-session.mts";
+import { keyringUnreachableMessage, secretServiceReachable } from "./keyring-check.mts";
 import { ScreenProbe, missingTemplates, templatePath } from "./screen-probe.mts";
 import { Xdotool } from "./xdotool.mts";
 
@@ -81,6 +82,9 @@ async function main(): Promise<void> {
 
   const profile = profileDir();
   if (profileInUse(profile)) throw new Error(`Claude Desktop is already running on ${profile}; close it first`);
+  if (!secretServiceReachable((file, argv) => execFileSync(file, argv, { encoding: "utf8", timeout: 5000 }))) {
+    throw new Error(keyringUnreachableMessage(process.env.DBUS_SESSION_BUS_ADDRESS, process.env.XDG_RUNTIME_DIR));
+  }
 
   const outputs = sceneOutputs(scene, { masters: mastersDir(), gifs: path.join(mastersDir(), "gifs") });
   const tmp = mkdtempSync(path.join(tmpdir(), "aica-demo-desktop-"));

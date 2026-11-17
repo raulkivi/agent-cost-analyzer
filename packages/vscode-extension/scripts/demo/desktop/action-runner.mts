@@ -70,13 +70,13 @@ export function createActionRunner(deps: ActionDeps): ActionRunner {
         case "startRecording":
           return deps.startRecording();
         case "waitFor":
-          await waitForMatch(action.template, probe(action.template), wait, deps.clock);
+          await waitForMatch(action.template, probe(action.template, paneOpen && !action.inChat), wait, deps.clock);
           return;
         case "waitAnswerDone":
           // The stop button is in the chat's composer, never in the pane.
           return waitForGone("stop", probe("stop", false), wait, deps.clock);
         case "click": {
-          const match = await waitForMatch(action.template, probe(action.template), wait, deps.clock);
+          const match = await waitForMatch(action.template, probe(action.template, paneOpen && !action.inChat), wait, deps.clock);
           const centre = clickPoint(match)!;
           await deps.input.click(action.at ? { x: action.at.x, y: centre.y + action.at.dy } : centre);
           if (action.opensPane) paneOpen = true;

@@ -87,11 +87,11 @@ describe.each(ALL)("scene $id ($slug)", (scene) => {
     expect(sceneTemplates(scene).some((t) => /fullscreen/i.test(t))).toBe(false);
     expect(scene.steps.some((s) => /fullscreen/i.test(s.label))).toBe(false);
   });
-  it("waits for the view, then for the answer, before the first click", () => {
+  it("waits for the view, then for the answer, before the first click (M8 excepted, see its own tests)", () => {
     const kinds = scene.steps.map((s) => s.action.kind);
     const firstClick = kinds.indexOf("click");
     expect(kinds.indexOf("waitFor", kinds.indexOf("startRecording"))).toBeGreaterThan(kinds.indexOf("startRecording"));
-    expect(kinds.indexOf("waitAnswerDone")).toBeLessThan(firstClick);
+    if (scene.id !== "M8") expect(kinds.indexOf("waitAnswerDone")).toBeLessThan(firstClick);
   });
   it("opens the side pane before any in-view click: the pane mounts a fresh view", () => {
     const clicks = scene.steps.filter((s) => s.action.kind === "click");
@@ -134,7 +134,12 @@ describe("scene specifics", () => {
   it("M4 sends the message Analyse put in the composer with the send button: keyboard focus stays in the view", () => {
     const steps = DESKTOP_SCENES.M4!.steps.map((s) => s.action);
     const analyse = steps.findIndex((a) => a.kind === "click" && a.template === "analyse-button");
-    expect(steps[analyse + 1]).toEqual({ kind: "click", template: "composer-send" });
+    // The pane is open by then, so the click searches the chat column too.
+    expect(steps[analyse + 1]).toEqual({ kind: "click", template: "composer-send", inChat: true }); // codespell:ignore analyse
+  });
+  it("M4 waits for the session audit in the chat: Claude answers the sent message there, not in the open pane", () => {
+    const wait = DESKTOP_SCENES.M4!.steps.map((s) => s.action).find((a) => a.kind === "waitFor" && a.template === "audit-kicker");
+    expect(wait).toEqual({ kind: "waitFor", template: "audit-kicker", inChat: true });
   });
   it.each(["M2", "M3", "M4", "M5", "M6", "M7", "M8"])("%s opens the pane of its own view, found by its kicker: Claude may show other views", (id) => {
     const open = DESKTOP_SCENES[id]!.steps.find((s) => s.label === "Open the host side pane")!.action;
@@ -157,10 +162,11 @@ describe("scene specifics", () => {
 });
 
 describe("M8", () => {
-  it("opens the pane from the savings kicker, then the unused-tools row, Open cost, the cost view and Back, in that order", () => {
+  // Claude keeps writing for about 15 s after the savings view arrives (live take 2026-11-17, 38.5 s master), so
+  // waiting for the answer would push the take past 25 s (D48). The pane is independent of the chat's stream.
+  it("opens the pane as soon as the savings view arrives, then the unused-tools row, Open cost, the cost view and Back", () => {
     expect(order("M8").slice(4)).toEqual([
       "waitFor:savings-kicker",
-      "waitAnswerDone",
       "click:savings-kicker",
       "click:unused-tools-row",
       "click:open-cost",

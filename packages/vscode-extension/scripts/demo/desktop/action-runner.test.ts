@@ -88,6 +88,19 @@ describe("createActionRunner", () => {
     expect(log).toContain(`find:why-flagged>=${PANE_MIN_X}`);
     expect(log.some((l) => l.startsWith("find:findings-kicker"))).toBe(false);
   });
+  it("searches the whole frame for a click marked inChat, even with the pane open: the composer is in the chat column", async () => {
+    const { run, log } = setup((t) => (t === "sessions-kicker" || t === "composer-send" ? hit(750, 928) : undefined));
+    await run.perform({ kind: "click", template: "sessions-kicker", at: { x: 1086, dy: -54 }, opensPane: true });
+    await run.perform({ kind: "click", template: "composer-send", inChat: true });
+    expect(log.some((l) => l.startsWith("find:composer-send"))).toBe(false);
+    expect(log).toContain("click:760,933");
+  });
+  it("waits on the whole frame for a waitFor marked inChat, even with the pane open: Claude answers a sent message in the chat", async () => {
+    const { run, log } = setup((t) => (t === "sessions-kicker" || t === "audit-kicker" ? hit(45, 900) : undefined));
+    await run.perform({ kind: "click", template: "sessions-kicker", at: { x: 1086, dy: -54 }, opensPane: true });
+    await run.perform({ kind: "waitFor", template: "audit-kicker", inChat: true });
+    expect(log.some((l) => l.startsWith("find:audit-kicker"))).toBe(false);
+  });
   it("presses a key", async () => {
     const { run, log } = setup(() => undefined);
     await run.perform({ kind: "press", key: "Return" });
