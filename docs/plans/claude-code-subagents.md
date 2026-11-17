@@ -2,7 +2,7 @@
 
 **Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **Building: CS0 to CS15 done 2026-11-16; next CS16, the real-data check and the owner's sign-off.** Plan approved (2026-11-14): the owner accepted every recommendation, D1–D16 (§8). A 1.0 criterion, C15 in
+Status: **Done 2026-11-17: CS0 to CS16; the owner signed off the real-data check (CS16, PR #393, 9 of 9 pass) on 2026-11-17, so C15 is met.** Plan approved (2026-11-14): the owner accepted every recommendation, D1–D16 (§8). A 1.0 criterion, C15 in
 [implementation-plan.md](../implementation-plan.md#100-release) (tasks V32
 plan, V33 build). Spike CS0 done read-only on the owner's machine (§4).
 Built on the patterns of step 10.19
@@ -429,6 +429,10 @@ ids, dates, counts, sums and model names only.
   - The read-only check fails on a vanished file or a changed file whose write
     time is not after the run began; a session that Claude Code itself writes
     while the check runs is counted, not failed.
+  - Owner decision 2026-11-17: the repository check stays as built (each
+    series equals the rollup's group, and the groups add up to the rollup)
+    instead of "equals the sum of its sessions" above, since a turn's cost
+    belongs to the repository of its folder.
 
 ## 11. Tasks
 
@@ -455,7 +459,7 @@ model in this repo. Specs and the real-data suite are TDD exceptions as in
 | CS13 | **Done 2026-11-16 (PR #389).** Web and MCP App U1 per CS2; Playwright spec `packages/web/e2e/specs/claude-code-subagents.spec.ts` and one in `packages/mcp-apps/e2e/specs/` | Component tests with axe; `web-e2e` and `mcp-apps-e2e` pass | medium | Sonnet | CS2, CS11 |
 | CS14 | **Done 2026-11-16 (PR #382).** Tool audit increment (D9): subagent tool calls in the audit and security findings, one shape with step 10.20 | Audit tests; threat-model residual closed | high | Opus | V21 approved, CS10 |
 | CS15 | **Done 2026-11-16 (PR #387).** Docs (§12); D17: say off-branch runs are not counted | Docs match the code; Gantt updated | medium | Sonnet | CS10–CS14 |
-| CS16 | Real-data suite and oracle (§10); owner run and sign-off | §10 passes; owner signs off | medium | Opus (suite), owner | CS15 |
+| CS16 | **Done 2026-11-17 (PR #393; owner sign-off 2026-11-17).** Real-data suite and oracle (§10); owner run and sign-off | §10 passes; owner signs off | medium | Opus (suite), owner | CS15 |
 
 Critical path: CS0b → CS3 → CS5/CS6 → CS7 → CS8 → CS9 → CS10 → CS11 →
 CS13 → CS15 → CS16. CS1, CS2 and CS4 run beside CS3–CS7; CS14 after V21.
