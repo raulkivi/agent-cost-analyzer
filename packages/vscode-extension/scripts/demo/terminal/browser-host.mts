@@ -7,7 +7,9 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import { chromium, type BrowserContext, type Page } from "playwright";
+import { chromium, type BrowserContext, type Locator, type Page } from "playwright";
+import { POINTER_OVERLAY_SCRIPT } from "../pointer-overlay.mts";
+import { glidePath, type Point } from "../pointer-target.mts";
 import { findForbidden } from "../privacy-probe.mts";
 import type { Rect } from "./terminal-layout.mts";
 
@@ -52,9 +54,12 @@ export async function startBrowserHost(o: BrowserHostOptions): Promise<BrowserHo
       headless: false,
       ...(executablePath ? { executablePath } : {}),
       viewport: null,
+      colorScheme: "dark",
       env: { ...process.env, DISPLAY: o.display, WAYLAND_DISPLAY: "" } as Record<string, string>,
       args: ["--kiosk", `--window-position=${o.frame.x},${o.frame.y}`, `--window-size=${o.frame.width},${o.frame.height}`, "--no-first-run", "--no-default-browser-check", "--disable-infobars", "--password-store=basic"],
     });
+    // Dark, as every web demo (owner decision 2026-11-14): the app reads this before its first render.
+    await context.addInitScript(() => window.localStorage.setItem("aca.colorMode", "dark"));
     await context.clock.setFixedTime(new Date(o.now));
     page = context.pages()[0] ?? (await context.newPage());
     await page.goto(url);
@@ -88,6 +93,21 @@ export async function startBrowserHost(o: BrowserHostOptions): Promise<BrowserHo
     if (hits.length > 0) throw new Error(`Forbidden text on screen: ${hits.map((h) => `${h.match} in ${h.source}`).join(", ")}`);
   };
 
+  // The shared drawn pointer, moved at demo pace like the W scenes' Pointer.
+  type PointerApi = { __demoPointer: { moveTo(x: number, y: number): void; ripple(): void } };
+  let at: Point = { x: 800, y: 500 };
+  const glideTo = async (target: Locator): Promise<void> => {
+    const box = await target.boundingBox();
+    if (!box) throw new Error("Pointer target has no box");
+    const to = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    for (const point of glidePath(at, to, 18)) {
+      await page!.evaluate(({ x, y }) => (window as unknown as PointerApi).__demoPointer.moveTo(x, y), point);
+      await sleep(22);
+    }
+    at = to;
+    await page!.evaluate(() => (window as unknown as PointerApi).__demoPointer.ripple());
+  };
+
   return {
     controlPort,
     opens: () => opens,
@@ -101,9 +121,16 @@ export async function startBrowserHost(o: BrowserHostOptions): Promise<BrowserHo
     },
     async analyzeClaudeCode() {
       const p = page!;
-      await p.getByText("Analyze", { exact: true }).click();
+      await p.evaluate(POINTER_OVERLAY_SCRIPT);
+      await p.evaluate(({ x, y }) => (window as unknown as PointerApi).__demoPointer.moveTo(x, y), at);
+      const analyze = p.getByText("Analyze", { exact: true });
+      await glideTo(analyze);
+      await analyze.click();
+      await sleep(500);
+      const source = p.getByRole("combobox", { name: "Log provider" });
+      await glideTo(source);
       const switched = p.waitForResponse((r) => r.url().endsWith("/api/log-providers/active") && r.ok());
-      await p.getByRole("combobox", { name: "Log provider" }).selectOption("claude-code");
+      await source.selectOption("claude-code");
       await switched;
       // End state of beat 3: the made-up Claude Code sessions are listed.
       await p.getByText(/\d+ turns?/).first().waitFor();

@@ -36,7 +36,7 @@ export const N1: TerminalScene = {
     step("Wait for the start line", { kind: "waitTemplate", template: "n1-start-line" }, 1500),
     step("Wait for the browser to open", { kind: "waitBrowser" }, 1500),
     // Beat 3
-    step("Analyze, Source Claude Code", { kind: "analyzeClaudeCode" }, 3000),
+    step("Analyze, Source Claude Code", { kind: "analyzeClaudeCode" }, 2500),
     // Beat 4
     step("Terminal B to the front", { kind: "showTerminal", terminal: "B" }, 600),
     step("Type the command again", { kind: "type", text: N1_COMMAND }, 0),
