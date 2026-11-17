@@ -22,7 +22,7 @@ describe("E5 beats", () => {
     expect(labels).not.toMatch(/7 days|copy text/);
   });
 
-  it("leave room for pointer glides inside the 20 s budget", () => {
+  it("leave room for pointer glides inside the GIF length limit", () => {
     const total = E5_BEATS.reduce((sum, beat) => sum + beat.beatMs, 0);
     expect(total).toBeLessThanOrEqual(E5_MAX_BEAT_MS);
   });

@@ -7,7 +7,9 @@
 // are accepted (owner, 2026-11-14).
 export const FRAME = { width: 1600, height: 1000, fps: 30 } as const;
 
-export const GIF_DEFAULTS = { fps: 12, width: 1600, maxBytes: 8 * 1024 * 1024, maxSeconds: 20 } as const;
+// The one GIF limit of the demo toolchains: 25 s and 8 MB (owner, 2026-11-17; was 20 s). The web and
+// mcp-apps scenes derive their beat budgets from maxSeconds, so there is no second literal to change.
+export const GIF_DEFAULTS = { fps: 12, width: 1600, maxBytes: 8 * 1024 * 1024, maxSeconds: 25 } as const;
 
 // The PATH ffprobe is a firejail wrapper that can't read our files (spike 1.0), so default to the real binaries.
 export function ffmpegBinary(env: Record<string, string | undefined>): string {

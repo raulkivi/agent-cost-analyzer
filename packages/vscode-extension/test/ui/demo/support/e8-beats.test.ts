@@ -16,7 +16,7 @@ describe("E8 beats", () => {
     ]);
   });
 
-  it("leave room for pointer glides, the probes and the panel's load time inside the 20 s budget", () => {
+  it("leave room for pointer glides, the probes and the panel's load time inside the GIF length limit", () => {
     const total = E8_BEATS.reduce((sum, beat) => sum + beat.beatMs, 0);
     expect(total).toBeLessThanOrEqual(E8_MAX_BEAT_MS);
   });

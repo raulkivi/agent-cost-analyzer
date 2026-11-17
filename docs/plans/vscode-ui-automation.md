@@ -635,7 +635,7 @@ Commands:
   - Each take sends a few messages on the owner's Claude plan.
   - A take whose JSON meta has `retakeNeeded: true` showed a permission prompt: retake it. Pre-approve the tools in the profile first.
   - `AICA_DEMO_DEBUG_DIR` keeps the last frame of a failed take. That frame can show the account, so never commit it.
-  - Trim each Desktop GIF to start 1 s before the view appears, at most 20 s.
+  - Trim each Desktop GIF to start 1 s before the view appears, at most 25 s.
   - Each take's JSON records the Desktop version. Desktop updates itself and cannot be pinned.
 - Terminal scenes (N1): `npm run demo:record:terminal -w packages/vscode-extension -- N1`. `--dry-run` plays the scene without recording and saves a frame at each template wait to `AICA_DEMO_DEBUG_DIR`, to cut templates from.
   - Prerequisites: `xterm`, `xdotool`, Xvfb, `curl`, python3 with OpenCV (`cv2`), and Playwright's Chromium. Build the web package and the CLI first (`npm run build`).
@@ -653,6 +653,7 @@ Rules:
 - **Stills the scenes produce.** `walkthrough.png` (E1), `sidebar.png` (E6), `savings.png` (E5), `allowance.png` (E7) and `mcp-agent-mode.png` (E9). See [vscode-extension-manual-checks.md](vscode-extension-manual-checks.md) §4.
 - **Privacy (Claude Desktop).** A take starts recording after the prompt is sent, and the new-chat screen shows the owner's name. Review every frame before a GIF is committed.
 - **Privacy.** Set `DEMO_FORBIDDEN` in the shell, never in a committed file: a comma-separated list of login and email strings (at least 3 characters each). The home path and username are always forbidden. A scene whose text contains a forbidden term fails and deletes its master.
-- **GIF budget.** At most 20 s, 8 MB, 1:1.
+- **GIF budget.** At most 25 s (was 20 s until 2026-11-17), 8 MB, 1:1.
+- **Recording stops at the last beat.** The wdio, web and mcp-apps drivers stop ffmpeg right after the last step's pause, then run the end-state checks and the privacy probe (`scripts/demo/record-take.mts`). A failing check deletes the master. The terminal and Desktop routes already stop before their checks.
 - **Time of day.** Don't record between 00:00 and 01:15 local time. The fixture's "today" sessions start 12–75 minutes before the run, so they fall on yesterday until then.
 - **Where the scenes live.** `test/ui/demo/` (free, VS Code), `test/ui/demo-copilot/` (real Copilot) and `packages/web/e2e/demo/` (standalone app). The shared driver is `test/ui/demo/support/demo-driver.ts`.

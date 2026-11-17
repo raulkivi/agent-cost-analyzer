@@ -3,7 +3,7 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "../support/app-fixture.js";
 import { assertPrivate, probed } from "./support/privacy-probe.js";
-import { play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
+import { DEMO_MAX_BEAT_MS, play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
 
 // W3, "Savings" (docs/plans/demo-recordings-1.0.md §3.3): Dashboard, Savings
 // tab, 90 then 30 days, the top row's sessions, the unused-tools row's tool
@@ -79,7 +79,7 @@ export const W3: DemoScene = {
 test.use({ demo: true });
 
 test("W3: the Savings tab, its windows and Open in Analyze", async ({ page, app }) => {
-  expect(totalBeatMs(W3)).toBeLessThan(20_000);
+  expect(totalBeatMs(W3)).toBeLessThan(DEMO_MAX_BEAT_MS);
   await presetColorMode(page, "dark");
   await page.goto(app.baseURL);
   await expect(page.getByText("Analyze", { exact: true })).toBeVisible();
@@ -87,9 +87,7 @@ test("W3: the Savings tab, its windows and Open in Analyze", async ({ page, app 
   const pointer = new Pointer(page);
   await pointer.install();
 
-  await recordScene(page, W3, async () => {
-  await play(page, probed(W3), pointer);
-
+  await recordScene(page, W3, () => play(page, probed(W3), pointer), async () => {
   // End state: Analyze shows the opened session's turns.
   await expect(page.locator("table tbody tr").first()).toBeVisible();
   await expect(page.getByText("Tidy the notes folder").first()).toBeVisible();

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
+import { GIF_DEFAULTS } from "../ffmpeg-args.mts";
 import { assertScene } from "../scene-timeline.mts";
 import { DESKTOP_SCENES, sceneTemplates } from "./desktop-scenes.mts";
 
@@ -48,7 +49,9 @@ const prompts: Record<string, RegExp> = {
 };
 // Chromium wheel notches are not exact, so a scroll is never the only way to a click target: the target
 // is within the last screenful, and the scene overshoots to the bottom of the view.
-const MAX_SECONDS_AFTER_RECORDING_STARTS = 25;
+// The recorder runs from the startRecording step to the last beat (the route has no end checks after it),
+// so those beats are the master's length and must fit the GIF limit.
+const MAX_SECONDS_AFTER_RECORDING_STARTS = GIF_DEFAULTS.maxSeconds;
 
 describe.each(ALL)("scene $id ($slug)", (scene) => {
   it("is a valid scene", () => {
@@ -96,7 +99,7 @@ describe.each(ALL)("scene $id ($slug)", (scene) => {
   it("lists the templates it needs, each cut or deliberately missing", () => {
     for (const t of sceneTemplates(scene)) expect(t).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
   });
-  it("keeps the beats after the recording starts within 25 s", () => {
+  it("keeps the beats after the recording starts within the GIF length limit", () => {
     const start = scene.steps.findIndex((s) => s.action.kind === "startRecording");
     const beats = scene.steps.slice(start).reduce((sum, s) => sum + s.beatMs, 0);
     expect(beats / 1000).toBeLessThanOrEqual(MAX_SECONDS_AFTER_RECORDING_STARTS);

@@ -15,6 +15,7 @@ import { sceneOutputs } from "../../../../scripts/demo/output-names.mts";
 import { POINTER_OVERLAY_SCRIPT } from "../../../../scripts/demo/pointer-overlay.mts";
 import { glidePath, targetPoint, type Point } from "../../../../scripts/demo/pointer-target.mts";
 import { findForbidden, forbiddenTerms } from "../../../../scripts/demo/privacy-probe.mts";
+import { recordTake } from "../../../../scripts/demo/record-take.mts";
 import { startRecorder } from "../../../../scripts/demo/recorder.mts";
 import { assertScene, playScene, type Scene } from "../../../../scripts/demo/scene-timeline.mts";
 import { PINNED_VSCODE_VERSION } from "../../../../scripts/ui-automation/vscode-version.mts";
@@ -26,7 +27,7 @@ export type DemoAction = (driver: DemoDriver) => Promise<void>;
 export type DemoScene = Scene<DemoAction>;
 
 export interface RunOptions {
-  // Checked after the last step, before the privacy probe: the scene's end state.
+  // Checked after the recording has stopped, before the privacy probe: the scene's end state.
   assertEnd?: (driver: DemoDriver) => Promise<void>;
 }
 
@@ -178,8 +179,8 @@ export async function hideWorkbenchClutter(): Promise<void> {
   }, CLUTTER_CSS);
 }
 
-// Records `scene`, plays it, checks the end state and privacy, and writes the MP4 and a
-// .json next to it. On any failure the recording is deleted and the error rethrown.
+// Records `scene` and stops at its last beat, then checks the end state and privacy, and writes the
+// MP4 and a .json next to it. On any failure the recording is deleted and the error rethrown.
 export async function runDemoScene(scene: DemoScene, options: RunOptions = {}): Promise<string> {
   assertScene(scene);
   const display = process.env.DISPLAY;
@@ -189,19 +190,22 @@ export async function runDemoScene(scene: DemoScene, options: RunOptions = {}): 
   await browser.executeWorkbench((vscode) => vscode.commands.executeCommand("notifications.clearAll"));
   await hideWorkbenchClutter();
   const recorder = startRecorder({ display, ...FRAME, out: out.mp4 });
+  let playedMs = 0;
   const startedAt = Date.now();
-  try {
-    await recorder.ready();
-    await playScene(scene, (action) => action(driver), (ms) => driver.beat(ms));
-    await options.assertEnd?.(driver);
-    await driver.probePrivacy();
-    await recorder.stop();
-  } catch (error) {
-    await recorder.discard();
-    throw error;
-  }
+  // The recording stops right after the last step's beat; the end state and the privacy probe run
+  // after it, so the master has no still tail. A failing check deletes the master (record-take.mts).
+  await recordTake(recorder, {
+    play: async () => {
+      await playScene(scene, (action) => action(driver), (ms) => driver.beat(ms));
+      playedMs = Date.now() - startedAt;
+    },
+    endChecks: async () => {
+      await options.assertEnd?.(driver);
+      await driver.probePrivacy();
+    },
+  });
   mkdirSync(path.dirname(out.meta), { recursive: true });
-  const meta = { id: scene.id, title: scene.title, vscodeVersion: PINNED_VSCODE_VERSION, date: new Date().toISOString(), durationMs: Date.now() - startedAt };
+  const meta = { id: scene.id, title: scene.title, vscodeVersion: PINNED_VSCODE_VERSION, date: new Date().toISOString(), durationMs: playedMs };
   writeFileSync(out.meta, `${JSON.stringify(meta, null, 2)}\n`);
   return out.mp4;
 }

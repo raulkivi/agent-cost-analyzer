@@ -12,7 +12,7 @@ export const E8_BEATS = [
   { label: "close the dialog without copying", beatMs: 400 },
 ] as const;
 
-// Pauses only; glides, clicks, probes and load time come on top, inside the 20 s budget.
+// Pauses only; glides, clicks, probes and load time come on top, inside the GIF length limit.
 export const E8_MAX_BEAT_MS = 6_800;
 
 export type E8Label = (typeof E8_BEATS)[number]["label"];

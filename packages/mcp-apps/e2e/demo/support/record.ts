@@ -3,6 +3,7 @@
 import type { Page } from "@playwright/test";
 import { FRAME } from "../../../../vscode-extension/scripts/demo/ffmpeg-args.mts";
 import { sceneOutputs } from "../../../../vscode-extension/scripts/demo/output-names.mts";
+import { recordTake } from "../../../../vscode-extension/scripts/demo/record-take.mts";
 import { startRecorder } from "../../../../vscode-extension/scripts/demo/recorder.mts";
 import { mastersDir } from "../../../../vscode-extension/test/ui/demo/support/demo-launch.mts";
 import type { DemoScene } from "../../../../web/e2e/demo/support/demo-driver.js";
@@ -32,23 +33,21 @@ async function assertPageFillsFrame(page: Page): Promise<void> {
   if (problem !== undefined) throw new Error(`The browser window does not fill the recorded frame: ${problem}`);
 }
 
-// Records the X display while `body` (the scene and its end-state assertions) runs.
-// A failing scene discards its MP4.
-export async function recordScene(page: Page, scene: DemoScene, body: () => Promise<void>): Promise<string> {
+// Records the X display while `playScene` runs and stops right after its last beat; only then do
+// `endChecks` run (see the web suite's recordScene). A failing play or check discards the MP4.
+export async function recordScene(page: Page, scene: DemoScene, playScene: () => Promise<void>, endChecks?: () => Promise<void>): Promise<string> {
   await fillFrame(page);
   await assertPageFillsFrame(page);
   const out = sceneOutputs(scene, { masters: mastersDir(), gifs: mastersDir() }).mp4;
   const display = process.env.DISPLAY;
   if (!display) throw new Error("DISPLAY is not set: run under xvfb-run (npm run demo:record does)");
   const recorder = startRecorder({ display, width: FRAME.width, height: FRAME.height, fps: FRAME.fps, out });
-  try {
-    await recorder.ready();
-    await page.waitForTimeout(800);
-    await body();
-    await recorder.stop();
-  } catch (error) {
-    await recorder.discard();
-    throw error;
-  }
+  await recordTake(recorder, {
+    play: async () => {
+      await page.waitForTimeout(800);
+      await playScene();
+    },
+    endChecks,
+  });
   return out;
 }

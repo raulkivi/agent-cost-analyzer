@@ -4,7 +4,7 @@
 // Sessions view; read its turns, the Explanation tab, the subagent marker and runs, the
 // system prompt tab and the prompt in an editor (docs/plans/docs-refresh-and-demo-recordings.md §4.1).
 // The turn inspector and "back to the session" beats are out: with them the take runs about 22 s of
-// content, over the 20 s GIF budget (DR10).
+// content, over the GIF length limit (DR10; it was 20 s then, now 25 s).
 import { browser, expect } from "@wdio/globals";
 import { DEMO_FIXTURE_ENV, parseDemoFixture } from "../../../scripts/ui-automation/demo-fixture.mts";
 import { AnalyzerPanel } from "../support/analyzer-panel.js";

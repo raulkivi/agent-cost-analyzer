@@ -3,7 +3,7 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "../support/app-fixture.js";
 import { assertPrivate, probed } from "./support/privacy-probe.js";
-import { play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
+import { DEMO_MAX_BEAT_MS, play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
 
 // W2, "Analyze and replay" (docs/plans/demo-recordings-1.0.md §3.3, extended by DR12 for C15):
 // a Claude Code session whose first turn started a subagent run. Hover the Turn-cell marker
@@ -83,7 +83,7 @@ export const W2: DemoScene = {
 test.use({ demo: true });
 
 test("W2: Analyze a Claude Code session with subagent runs and replay it on another model", async ({ page, app }) => {
-  expect(totalBeatMs(W2)).toBeLessThan(20_000);
+  expect(totalBeatMs(W2)).toBeLessThan(DEMO_MAX_BEAT_MS);
   await presetColorMode(page, "dark");
   await page.goto(app.baseURL);
   await expect(page.getByText("Analyze", { exact: true })).toBeVisible();
@@ -91,9 +91,7 @@ test("W2: Analyze a Claude Code session with subagent runs and replay it on anot
   const pointer = new Pointer(page);
   await pointer.install();
 
-  await recordScene(page, W2, async () => {
-    await play(page, probed(W2), pointer);
-
+  await recordScene(page, W2, () => play(page, probed(W2), pointer), async () => {
     // End state: the Simulated columns, the replay strip and the runs it left out are on screen.
     await expect(page.getByRole("columnheader", { name: `Simulated ${MODEL}` })).toBeVisible();
     await expect(summary(page)).toContainText(`on ${MODEL}`);
