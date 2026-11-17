@@ -271,10 +271,8 @@ the orders API"), not the Copilot CLI audit session, which has no subagent runs.
 and the session cost stays known, so E3/E4 figures do not move. The runs table labels that unread run
 "searchSubagent": the product maps `explore_subagent` to it by design (`labelOfCallName`, plan §14.1).
 E8 starts on `readSession` (the CLI session's audit beat is gone as redundant) and keeps the Advice Bundle
-preview; its take is 20.1 s. E3 drops the turn inspector and "back to the session" beats: the old scene
-already ran about 35 s on this setup (the committed GIF was a trimmed cut that ended on the System prompt
-tab), and with them the content is about 22 s. Its new take is 25 s, of which the last 5 s are the
-end-state checks and probe, cut by the trim.
+preview; its take is 20.1 s. E3 first dropped the turn inspector and "back to the session" beats to fit 20 s; with the 25 s limit (D48)
+they are back, so E3 keeps all eight beats and its take is 23.5 s, ending on the prompt open in the editor.
 
 **As built (DR12).**
 
