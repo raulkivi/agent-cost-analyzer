@@ -53,6 +53,9 @@ test("10.20: the Tool audit tab splits calls by agent, filters them, and lists t
   await agent.getByRole("button", { name: "Subagents" }).click();
   await expect(rowCount(page)).toHaveCount(3);
   await expect(rowCount(page).first()).toContainText("searchSubagent");
+  // The status chips count the same 3 calls, not the main agent's.
+  const chipTexts = await page.locator("button.filter-chip", { hasText: /\s\d+$/ }).allTextContents();
+  expect(chipTexts.reduce((sum, text) => sum + Number(/(\d+)$/.exec(text.trim())?.[1]), 0)).toBe(3);
 
   // The API's own origin filter agrees with the chip.
   const calls = (await (await page.request.get(`${app.baseURL}/api/sessions/${await sessionId(page)}/tool-calls?provider=${PROVIDER}&origin=subagent`)).json()) as { total: number };
