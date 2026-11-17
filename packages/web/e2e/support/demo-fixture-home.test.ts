@@ -16,7 +16,7 @@ import {
   DEMO_UNUSED_TOOLS_SESSIONS,
   DEMO_UNUSED_TOOLS_TOOLS,
 } from "./demo-fixture-home.mts";
-import { ALLOWANCE_KNOWN_SESSION_ID, ALLOWANCE_UNKNOWN_SESSION_ID, createFixtureHome } from "./fixture-home.mts";
+import { ALLOWANCE_KNOWN_SESSION_ID, ALLOWANCE_UNKNOWN_SESSION_ID, AUDIT_READ_SESSION_ID, AUDIT_READ_SESSION_TITLE, AUDIT_SHELL_SESSION_ID, createFixtureHome } from "./fixture-home.mts";
 
 // The parts of a pi session line this test reads.
 interface PiLine {
@@ -213,5 +213,30 @@ describe("session titles", () => {
 
   it("leaves the shared home's titles alone", () => {
     expect(titles(path.join(root, "shared"))).toContain("Fixture session");
+  });
+});
+
+// DR11 (W5): the audit sessions (ST12's child-log calls) are opt-in on the shared home and pass
+// through the demo home, so only W5 has them and W3/F4 keep their lists.
+describe("createDemoFixtureHome with auditSessions", () => {
+  it("holds the audit sessions, still with no 'fixture-' text, and leaves them out by default", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "aica-demo-web-audit-"));
+    try {
+      const withAudit = path.join(root, "with");
+      const without = path.join(root, "without");
+      createDemoFixtureHome(withAudit, { auditSessions: true });
+      createDemoFixtureHome(without);
+      expect(files(withAudit).filter((file) => readFileSync(file).includes("fixture-"))).toEqual([]);
+      const db = new DatabaseSync(path.join(withAudit, ".config", "Code", "User", "globalStorage", "github.copilot-chat", "session-store.db"), { readOnly: true });
+      try {
+        expect((db.prepare("SELECT summary FROM sessions WHERE id = ?").get(AUDIT_READ_SESSION_ID) as { summary: string }).summary).toBe(AUDIT_READ_SESSION_TITLE);
+      } finally {
+        db.close();
+      }
+      expect(files(withAudit).some((file) => file.includes(AUDIT_SHELL_SESSION_ID))).toBe(true);
+      expect(files(without).some((file) => file.includes(AUDIT_READ_SESSION_ID))).toBe(false);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
   });
 });

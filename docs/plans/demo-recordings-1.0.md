@@ -254,6 +254,15 @@ the home has no allowance until the scene saves one. The demo home's release-not
 adds to the month, so the gauge reads "at least 32.46 of 36 AI Credits" (8 of 9 sessions known); the
 scene's 36 is 90% of the allowance. `demo-fixture-home.test.ts` pins the seeds. The demo home retitles the shared seeds' "Fixture session" rows (`retitleFixtureSessions`), and the web scenes share one privacy probe (`e2e/demo/support/privacy-probe.ts`) that also forbids the word "fixture".
 
+**As built (DR11, W5).**
+
+- No new fixture sessions: ST12's `auditSessions` (the shared home's "Subagent audit session": 2 main
+  calls, a read `searchSubagent` run of 3 calls with 1 failed, and an unread run with its reason) already
+  has the child-log calls. The scene sets `test.use({ demo: true, auditSessions: true })`, and
+  `createDemoFixtureHome` passes the option through, so only W5 has them and W3/F4 lists stay as they are.
+  `demo-fixture-home.test.ts` covers it (no "fixture-" text with the sessions on, absent by default).
+- Scene: `packages/web/e2e/demo/w5-tool-audit.demo.ts`, 19 s draft GIF.
+
 ## 5. Docs mapping and alt text
 
 | Recording | Doc and section | Alt text draft |
