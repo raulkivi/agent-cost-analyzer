@@ -15,8 +15,8 @@ This plan reviews what shipped or is being built since the demo recordings
 of steps 10.22 and 10.23, and proposes for each feature: extend an existing
 scene, record a new one, or record nothing. It builds on
 [docs-refresh-and-demo-recordings.md](docs-refresh-and-demo-recordings.md):
-its tooling, frame (1600×1000, GIFs 1:1), GIF budget (at most 20 s and
-8 MB), privacy rules and decisions D1–D28 apply unchanged. Decisions here
+its tooling, frame (1600×1000, GIFs 1:1), GIF budget (at most 25 s since D48, was 20 s;
+and 8 MB), privacy rules and decisions D1–D28 apply unchanged. Decisions here
 continue at D29.
 
 ## Contents
@@ -171,7 +171,7 @@ saved on my coding agents in October?"
 | 4 | **Open cost** on a session: U1 in place | 4 s |
 | 5 | **Back**: focus returns to the session button | 2 s |
 
-- At most 20 s. New scene data in `desktop-scenes.mts`. New templates
+- At most 25 s (D48). New scene data in `desktop-scenes.mts`. New templates
   (savings kicker, the row, Open cost, Back) are cut from a live frame,
   since fake-host crops of buttons scored too low live (step 2.3).
   Pre-approve `get_savings_report` and `get_session_cost` in the profile
@@ -194,7 +194,7 @@ extension guide's GIF and M8's fallback.
 | 3 | Agent filter → **Subagents**: Agent column; Subagent runs table with an unread run and its reason | 6 s |
 | 4 | All sessions audit: main and subagent totals, the subagent calls column | 5 s |
 
-- 18–20 s.
+- 20–23 s, with all three subagent calls shown (D46, D48).
 - The User Guide's "Auditing tool calls" has no recording today.
 
 ### 3.3 Retakes and extended scenes
