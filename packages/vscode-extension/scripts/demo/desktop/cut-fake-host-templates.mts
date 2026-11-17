@@ -88,9 +88,8 @@ const CUTS: Cut[] = [
   },
   { template: "estimate-kicker", prepare: async (c) => kicker(await c.show("estimate_cost", { projectId: "mobile", activeDays: 10 })) },
   { template: "savings-kicker", prepare: async (c) => kicker(await c.show("get_savings_report", SAVINGS)) },
-  // The row's text block (title, subject, coverage) without its amount: the amount column changes with the data. Subject "acmedocs"
-  // tells it from the pi row with the same title.
-  { template: "unused-tools-row", prepare: async (c) => (await c.show("get_savings_report", SAVINGS)).content.locator(".sv-main", { hasText: /Tools loaded but never used\s*acmedocs/ }).first() },
+  // unused-tools-row is a live crop (DR6, 2026-11-17), not cut here: the row's title and subject line ("acmedocs" tells it from the
+  // pi row with the same title), without the coverage line, which changed when coverage reasons merged.
   { template: "open-cost", prepare: async (c) => openCostButton(await openUnusedToolsRow(c)) },
   {
     template: "session-cost-kicker",
