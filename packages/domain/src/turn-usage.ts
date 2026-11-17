@@ -88,14 +88,16 @@ export const turnUsageSchema = z.object({
   // Step 10.19: when present, the figures above are everything billed for
   // the turn (the main agent plus these runs); absent: no run was read.
   subagents: z.array(subagentRunUsageSchema).optional(),
-  // The main agent's own figures; present exactly when `subagents` is.
+  // The main agent's own figures; present whenever `subagents` is (and on the carrier of a session-level unknown, CS16).
   ownUsage: ownTurnUsageSchema.optional(),
   // Step CS13: the turn's priced cost (all lines), set by the API for
   // providers without AI Credits (Claude Code) so the UI shows a figure.
   pricedCost: costFigureSchema.optional(),
 }).superRefine((usage, ctx) => {
-  if ((usage.subagents === undefined) !== (usage.ownUsage === undefined)) {
-    ctx.addIssue({ code: "custom", path: ["ownUsage"], message: "ownUsage is set exactly when subagents is" });
+  // `ownUsage` may stand without runs: a Claude Code session-level unknown
+  // marks the first turn's figures unknown and keeps its own there (CS16).
+  if (usage.subagents !== undefined && usage.ownUsage === undefined) {
+    ctx.addIssue({ code: "custom", path: ["ownUsage"], message: "ownUsage is set whenever subagents is" });
   }
 });
 

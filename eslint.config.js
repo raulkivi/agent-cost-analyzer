@@ -47,8 +47,9 @@ export default tseslint.config(
           // Config and script files outside any tsconfig, by design; the SA18
           // real-data suite and the SA0 scan raised the count past 24, the pi redaction CLI past 32,
           // the replay exit check (oracle, its tests, the suite) past 40, the Phase 15 exit check
-          // with its oracle past 48, the pi fixture generator (script, lib, tests) past 56, the tool-audit check (oracle, its tests, the suite) past 60.
-          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 66,
+          // with its oracle past 48, the pi fixture generator (script, lib, tests) past 56, the tool-audit check (oracle, its tests, the suite) past 60,
+          // the Claude Code subagent check (oracle, scan, their tests, the suite) past 66.
+          maximumDefaultProjectFileMatchCount_THIS_WILL_SLOW_DOWN_LINTING: 72,
         },
         tsconfigRootDir: import.meta.dirname,
       },
