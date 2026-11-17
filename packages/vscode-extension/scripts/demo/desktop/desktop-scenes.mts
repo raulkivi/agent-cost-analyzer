@@ -4,7 +4,8 @@ import type { Scene } from "../scene-timeline.mts";
 
 // What a Desktop scene can do. `template` names a PNG in ./templates (without extension).
 export type DesktopAction =
-  | { kind: "waitFor"; template: string }
+  // `inChat`: as for a click below; for a view Claude shows in the chat after the pane is open.
+  | { kind: "waitFor"; template: string; inChat?: boolean }
   | { kind: "waitAnswerDone" }
   | { kind: "newChat" }
   | { kind: "prompt"; text: string }
@@ -12,7 +13,8 @@ export type DesktopAction =
   // `at` clicks at a fixed x and `dy` from the template's centre, for a target that repeats on screen (an
   // expand icon per view) but sits at a fixed offset from a unique one (that view's kicker).
   // `opensPane` marks the click that opens the side pane: later templates are searched in the pane only.
-  | { kind: "click"; template: string; at?: { x: number; dy: number }; opensPane?: boolean }
+  // `inChat` searches the whole frame even then, for a target in the chat column such as the composer's send button.
+  | { kind: "click"; template: string; at?: { x: number; dy: number }; opensPane?: boolean; inChat?: boolean }
   // A key press with nothing typed, e.g. Return to send what a view put in the composer.
   | { kind: "press"; key: string }
   // Wheel-down over the side pane; the views are taller than the pane, and the target is in the last screenful.
@@ -108,8 +110,8 @@ const M4: DesktopScene = {
     step("Analyse the session", { kind: "click", template: "analyse-button" }, 1500),
     // Desktop puts the view's "Analyse session <id>" in the composer under a caution note and waits; keyboard focus
     // stays in the view, so Return does nothing: click the composer's send button.
-    step("Send it", { kind: "click", template: "composer-send" }, 500),
-    step("Wait for the session audit", { kind: "waitFor", template: "audit-kicker" }, 1500),
+    step("Send it", { kind: "click", template: "composer-send", inChat: true }, 500),
+    step("Wait for the session audit", { kind: "waitFor", template: "audit-kicker", inChat: true }, 1500),
     step("Wait for the answer", { kind: "waitAnswerDone" }, 3500),
   ],
 };
@@ -175,8 +177,8 @@ const M8: DesktopScene = {
   title: "Possible savings in Claude Desktop",
   steps: [
     ...opening("What could I have saved on my coding agents in October?"),
-    step("Wait for the savings view", { kind: "waitFor", template: "savings-kicker" }, 1500),
-    step("Wait for the answer", { kind: "waitAnswerDone" }, 1500),
+    // No wait for the answer: Claude writes on for about 15 s, which would push the take past 25 s.
+    step("Wait for the savings view", { kind: "waitFor", template: "savings-kicker" }, 2500),
     step("Open the host side pane", { kind: "click", template: "savings-kicker", at: PANE_FROM_KICKER, opensPane: true }, 3500),
     step("Open the unused-tools row", { kind: "click", template: "unused-tools-row" }, 5000),
     step("Open the cost of a session", { kind: "click", template: "open-cost" }, 1500),
