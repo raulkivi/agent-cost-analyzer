@@ -78,7 +78,7 @@ export const DEMO_CLAUDE_SUBAGENT_SESSION = {
   mainModel: "claude-sonnet-5-5",
 } as const;
 
-const PI_FIXTURE =path.resolve(import.meta.dirname, "../../../server/fixtures/pi-agent/generated/pi-linear.jsonl");
+const PI_FIXTURE = path.resolve(import.meta.dirname, "../../../server/fixtures/pi-agent/generated/pi-linear.jsonl");
 // What the generated fixture records, which the demo replaces.
 const GENERATED_FOLDER = "/home/user/project";
 const GENERATED_MODEL = "qwen3.8-flash-next:setup6";
