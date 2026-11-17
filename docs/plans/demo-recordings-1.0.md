@@ -246,6 +246,13 @@ on purpose. Fixture code is written test first (as `demo-fixture.test.ts`).
 - Not as in the table: a pi session's list id is a hash of its file path, so scenes click it by title, not
   by id.
 
+**As built (DR9).** W4 needed no new fixture code. `createDemoFixtureHome` already passes its options to
+`createFixtureHome`, so `test.use({ demo: true, allowanceSessions: true })` gives MS8's seeds (Copilot sessions
+on 2026-11-02, 11-03 and 11-05, one without cost data, and the Agent Host sessions) on the demo home, and
+the home has no allowance until the scene saves one. The demo home's release-notes session (2026-11-03)
+adds to the month, so the gauge reads "at least 32.46 of 36 AI Credits" (8 of 9 sessions known); the
+scene's 36 is 90% of the allowance. `demo-fixture-home.test.ts` pins the seeds.
+
 ## 5. Docs mapping and alt text
 
 | Recording | Doc and section | Alt text draft |

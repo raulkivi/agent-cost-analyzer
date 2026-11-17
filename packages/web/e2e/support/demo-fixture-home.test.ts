@@ -16,7 +16,7 @@ import {
   DEMO_UNUSED_TOOLS_SESSIONS,
   DEMO_UNUSED_TOOLS_TOOLS,
 } from "./demo-fixture-home.mts";
-import { createFixtureHome } from "./fixture-home.mts";
+import { ALLOWANCE_KNOWN_SESSION_ID, ALLOWANCE_UNKNOWN_SESSION_ID, createFixtureHome } from "./fixture-home.mts";
 
 // The parts of a pi session line this test reads.
 interface PiLine {
@@ -150,5 +150,39 @@ describe("the shared fixture home", () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
+  });
+});
+
+// DR9 (W4): the demo home with MS8's seeds and no allowance set.
+describe("createDemoFixtureHome with the allowance seeds", () => {
+  let root: string;
+  let home: string;
+  beforeAll(() => {
+    root = mkdtempSync(path.join(tmpdir(), "aica-demo-allowance-home-"));
+    home = path.join(root, "home");
+    createDemoFixtureHome(home, { allowanceSessions: true });
+  });
+  afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+  it("seeds VS Code sessions from 2026-11-01 to 2026-11-06, one of them without cost data", () => {
+    const db = new DatabaseSync(path.join(home, ".config", "Code", "User", "globalStorage", "github.copilot-chat", "session-store.db"), { readOnly: true });
+    try {
+      for (const id of [ALLOWANCE_KNOWN_SESSION_ID, ALLOWANCE_UNKNOWN_SESSION_ID]) {
+        const row = db.prepare("SELECT created_at FROM sessions WHERE id = ?").get(id) as { created_at: string } | undefined;
+        expect(Date.parse(row!.created_at)).toBeGreaterThanOrEqual(Date.parse("2026-11-01T00:00:00.000Z"));
+        expect(Date.parse(row!.created_at)).toBeLessThan(Date.parse("2026-11-06T12:00:00.000Z"));
+      }
+    } finally {
+      db.close();
+    }
+  });
+
+  it("has an Agent Host session store", () => {
+    expect(files(path.join(home, ".config", "Code")).some((file) => file.endsWith("session.db"))).toBe(true);
+  });
+
+  it("starts with no allowance set and no 'fixture-' text", () => {
+    expect(files(home).some((file) => file.endsWith("settings.json") && file.includes("agent-cost-analyzer"))).toBe(false);
+    expect(files(home).filter((file) => readFileSync(file).includes("fixture-"))).toEqual([]);
   });
 });
