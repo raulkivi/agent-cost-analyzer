@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import {
   costBasisTotals,
+  isPricedProvider,
   splitByModel,
   type InsightTurnRow,
   type Session,
@@ -120,6 +121,14 @@ function subagentSummary(session: Session, rows: InsightTurnRow[]): Pick<Session
   };
 }
 
+// A provider without AI Credits (Claude Code): the flag, and why the priced
+// cost is unknown when it is (never 0).
+function withoutAiCreditsFields(providerId: string, rows: InsightTurnRow[]): Pick<SessionCost, "withoutAiCredits" | "pricedCostUnknownReason"> {
+  if (!isPricedProvider(providerId)) return {};
+  const unknown = rows.map((row) => costOf(row).priced).find((priced) => !priced.known);
+  return { withoutAiCredits: true, ...(unknown && !unknown.known ? { pricedCostUnknownReason: unknown.reason } : {}) };
+}
+
 export function buildSessionCost(session: Session, options: SessionCostOptions = {}, context: SessionCostContext = {}): SessionCost {
   const providerId = context.providerId ?? session.providerId ?? "";
   const { turns: rows } = buildInsightRows([{ providerId, providerLabel: "", sessions: [session] }], context.attributor, context.pricer);
@@ -164,6 +173,7 @@ export function buildSessionCost(session: Session, options: SessionCostOptions =
       : {}),
     totals: costMeasures(rows),
     cost: costBasisTotals(rows.map(costOf)),
+    ...withoutAiCreditsFields(providerId, rows),
     cacheHitRatio: cacheHitRatio(rows),
     byModel,
     rankedBy,

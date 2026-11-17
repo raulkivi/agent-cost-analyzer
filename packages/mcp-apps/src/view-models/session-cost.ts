@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: MIT
 import type { SessionCost, TriggeredEvent, TurnSeries } from "@agent-cost-analyzer/domain";
 import { formatAiCreditsValue } from "@agent-cost-analyzer/web/lib/format-ai-credits";
-import { formatDay, formatPercent, formatTokens, measureView, pluralize, valueView } from "./format.js";
+import { formatUsd } from "@agent-cost-analyzer/web/lib/ai-credits-usd";
+import { UNKNOWN_TEXT, formatDay, formatPercent, formatTokens, measureView, pluralize, valueView } from "./format.js";
 import type { MeasureView } from "./format.js";
 import { ACTIVE_NOTE, activeView } from "./active-session.js";
 import type { ActiveView } from "./active-session.js";
@@ -62,7 +63,8 @@ export interface SessionCostViewModel extends ActiveView {
   model: string;
   turnsText: string;
   startedText?: string;
-  tiles: { aiCredits: SessionCostTile; inputTokens: SessionCostTile; cacheHit: SessionCostTile; output: SessionCostTile };
+  // pricedCost: only for a provider without AI Credits (Claude Code).
+  tiles: { pricedCost?: SessionCostTile; aiCredits: SessionCostTile; inputTokens: SessionCostTile; cacheHit: SessionCostTile; output: SessionCostTile };
   chart?: TurnChart;
   rankedBy: RankedBy;
   chartTitle: string; // known before the series loads, so the section heading never flips
@@ -79,6 +81,25 @@ function inputTiles(cost: SessionCost): { inputTokens: SessionCostTile; cacheHit
     inputTokens: withUnknownNote(measureView(cost.totals.inputTokens, formatTokens), notes.inputTokens),
     cacheHit: withUnknownNote(valueView(cost.cacheHitRatio, formatPercent), notes.cacheHit),
   };
+}
+
+// The web app's wording for a provider without AI Credits (SessionKpiTiles,
+// the turn detail): n/a, never Unknown.
+const NO_CREDITS_NOTE = "Claude Code has no AI Credits";
+const NOT_APPLICABLE: MeasureView = { text: "n/a", known: true, estimate: false };
+const PRICED_COST_UNKNOWN = "No priced cost is recorded for this session.";
+
+function creditsTile(cost: SessionCost): SessionCostTile {
+  if (cost.withoutAiCredits !== true) return measureView(cost.totals.aiCredits, formatAiCreditsValue);
+  return { ...NOT_APPLICABLE, unknownNote: NO_CREDITS_NOTE };
+}
+
+// Like the web's pricedSessionTotal: unknown when any turn's priced cost is,
+// with the reason, never the sum of the known turns.
+function pricedCostTile(cost: SessionCost): SessionCostTile {
+  const { priced } = cost.cost;
+  if (priced.turns > 0 && priced.knownTurns === priced.turns && priced.usd !== null) return { text: formatUsd(priced.usd), known: true, estimate: false };
+  return { text: UNKNOWN_TEXT, known: false, estimate: false, unknownNote: cost.pricedCostUnknownReason ?? PRICED_COST_UNKNOWN };
 }
 
 export function eventLabel(event: TriggeredEvent): string {
@@ -151,7 +172,8 @@ export function toSessionCostViewModel(cost: SessionCost, series?: TurnSeries): 
     ...activeView(cost.active),
     ...(cost.active === true ? { activeNote: ACTIVE_NOTE } : {}),
     tiles: {
-      aiCredits: measureView(cost.totals.aiCredits, formatAiCreditsValue),
+      ...(cost.withoutAiCredits === true ? { pricedCost: pricedCostTile(cost) } : {}),
+      aiCredits: creditsTile(cost),
       ...inputTiles(cost),
       output: measureView(cost.totals.output, formatTokens),
     },
@@ -162,7 +184,7 @@ export function toSessionCostViewModel(cost: SessionCost, series?: TurnSeries): 
       turnIndex: turn.turnIndex,
       ...(turn.userMessage.trim() === "" ? { excerpt: PROMPT_NOT_RECORDED, excerptRecorded: false } : { excerpt: turn.userMessage, excerptRecorded: true }),
       ...(turn.triggeredEvent === undefined ? {} : { eventLabel: eventLabel(turn.triggeredEvent) }),
-      aiCredits: valueView(turn.aiCredits, formatAiCreditsValue),
+      aiCredits: cost.withoutAiCredits === true ? NOT_APPLICABLE : valueView(turn.aiCredits, formatAiCreditsValue),
       inputTokens: valueView(turn.inputTokens, formatTokens),
     })),
     contextOverhead: buildOverhead(cost.contextOverhead),

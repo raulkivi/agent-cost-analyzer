@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { describe, expect, it } from "vitest";
-import { measures, sessionCost, total, turnSeries } from "./fixtures.js";
+import { claudeCodeSessionCost, measures, sessionCost, total, turnSeries } from "./fixtures.js";
 import { toSessionCostViewModel } from "./session-cost.js";
 
 describe("toSessionCostViewModel header", () => {
@@ -248,5 +248,39 @@ describe("toSessionCostViewModel active flag (plan §4.7)", () => {
       expect(vm.activeNote).toBeUndefined();
       expect(vm.activeHint).toBeUndefined();
     }
+  });
+});
+
+// A session without AI Credits (Claude Code) matches the web app's KPI tiles
+// (C15, CS2 decision 1): a Priced cost tile and AI Credits n/a, never Unknown.
+describe("toSessionCostViewModel without AI Credits", () => {
+  it("adds a Priced cost tile with the session's priced cost", () => {
+    const { tiles } = toSessionCostViewModel(claudeCodeSessionCost());
+    expect(tiles.pricedCost).toEqual({ text: "$0.288", known: true, estimate: false });
+  });
+
+  it("shows AI Credits as n/a with the reason, not Unknown", () => {
+    const { tiles } = toSessionCostViewModel(claudeCodeSessionCost());
+    expect(tiles.aiCredits).toEqual({ text: "n/a", known: true, estimate: false, unknownNote: "Claude Code has no AI Credits" });
+  });
+
+  it("keeps an unknown priced cost Unknown with its reason, never 0", () => {
+    const { tiles } = toSessionCostViewModel(claudeCodeSessionCost(2, 3));
+    expect(tiles.pricedCost).toEqual({ text: "Unknown", known: false, estimate: false, unknownNote: "The price book has no price for this model." });
+  });
+
+  it("is Unknown, not $0.00, for a session without turns", () => {
+    const { tiles } = toSessionCostViewModel(claudeCodeSessionCost(0, 0));
+    expect(tiles.pricedCost).toMatchObject({ text: "Unknown", known: false });
+  });
+
+  it("reads n/a in every Top turns AI Credits cell", () => {
+    const { topTurns } = toSessionCostViewModel(claudeCodeSessionCost());
+    expect(topTurns.map((turn) => turn.aiCredits)).toEqual(topTurns.map(() => ({ text: "n/a", known: true, estimate: false })));
+  });
+
+  it("leaves a Copilot session without a Priced cost tile", () => {
+    const { tiles } = toSessionCostViewModel(sessionCost());
+    expect(tiles).not.toHaveProperty("pricedCost");
   });
 });

@@ -116,6 +116,12 @@ export const sessionCostSchema = z.object({
   totals: costMeasuresSchema,
   // Step 15.6: the turns' cost per basis, with coverage and the price versions used.
   cost: costBasisTotalsSchema,
+  // The provider has no AI Credits (Claude Code): views show the priced cost
+  // and AI Credits as n/a. Present, and true, only then.
+  withoutAiCredits: z.boolean().optional(),
+  // With withoutAiCredits: why the session's priced cost is unknown (the first
+  // unknown turn's reason); absent when every turn is priced.
+  pricedCostUnknownReason: z.string().optional(),
   cacheHitRatio: ratioSchema, // cache read / input tokens
   byModel: z.array(modelCostSchema),
   rankedBy: costRankingSchema,

@@ -115,7 +115,8 @@ function LoadedSessionCost({ port, brand, clipboard, cost, frame }: { port: AppH
     >
       {vm.activeNote !== undefined && <p className="view-active-note text-muted">{vm.activeNote}</p>}
 
-      <div className="stat-tiles view-tiles">
+      <div className={vm.tiles.pricedCost === undefined ? "stat-tiles view-tiles" : "stat-tiles view-tiles view-tiles--priced"}>
+        {vm.tiles.pricedCost !== undefined && <Tile label="Priced cost" tile={vm.tiles.pricedCost} />}
         <Tile label="AI Credits" tile={vm.tiles.aiCredits} />
         <Tile label="Input tokens" tile={vm.tiles.inputTokens} />
         <Tile label="Cache hit" tile={vm.tiles.cacheHit} />

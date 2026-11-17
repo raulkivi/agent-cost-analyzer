@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { Session, SubagentSpend, Turn, TurnCostFigures, TurnUsage } from "@agent-cost-analyzer/domain";
+import { isPricedProvider, type Session, type SubagentSpend, type Turn, type TurnCostFigures, type TurnUsage } from "@agent-cost-analyzer/domain";
 import { NOT_ATTRIBUTED } from "../insights/insights-dataset-builder.js";
 import { turnLinesOf } from "../pricing/turn-cost-lines.js";
 import type { SessionCostSources } from "../analysis/analysis-query-service.js";
@@ -11,8 +11,6 @@ import { subagentSpendCost } from "./subagent-spend-cost.js";
 // cost from the usage: `pricedCost` on the turn, the main agent's own line
 // and each run, each line priced on its own model (the same lines the cost
 // builders use). Applied to the API's answer only; nothing is stored.
-
-const PRICED_PROVIDER_IDS: ReadonlySet<string> = new Set(["claude-code"]);
 
 function pricedUsage(usage: TurnUsage, whole: TurnCostFigures, lines: readonly TurnCostFigures[] | undefined): TurnUsage {
   const priced = { pricedCost: whole.priced };
@@ -30,7 +28,7 @@ function pricedUsage(usage: TurnUsage, whole: TurnCostFigures, lines: readonly T
 }
 
 export function withPricedCosts(session: Session, providerId: string, sources: SessionCostSources): Session {
-  if (!PRICED_PROVIDER_IDS.has(providerId) || !sources.pricer) return session;
+  if (!isPricedProvider(providerId) || !sources.pricer) return session;
   const pricer = sources.pricer.snapshot();
   const attributor = sources.attribution?.snapshot();
   const runLineCosts: TurnCostFigures[] = [];
