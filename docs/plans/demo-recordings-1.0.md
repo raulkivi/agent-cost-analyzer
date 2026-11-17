@@ -3,11 +3,12 @@
 **Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **in progress**: DR1–DR6 and DR9–DR12 done 2026-11-17 (PRs #394,
-#396–#399, #404–#406, #408, #415, and DR6's live takes); DR7: the owner approved the nine drafts, and the M1, M4
-and M8 takes wait for review. Approved (owner interview 2026-11-16: D29–D43, all
+#396–#399, #404–#406, #408, #415, and DR6's live takes); DR7 done: the owner approved the nine drafts and the M1, M4
+and M8 takes; M1, M4 and M8 are retaken after two fixes (D57, D58). Approved (owner interview 2026-11-16: D29–D43, all
 recommended options accepted). Owner interview 2026-11-17: D44–D51 (GIFs up to
 25 s, retakes of N1, W3, W5 and E3, the recorder stops before the end checks), then D52–D55 (drafts
-approved, the tool-audit chip fix before 1.0, DR6 recorded, the version bump after DR7 and C2). Tracked as step 10.24 in
+approved, the tool-audit chip fix before 1.0, DR6 recorded, the version bump after DR7 and C2), then D56–D59 (M1, M4
+and M8 approved; the chat cost view and savings coverage fixes before 1.0, then their retakes; C2 closed). Tracked as step 10.24 in
 [implementation-plan.md](../implementation-plan.md) and in the
 [Gantt](../implementation-plan-gantt.md). **Start condition:** recording
 work starts after C9 (the monthly allowance in the standalone app, MA13)
@@ -400,3 +401,7 @@ apt. The last column names the tasks (§6) each answer feeds.
 | D53 | W5's chip read "Succeeded 4" beside 3 subagent calls | Accepted (owner, 2026-11-17): **fix before 1.0**: the status chips count only the calls the Agent filter shows (PR #416, app and extension); W5 and E8 retaken | DR11 follow-up |
 | D54 | DR6's timing | Owner, 2026-11-17: **record now**, the demo profile signed in; M8, M4 and M1 recorded the same evening | DR6 |
 | D55 | When the version bump (V30) goes up | Accepted (owner, 2026-11-17): **after DR7 and C2** (the owner's Phase 11 review), so the bump is the last code change | V30 |
+| D56 | DR6's takes M1, M4 and M8 | Owner, 2026-11-17: **all three approved** | DR7 |
+| D57 | A Claude Code session's cost in the chat views read "AI Credits: Unknown" with no priced cost | Accepted (owner, 2026-11-17): **fix before 1.0**: the Priced cost tile and AI Credits n/a, as in the web app; M1 and M4 retaken (paid) | before V30 |
+| D58 | A savings row's coverage line repeated one reason with two counts | Accepted (owner, 2026-11-17): **fix before 1.0**: one entry per reason with the summed count; M8 retaken (paid) with M1 and M4; the free scenes on the 1.0 build (DR13) | before V30 |
+| D59 | C2 (Phase 11) | Accepted (owner, 2026-11-17): **closed**, the `/fork` and `/tree` items documented as known limitations | C2 |
