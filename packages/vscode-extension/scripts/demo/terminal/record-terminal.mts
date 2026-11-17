@@ -108,19 +108,24 @@ async function main(): Promise<void> {
 
     const layout = terminalLayout(FRAME);
     const windows = {} as Record<TerminalName, string>;
-    const forbidden = forbiddenTerms(process.env.DEMO_FORBIDDEN, { homedir: homedir(), username: userInfo().username });
+    // D36: the bare word "fixture" is forbidden too, as in the web scenes (sceneForbiddenTerms).
+    const forbidden = [...forbiddenTerms(process.env.DEMO_FORBIDDEN, { homedir: homedir(), username: userInfo().username }), "fixture"];
 
     const binDir = path.join(tmp, "bin");
     mkdirSync(binDir);
     host = await startBrowserHost({
       display,
-      frame: layout.A,
+      frame: layout.browser,
       now: FIXTURE_NOW,
       forbidden,
       openDelayMs: 2200,
       raiseWindow: async () => {
         const id = await xdo.findWindow("chrom");
         if (id) await xdo.raise(id);
+      },
+      placeWindow: async () => {
+        const id = await waitFor("the browser window", 10_000, () => xdo.findWindow("chrom"));
+        await xdo.placeWindow(id, layout.browser);
       },
       log,
     });
@@ -132,7 +137,7 @@ async function main(): Promise<void> {
     for (const name of ["A", "B"] as const) {
       children.push(spawn("xterm", xtermArgs(name, layout[name]), { cwd: demoDir, env, stdio: "ignore" }));
       windows[name] = await waitFor(`xterm ${name}`, 10_000, () => xdo.findWindowByName(`aica-terminal-${name.toLowerCase()}`));
-      await xdo.fitWindow(windows[name], layout[name]);
+      await xdo.placeWindow(windows[name], layout[name]);
     }
     // The grabbed cursor would sit mid-frame; park it in a corner.
     await xdo.move({ x: FRAME.width - 1, y: FRAME.height - 1 });

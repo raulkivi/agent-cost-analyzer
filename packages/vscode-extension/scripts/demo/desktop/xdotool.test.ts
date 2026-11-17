@@ -44,6 +44,11 @@ describe("Xdotool", () => {
     await xdo.fitWindow("12345", { width: 1600, height: 1000 });
     expect(calls[0].args).toEqual(["windowmove", "12345", "0", "0", "windowsize", "12345", "1600", "1000"]);
   });
+  it("places a window at a rectangle", async () => {
+    const { xdo, calls } = setup();
+    await xdo.placeWindow("12345", { x: 600, y: 0, width: 1000, height: 1000 });
+    expect(calls[0].args).toEqual(["windowmove", "12345", "600", "0", "windowsize", "12345", "1000", "1000"]);
+  });
   it("finds the window id by class", async () => {
     const calls: string[][] = [];
     const xdo = new Xdotool(":93", async (_c, args) => {

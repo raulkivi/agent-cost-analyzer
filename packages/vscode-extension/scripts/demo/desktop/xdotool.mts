@@ -52,6 +52,10 @@ export class Xdotool {
     await this.xdo(["windowmove", id, "0", "0", "windowsize", id, String(frame.width), String(frame.height)]);
   }
 
+  async placeWindow(id: string, rect: { x: number; y: number; width: number; height: number }): Promise<void> {
+    await this.xdo(["windowmove", id, String(rect.x), String(rect.y), "windowsize", id, String(rect.width), String(rect.height)]);
+  }
+
   async raise(id: string): Promise<void> {
     await this.xdo(["windowraise", id, "windowfocus", id]);
   }

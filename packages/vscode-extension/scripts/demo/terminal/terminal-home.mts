@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { createFixtureHome } from "../../../../web/e2e/support/fixture-home.mts";
+import { createDemoFixtureHome } from "../../../../web/e2e/support/demo-fixture-home.mts";
 
-// The one place N1 chooses its made-up HOME. Today it is the shared web e2e fixture home. DR1 adds a demo variant
-// with realistic model names (D36): switch to it here, nowhere else.
+// The one place N1 chooses its made-up HOME: the demo variant of the web e2e fixture home (D36), so the sessions
+// match the other web scenes and no frame reads "fixture".
 export function createTerminalHome(home: string): void {
-  createFixtureHome(home);
+  createDemoFixtureHome(home);
 }

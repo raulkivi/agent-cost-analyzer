@@ -20,6 +20,8 @@ export interface BrowserHostOptions {
   forbidden: string[];
   // Raises the Chromium window; there is no window manager to do it.
   raiseWindow(): Promise<void>;
+  // Moves and sizes the Chromium window to `frame` once it is open (kiosk mode alone fills the screen).
+  placeWindow(): Promise<void>;
   // The browser covers the screen, so it opens or comes forward only after the terminal line has been on screen this long.
   openDelayMs: number;
   log(line: string): void;
@@ -63,6 +65,7 @@ export async function startBrowserHost(o: BrowserHostOptions): Promise<BrowserHo
     await context.clock.setFixedTime(new Date(o.now));
     page = context.pages()[0] ?? (await context.newPage());
     await page.goto(url);
+    await o.placeWindow();
   };
 
   const server: Server = createServer((req, res) => {
@@ -96,9 +99,19 @@ export async function startBrowserHost(o: BrowserHostOptions): Promise<BrowserHo
   // The shared drawn pointer, moved at demo pace like the W scenes' Pointer.
   type PointerApi = { __demoPointer: { moveTo(x: number, y: number): void; ripple(): void } };
   let at: Point = { x: 800, y: 500 };
+  // The header re-lays out while the provider list loads; glide only once the control has stopped moving.
+  const settledBox = async (target: Locator): Promise<{ x: number; y: number; width: number; height: number }> => {
+    let last = await target.boundingBox();
+    for (let i = 0; i < 40; i++) {
+      await sleep(150);
+      const now = await target.boundingBox();
+      if (now && last && now.x === last.x && now.y === last.y && now.width === last.width) return now;
+      last = now;
+    }
+    throw new Error("Pointer target never settled");
+  };
   const glideTo = async (target: Locator): Promise<void> => {
-    const box = await target.boundingBox();
-    if (!box) throw new Error("Pointer target has no box");
+    const box = await settledBox(target);
     const to = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
     for (const point of glidePath(at, to, 18)) {
       await page!.evaluate(({ x, y }) => (window as unknown as PointerApi).__demoPointer.moveTo(x, y), point);
@@ -130,6 +143,7 @@ export async function startBrowserHost(o: BrowserHostOptions): Promise<BrowserHo
       const source = p.getByRole("combobox", { name: "Log provider" });
       await glideTo(source);
       const switched = p.waitForResponse((r) => r.url().endsWith("/api/log-providers/active") && r.ok());
+      // selectOption sets the value without opening the native list (as the web demo driver's pointer.select does).
       await source.selectOption("claude-code");
       await switched;
       // End state of beat 3: the made-up Claude Code sessions are listed.
