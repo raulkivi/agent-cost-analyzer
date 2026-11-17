@@ -230,6 +230,8 @@ on purpose. Fixture code is written test first (as `demo-fixture.test.ts`).
 | Desktop demo home (`createDemoDesktopHome`) | M4, M8 (M1 after C15) | Inherits the web additions. Recommended: register the packaged server (`npx -y --prefer-offline agent-cost-analyzer mcp`, from N1's tarball) in the Desktop profile, so the takes run the 1.0 server; invisible in the GIF |
 | N1 terminal | N1 | `HOME` = a demo-variant fixture home, `AGENT_COST_ANALYZER_NOW` = `FIXTURE_NOW`, `PS1='$ '`, `npm_config_update_notifier=false`, `npm_config_fund=false`; the package installed into an empty demo folder from the tarball (D29); port 5199 free; `DEMO_FORBIDDEN` set as usual |
 
+**As built (D47).** N1's terminals are a full-width 300 px strip at the bottom of the frame and the browser is 1600x700 above it, so both stay readable; N1 runs on `createDemoFixtureHome`.
+
 **As built (DR1, wave 1).**
 
 - Extension demo fixture (`demo-fixture.mts`): `acmedocs` has six tools, loaded in every session of the

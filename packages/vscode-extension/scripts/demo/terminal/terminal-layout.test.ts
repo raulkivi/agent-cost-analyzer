@@ -6,10 +6,15 @@ import { terminalLayout, xtermArgs, XTERM_FONT } from "./terminal-layout.mts";
 const frame = { width: 1600, height: 1000 };
 
 describe("terminalLayout", () => {
-  it("gives Terminal A and Terminal B the whole frame, so whichever is raised fills the recording", () => {
+  it("docks both terminals in a 300 px strip along the bottom, full width, so the CLI's lines do not wrap", () => {
     const layout = terminalLayout(frame);
-    expect(layout.A).toEqual({ x: 0, y: 0, width: 1600, height: 1000 });
+    expect(layout.A).toEqual({ x: 0, y: 700, width: 1600, height: 300 });
     expect(layout.B).toEqual(layout.A);
+  });
+  it("gives the browser the rest of the frame, above the terminals", () => {
+    const { A, browser } = terminalLayout(frame);
+    expect(browser).toEqual({ x: 0, y: 0, width: 1600, height: 700 });
+    expect(browser.y + browser.height).toBe(A.y);
   });
   it("rejects a frame that is not a positive size", () => {
     expect(() => terminalLayout({ width: 0, height: 1000 })).toThrow(/frame/i);
