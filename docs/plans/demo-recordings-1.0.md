@@ -2,9 +2,10 @@
 
 **Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **wave 1 in progress**: DR1–DR5 done 2026-11-17 (PRs #394,
-#396–#399); DR6 and DR7 wait for the owner. Approved (owner interview 2026-11-16: D29–D43, all
-recommended options accepted). Tracked as step 10.24 in
+Status: **in progress**: DR1–DR5 and DR9–DR12 done 2026-11-17 (PRs #394,
+#396–#399, #404–#406, #408); DR6 and DR7 wait for the owner. Approved (owner interview 2026-11-16: D29–D43, all
+recommended options accepted). Owner interview 2026-11-17: D44–D51 (GIFs up to
+25 s, retakes of N1, W3, W5 and E3, the recorder stops before the end checks). Tracked as step 10.24 in
 [implementation-plan.md](../implementation-plan.md) and in the
 [Gantt](../implementation-plan-gantt.md). **Start condition:** recording
 work starts after C9 (the monthly allowance in the standalone app, MA13)
@@ -355,7 +356,8 @@ files but add about 15 MB to history (D42).
 ## 7. Owner decisions
 
 Interview 2026-11-16: the owner accepted the recommended option in every
-row (D29–D43). The recommended option is in bold; the alternatives the owner
+row (D29–D43). Interview 2026-11-17: D44–D51; where the owner chose other than
+the recommendation, the row says so. The recommended option is in bold; the alternatives the owner
 did not choose follow it. D30's owner step: the owner installs `xterm` with
 apt. The last column names the tasks (§6) each answer feeds.
 
@@ -376,3 +378,11 @@ apt. The last column names the tasks (§6) each answer feeds.
 | D41 | A sweep on the 1.0 build | Accepted (owner, 2026-11-16): **yes.** Re-record every free scene in one run (free, about an hour), so look and header version match; paid scenes only where stale. Alternative: retake only the scenes named in §3.3 | DR13 |
 | D42 | Media budget | Accepted (owner, 2026-11-16): **accept about 60 MB** in `docs/images/demo/` and about 15 MB more history from retakes (as D28). Alternative: hold today's size by dropping the unembedded F1–F3 and publishing the largest scenes as MP4 only | DR8 |
 | D43 | Tracking | Accepted (owner, 2026-11-16): **a numbered plan step** ("Demo recordings for 1.0") with a Gantt bar, linked by the coordinator (as D7). Alternative: untracked docs work | DR1 |
+| D44 | DR6's live takes | Accepted (owner, 2026-11-17): **record M8, the M4 retake and the M1 retake** in one sequential Claude Desktop session once the owner's signed-in demo profile is ready (M1's Claude Code turn view changed with C15, DR12). Alternatives: M8 and M4 only; F4 in place of M8; DR6 after 1.0 | DR6 |
+| D45 | W3's opened row | Accepted (owner, 2026-11-17): **the top row on screen** (the `acmedocs` unused-tools row), as §3.3's beats say; the draft opened "Model switched". Alternative: keep the draft | DR3 retake |
+| D46 | W5's Subagents view | Owner, 2026-11-17: **show all 3 subagent calls** (the Succeeded chip, as E8 does), not the failed-only default. Recommended was the failed-only default | DR11 retake |
+| D47 | N1's draft issues | Accepted (owner, 2026-11-17): **fix all three before the final take**: a smaller terminal beside the browser instead of a full-frame one, the browser ends in front on the second run, no Source dropdown flash | DR4 follow-up, DR13 |
+| D48 | GIF length | Owner, 2026-11-17: **GIFs up to 25 s** (was 20 s, the 10.22 rule); the 8 MB size limit stays. E3 keeps all eight beats (turn inspector and back to the session included). Proposed were dropping E3's turn inspector beats, two GIFs, or dropping the editor beat | all scenes; E3 retake |
+| D49 | W2's marker tooltip | Owner, 2026-11-17: **a custom, accessible tooltip on the Turn-cell marker after 1.0**, then a W2 retake; the native `title` tooltip doesn't show in an x11grab take, and the Explanation panel shows the same figures. Recommended was to accept it as is | after 1.0 |
+| D50 | The recorder's tail | Accepted (owner, 2026-11-17): **stop the recording before the end-state checks and privacy probe** in every demo driver, before the final takes; today they add about 5 s of still frames that a trim cuts | DR13 |
+| D51 | Draft review | Accepted (owner, 2026-11-17): **drafts copied to a folder in the owner's home** with an index of what each shows and what to check | DR7 |
