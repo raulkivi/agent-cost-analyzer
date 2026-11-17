@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-17
+
 ### Added
 - Prices for Claude Fable 5.2, Gemini 4 Carbon and Gemini 4 Hydrogen, from the Copilot price table that GitHub publishes (checked 2026-11-16). Gemini 4 Carbon is a promotional price until 2026-12-01.
 - A GitHub Copilot Chat session's turn now lists the tool calls of the subagent runs it started, after the main agent's calls, each marked with the run it belongs to, so the tool-call counts and failures include them. A run whose log is missing, unreadable or empty, a run started by another subagent, and a subagent tool that writes no log are named with the reason their tool calls are unknown, never counted as zero. A call that appears in both the main log and a run's log is counted once.
