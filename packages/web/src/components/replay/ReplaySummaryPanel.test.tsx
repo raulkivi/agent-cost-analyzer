@@ -4,6 +4,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resetViewStateStorage } from "../../state/current-view-state-storage.js";
+import { axeViolations } from "../../test-support/axe.js";
 import { makeReplay, NOT_REPLAYED_REASON } from "../../test-support/replay-fixture.js";
 import { ReplaySummaryPanel } from "./ReplaySummaryPanel.js";
 
@@ -67,6 +68,23 @@ describe("ReplaySummaryPanel (step 14.7, board 2)", () => {
     expect(region).toHaveTextContent("1 subagent run not replayed");
     expect(region).toHaveTextContent("Their cost is unknown: a run log is missing");
     expect(region).not.toHaveTextContent("0.00 AI Credits");
+  });
+
+  it("gives a Claude Code session's runs a priced cost and tokens, not unknown", async () => {
+    const coverage = makeReplay().coverage;
+    const known = (value: number) => ({ known: true as const, value });
+    const unknownCredits = { known: false as const, reason: "AI Credits are Copilot's own billing unit: a Claude Code CLI session has no AI Credits conversion." };
+    const cost = {
+      billed: { known: false as const, reason: "no billing" },
+      reported: { known: false as const, reason: "none" },
+      priced: { known: true as const, amount: 9.2, currency: "USD" as const, basis: "priced" as const },
+    };
+    const tokens = { uncachedInput: known(1_000), cacheWrite: known(2_000), cacheRead: known(30_000_000), output: known(1_400_000) };
+    const { dialog } = renderPanel(makeReplay({ coverage: { ...coverage, subagentRuns: { runs: 1, costAiCredits: unknownCredits, tokens, cost } } }));
+    const region = within(dialog).getByRole("region", { name: "Coverage" });
+    expect(region).toHaveTextContent("1 subagent run not replayed: replay covers the main agent only. Their priced cost is $9.20 for 31.4M tokens.");
+    expect(region).not.toHaveTextContent("Their cost is unknown");
+    expect(await axeViolations(document.body)).toEqual([]);
   });
 
   it("lists the helper agents' requests the replay leaves out, with their cost kept in the measured figures", () => {

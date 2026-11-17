@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import type { Currency, HelperRequests, ReplayCoverage, ReplayPricing, ReplaySelfCheck, ReplaySubagentRuns, SimulatedCost } from "@agent-cost-analyzer/domain";
+import { pricedRunsSentence } from "./subagent-priced.js";
 import { aiCreditsToUsd, formatUsd } from "./ai-credits-usd.js";
 
 // Phase 14 step 14.7: the words and numbers the replay views share (mock-up
@@ -56,10 +57,15 @@ export function subagentRunsSentence(runs: ReplaySubagentRuns | undefined): stri
   return `${runs.runs} subagent ${runs.runs === 1 ? "run" : "runs"} not replayed: replay covers the main agent only`;
 }
 
-// Their AI Credits, or why they are unknown (an unknown is never 0).
+// Their AI Credits (Copilot); without them (Claude Code) their priced cost and
+// tokens (CS4, D13); else why they are unknown (an unknown is never 0).
 export function subagentRunsCostSentence(runs: ReplaySubagentRuns | undefined): string | undefined {
   if (runs === undefined || subagentRunsSentence(runs) === undefined) return undefined;
   const cost = runs.costAiCredits;
+  if (!cost.known) {
+    const priced = pricedRunsSentence(runs.tokens, runs.cost);
+    if (priced !== undefined) return priced;
+  }
   return cost.known ? `Their cost is ${formatReplayAmount(cost.value, "AI_CREDITS")} AI Credits.` : `Their cost is ${UNKNOWN}: ${cost.reason}`;
 }
 
