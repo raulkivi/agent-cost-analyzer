@@ -3,9 +3,9 @@
 // Folder scan of the Claude Code subagent real-data check (plan
 // claude-code-subagents.md §10, CS16): reads ~/.claude/projects as the oracle
 // needs it, and shares no code with the server's readers. Read-only: it opens
-// files for reading, takes `lstat`s, and only `hardLinkView` creates anything,
-// and only under the folder it is given.
-import { linkSync, lstatSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
+// files for reading and takes `lstat`s. (claude-code-view.mts makes the snapshot
+// the check reads.)
+import { lstatSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { MAX_RUN_FILES, type OracleRunInput, type OracleSessionInput, type OracleTranscript } from "./claude-code-subagent-spend-lib.mjs";
 import { parseJsonl } from "./savings-oracle.mjs";
@@ -76,27 +76,6 @@ export function listClaudeSessions(projectsDir: string, now: number): { stable: 
     }
   }
   return { stable, live };
-}
-
-// A hard-linked mirror of the given sessions: the products read it as the real
-// folder (their path rules refuse symlinks), a live session never enters it, and
-// nothing is copied. A hard link is another name for the same file, so removing
-// the view leaves every original as it was.
-export function hardLinkView(sessions: readonly ClaudeSessionFiles[], viewDir: string): void {
-  for (const session of sessions) {
-    for (const source of session.files) {
-      const target = path.join(viewDir, path.relative(path.dirname(path.dirname(session.file)), source));
-      try {
-        mkdirSync(path.dirname(target), { recursive: true });
-        linkSync(source, target);
-      } catch (error) {
-        throw new Error(
-          `Could not hard-link a log file into the view (${(error as NodeJS.ErrnoException).code ?? "error"}). The view folder must be on the same file system as the projects folder: set REAL_DATA_VIEW_PARENT to a folder there.`,
-          { cause: error },
-        );
-      }
-    }
-  }
 }
 
 // --------------------------------------------------------------- the oracle input

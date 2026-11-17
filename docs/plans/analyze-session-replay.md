@@ -539,16 +539,18 @@ raw logs (Claude Code JSONL, `main.jsonl`, the Copilot CLI's
 `events.jsonl`) and the bundled price book, and recomputes per session:
 
 - the turns, the main agent's requests per turn, the turns left out (no
-  request, incomplete counts, helpers only), the subagent runs left out and
-  Copilot local's helper agents' requests;
+  request, incomplete counts, helpers only), the subagent runs left out (Claude
+  Code's from the `subagents/` folder, with their tokens) and Copilot local's
+  helper agents' requests;
 - each turn's logged cache read, the read the own-model replay must
   reproduce (the first request left out, A3) and the recorded D12 outcome;
 - each turn's measured cost: Claude Code priced from the API price book,
   Copilot's local harness billed AI Credits from `main.jsonl`.
 
 It asserts: coverage lists exactly the oracle's turns left out, each with a
-reason, and the oracle's request count; Copilot local's subagent runs equal
-`coverage.subagentRuns`, and its helper agents' requests and their AI Credits
+reason, and the oracle's request count; the subagent runs of Copilot local and
+Claude Code equal `coverage.subagentRuns` (Claude Code's also in tokens, and
+absent where the oracle finds no run), and Copilot local's helper agents' requests and their AI Credits
 equal `coverage.helperRequests`; measured cache reads are exact and measured costs
 within 1e-9; a self-check that passes is confirmed turn by turn (reads
 within 5%, same outcome), and at least one Claude Code and one Copilot
@@ -613,6 +615,11 @@ The transcripts (`<session>/subagents/*.jsonl`) are not replayed. The replay cov
 the main agent only. The session cost counts the runs
 (`docs/plans/claude-code-subagents.md`), the measured side uses the main
 agent's own usage including its own 1-hour cache writes, and
-`coverage.subagentRuns` gives the runs' count, tokens and priced cost. Agent
-Host sub-agent calls are left out the same way; only a turn with nothing
-else shows in coverage (§12.1, the 14.8 note).
+`coverage.subagentRuns` gives the runs' count, tokens and priced cost. The
+real-data check asserts that count and those tokens against an oracle
+(`scripts/claude-subagent-runs-oracle.mts`, unit-tested) that places each run by
+the rules of `docs/plans/claude-code-subagents.md` §5.4 and §6. Its Claude Code
+view holds a copy of each session's `subagents/` folder: the product refuses a
+symlinked folder, so a view of symlinks alone made every `Agent` call read as a
+missing run. Agent Host sub-agent calls are left out the same way; only a turn
+with nothing else shows in coverage (§12.1, the 14.8 note).

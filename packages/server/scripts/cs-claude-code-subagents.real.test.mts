@@ -5,16 +5,17 @@
 // Opt-in and local only:
 //
 //   npm run test:real-data:claude-code-subagents
-//   REAL_DATA_VIEW_PARENT=<dir> ...        (default ~/.cache; must share a file system with ~/.claude/projects)
+//   REAL_DATA_VIEW_PARENT=<dir> ...        (default ~/.cache: where the snapshot copy of the logs is made, about 4 GB; not tmpdir, which may be RAM)
 //   REAL_DATA_CS16_TURNS_PER_SESSION=<n>   (get_turn checks per session, default 2)
 //   REAL_DATA_CS16_REPLAY_SAMPLE=<n>       (sessions replayed, default 15)
 //
 // The oracle (claude-code-subagent-spend-lib.mts, folder scan in
 // claude-code-subagent-spend-scan.mts) reads the raw transcripts and metas and
 // the bundled price book, read-only, and shares no code with the product's
-// readers, attribution, merge or pricer. The products read a hard-linked mirror
-// of the stable sessions (a live session, written in the last 15 minutes, never
-// enters it), so every figure is over the same files: the standalone app over
+// readers, attribution, merge or pricer. The oracle and the products read one
+// snapshot copy of the stable sessions (claude-code-view.mts; a live session,
+// written in the last 15 minutes, never enters it), so every figure is over the
+// same bytes even while a session grows: the standalone app over
 // real HTTP, and its MCP server over an in-memory client, each composed as
 // `mcp/stdio.ts` and `app.ts` compose them, over a temporary settings folder.
 //
@@ -27,7 +28,7 @@
 // response, title, file content, path or money figure from the logs beyond the
 // tolerances.
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, rmSync, statSync } from "node:fs";
+import { mkdtempSync, rmSync, statSync } from "node:fs";
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { homedir, tmpdir } from "node:os";
@@ -66,14 +67,15 @@ import {
   type OracleTurn,
   type RawLine,
 } from "./claude-code-subagent-spend-lib.mjs";
-import { hardLinkView, listClaudeSessions, readOracleInput, type ClaudeSessionFiles } from "./claude-code-subagent-spend-scan.mjs";
+import { LIVE_MS, listClaudeSessions, readOracleInput, type ClaudeSessionFiles } from "./claude-code-subagent-spend-scan.mjs";
+import { buildClaudeCodeView, createViewDir } from "./claude-code-view.mjs";
+import { compareLogs, statLogs, type LogStat } from "./log-write-check.mjs";
 import { leaksIn } from "./replay-oracle.mjs";
 import { loadBundledTables } from "./savings-oracle.mjs";
 
 const REAL_DATA = process.env.REAL_DATA === "1";
 const HOME = homedir();
 const CLAUDE_PROJECTS = path.join(HOME, ".claude", "projects");
-const VIEW_PARENT = process.env.REAL_DATA_VIEW_PARENT ?? path.join(HOME, ".cache");
 const TURNS_PER_SESSION = Math.max(1, Number(process.env.REAL_DATA_CS16_TURNS_PER_SESSION ?? 2));
 const REPLAY_SAMPLE = Math.max(1, Number(process.env.REAL_DATA_CS16_REPLAY_SAMPLE ?? 15));
 // Both sides add the same prices to the same tokens; only summation order differs.
@@ -245,8 +247,10 @@ const textOfUser = (line: RawLine): string => {
   let server: Server | undefined;
   let baseUrl = "";
   let mcp: Client;
-  let before = new Map<string, { size: number; mtimeMs: number }>();
-  let stableFiles: ClaudeSessionFiles[] = [];
+  let before = new Map<string, LogStat>();
+  // The owner's own files behind the snapshot, for the read-only check.
+  let originals: string[] = [];
+  let viewSessions: ClaudeSessionFiles[] = [];
   let live = 0;
   let rows: Row[] = [];
   const raw: Answer[] = [];
@@ -259,26 +263,24 @@ const textOfUser = (line: RawLine): string => {
     if (!response.ok) throw new Error(`GET ${route.replace(/[0-9a-f]{16}/g, "#")} answered ${response.status}`);
     return response.json();
   };
-  const fingerprint = () => new Map(stableFiles.flatMap((s) => s.files).map((f) => [f, statSync(f)] as const).map(([f, s]) => [f, { size: s.size, mtimeMs: s.mtimeMs }] as const));
   const cost = async (row: Row) => sessionCostSchema.parse(await mcpCall(mcp, "get_session_cost", { sessionId: row.id, provider: "claude-code", topTurns: 1 }, raw));
   const detail = async (row: Row): Promise<Session> => sessionSchema.parse(await get(`/api/sessions/${row.id}`));
 
   beforeAll(async () => {
-    const listed = listClaudeSessions(CLAUDE_PROJECTS, startedAt);
-    stableFiles = listed.stable;
-    live = listed.live.length;
-    before = fingerprint();
-    mkdirSync(VIEW_PARENT, { recursive: true });
-    viewDir = mkdtempSync(path.join(VIEW_PARENT, "cs16-claude-view-"));
+    // One snapshot copy (write times kept) that the oracle and the products both read.
+    viewDir = createViewDir("cs16-claude-view-");
     settingsDir = mkdtempSync(path.join(tmpdir(), "cs16-settings-"));
-    hardLinkView(stableFiles, viewDir);
+    const view = buildClaudeCodeView(CLAUDE_PROJECTS, viewDir, startedAt, LIVE_MS);
+    originals = view.targets;
+    live = view.live;
+    before = statLogs(originals);
+    viewSessions = listClaudeSessions(viewDir, startedAt).stable;
 
-    const allFiles = stableFiles.map((s) => s.file);
-    rows = stableFiles.map((files) => {
+    const allFiles = viewSessions.map((s) => s.file);
+    rows = viewSessions.map((files) => {
       const input = readOracleInput(files.file, allFiles);
       const oracle = oracleSession(input);
-      const viewFile = path.join(viewDir, files.project, `${files.sessionId}.jsonl`);
-      const id = createHash("sha256").update(`${viewFile}:${statSync(viewFile).mtimeMs}`).digest("hex").slice(0, 16);
+      const id = createHash("sha256").update(`${files.file}:${statSync(files.file).mtimeMs}`).digest("hex").slice(0, 16);
       return { files, id, oracle, prompts: promptsOf(input), focus: input.runs.length > 0 || oracle.runs.length > 0 || oracle.unknownKinds.length > 0, runCount: oracle.runs.length };
     });
 
@@ -317,7 +319,7 @@ const textOfUser = (line: RawLine): string => {
   afterAll(async () => {
     await mcp?.close();
     await new Promise<void>((resolve) => (server ? server.close(() => resolve()) : resolve()));
-    // Only hard links to the logs: removing them leaves every log as it was.
+    // Only copies: removing them leaves every log as it was.
     if (viewDir) rmSync(viewDir, { recursive: true, force: true });
     if (settingsDir) rmSync(settingsDir, { recursive: true, force: true });
     console.log(["", "Claude Code subagent usage, real-data summary (CS16, automated)", ...summary].join("\n"));
@@ -560,6 +562,9 @@ const textOfUser = (line: RawLine): string => {
     const listedSessions = (await mcpCall(mcp, "list_sessions", { provider: "claude-code", limit: 1000 }, raw)) as { sessions: { id: string; repositoryKey?: string | null }[] };
     for (const s of listedSessions.sessions) sessionRepo.set(s.id, s.repositoryKey ?? null);
     let repos = 0;
+    let seriesSessions = 0;
+    let listedMembers = 0;
+    let sessionListsDiffer = 0;
     let equalToSessions = 0;
     let unexplained = 0;
     for (const repo of repositories.repositories) {
@@ -568,6 +573,13 @@ const textOfUser = (line: RawLine): string => {
       const want = sum(members.map(usdOf));
       const group = rollup.byRepository.find((g) => g.key === repo.key);
       repos += 1;
+      // One frozen input: the series' session count is the list's, per repository.
+      seriesSessions += series.sessions;
+      listedMembers += members.length;
+      if (series.sessions !== members.length) {
+        sessionListsDiffer += 1;
+        problems.push(`repository ${tag(repo.key)}: the series counts ${series.sessions} sessions, the session list ${members.length}`);
+      }
       const usd = series.totals.priced.usd ?? 0;
       if (group !== undefined && Math.abs((group.cost.priced.usd ?? 0) - usd) > USD_TOLERANCE) problems.push(`repository ${tag(repo.key)}: the rollup's group differs from its series`);
       if (Math.abs(usd - want) <= USD_TOLERANCE * Math.max(1, members.length)) equalToSessions += 1;
@@ -585,6 +597,7 @@ const textOfUser = (line: RawLine): string => {
     }
     const groupsUsd = sum(rollup.byRepository.map((g) => g.cost.priced.usd ?? 0));
     if (Math.abs(groupsUsd - (rollup.cost.priced.usd ?? 0)) > USD_TOLERANCE * Math.max(1, rows.length)) problems.push("the repository groups don't add up to the rollup's priced cost");
+    say(`session lists compared: ${repos} repositories, ${seriesSessions} sessions in the series, ${listedMembers} in the list, ${sessionListsDiffer} repositories that differ: ${sessionListsDiffer === 0 ? "PASS" : "FAIL"}`);
     say(`aggregates: Σ runs ${runs} (oracle ${oracleRuns}); rollup over ${rollup.sessionCount} sessions; ${repos} repositories (${equalToSessions} equal to the sum of their sessions, ${repos - equalToSessions - unexplained} differ only where a session ran turns in another folder, ${unexplained} unexplained), groups add up to the rollup: ${problems.length === 0 ? "PASS" : "FAIL"}`);
     expect(problems).toEqual([]);
   }, 1_800_000);
@@ -605,21 +618,10 @@ const textOfUser = (line: RawLine): string => {
   it("left every log untouched (read-only; live sessions left out)", () => {
     // This check runs for many minutes beside Claude Code sessions that may be
     // resumed (or a subagent's meta rewritten as it finishes): a file whose write
-    // time falls after the run began was written by its own session, which a
-    // hard-linked read cannot do. A file that changed with an older write time,
-    // or vanished, would be a write by this check.
-    const after = fingerprint();
-    let unchanged = 0;
-    let appended = 0;
-    const other: string[] = [];
-    for (const [file, was] of before) {
-      const now = after.get(file);
-      if (now === undefined) other.push("a log file vanished");
-      else if (now.size === was.size && now.mtimeMs === was.mtimeMs) unchanged += 1;
-      else if (now.mtimeMs >= startedAt) appended += 1;
-      else other.push(`${tag(file)} changed without a write time after the run began`);
-    }
-    say(`read-only: ${before.size} log files by size and mtime: ${unchanged} unchanged, ${appended} written by their own session during the run (write time after it began), ${other.length} changed without such a write time: ${other.length === 0 ? "PASS" : "FAIL"}`);
-    expect(other).toEqual([]);
+    // time falls after the run began was written by its own session (log-write-check.mts).
+    // A file that vanished, or changed with an older write time, would be a write by this check.
+    const report = compareLogs(before, statLogs(originals), startedAt, tag);
+    say(`read-only: ${before.size} log files by size and mtime: ${report.unchanged} unchanged, ${report.writtenDuringRun} written by their own session during the run (write time after it began), ${report.violations.length} changed without such a write time: ${report.violations.length === 0 ? "PASS" : "FAIL"}`);
+    expect(report.violations).toEqual([]);
   });
 });

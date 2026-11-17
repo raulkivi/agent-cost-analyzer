@@ -27,6 +27,7 @@
 //     write + output × output, per million, from the price version in force at
 //     the turn's start; writes the log doesn't split count as 1-hour (Claude
 //     Code's lifetime). Unknown, never 0, when no single-tier version applies.
+import { placeRuns, type RawRun } from "./claude-subagent-runs-oracle.mjs";
 import { bookModelIds, activeBranchOf, roundsOf, turnsOf, type ModelTables, type RawLine } from "./savings-oracle.mjs";
 
 export interface OracleRequest {
@@ -66,6 +67,10 @@ export interface OracleSession {
   untraced: Map<number, UntracedKind>;
   // Subagent runs the main chain leaves out (D6).
   subagentRuns: number;
+  // Claude Code (C15): the runs' summed tokens, as coverage.subagentRuns lists them;
+  // null when any is unknown; absent when the session lists no run and has no
+  // session-level reason (then coverage.subagentRuns is absent too).
+  subagentTokens?: { uncached: number; cacheWrite: number; cacheRead: number; output: number } | null;
   // The human prompts, for the privacy check only: never printed.
   prompts: string[];
   // Copilot local: the helper agents' requests of every turn.
@@ -127,14 +132,33 @@ const promptText = (content: unknown): string =>
       ? content.map((block) => (isRecord(block) && typeof block.text === "string" ? block.text : "")).join(" ")
       : "";
 
-export function claudeCodeSessionOf(lines: readonly RawLine[]): OracleSession {
-  const turns = turnsOf(activeBranchOf(lines));
-  const agents = new Set(lines.filter((l) => l.isSidechain === true && typeof l.agentId === "string").map((l) => l.agentId as string));
+// The runs of the session's subagents/ folder (C15): the session's turns hold
+// them, the replay leaves them out and coverage.subagentRuns lists them.
+export interface ClaudeCodeRuns {
+  runs: readonly RawRun[];
+  heldElsewhere?: ReadonlySet<string>;
+}
+
+export function claudeCodeSessionOf(lines: readonly RawLine[], folder: ClaudeCodeRuns = { runs: [] }): OracleSession {
+  const chain = activeBranchOf(lines);
+  const turns = turnsOf(chain);
+  const placed = placeRuns({
+    branch: chain,
+    sessionLines: lines,
+    turns: turns.map((turn) => ({ index: chain.indexOf(turn.lines[0]!), ms: timeOf(turn.lines[0]!.timestamp) ?? null })),
+    runs: folder.runs,
+    heldElsewhere: folder.heldElsewhere,
+  });
+  const all = [...placed.byTurn.values()];
+  const listed = placed.runCount > 0 || placed.sessionUnknown;
+  const unknown = placed.sessionUnknown || all.some((turn) => turn.unknown || turn.runs.some((run) => run.tokens === null));
+  const sum = (field: "uncached" | "cacheWrite" | "cacheRead" | "output") => all.reduce((n, turn) => n + turn.runs.reduce((m, run) => m + (run.tokens?.[field] ?? 0), 0), 0);
   return assemble(
     turns.map((turn) => roundsOf(turn).map((round) => claudeFigures(round.lines))),
     {
       turnStartMs: turns.map((turn) => timeOf(turn.lines[0]!.timestamp)),
-      subagentRuns: agents.size,
+      subagentRuns: placed.runCount,
+      ...(listed ? { subagentTokens: unknown ? null : { uncached: sum("uncached"), cacheWrite: sum("cacheWrite"), cacheRead: sum("cacheRead"), output: sum("output") } } : {}),
       prompts: turns.map((turn) => promptText((turn.lines[0]!.message as Record<string, unknown> | undefined)?.content)),
     },
   );

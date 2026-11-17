@@ -2207,14 +2207,18 @@ finds them, and the oracle rebuilds them from their raw stores.
 
 **Oracle.** `scripts/cost-by-project-oracle.mts`, unit-tested in
 `cost-by-project-oracle.test.mts` (a test checks it imports nothing from the
-product but `savings-oracle.mts`'s model spellings). It reads:
+product but the model spellings of `savings-oracle.mts` and the placement rules
+of `claude-subagent-runs-oracle.mts`). It reads:
 
 - repository (§4.2, re-implemented): walk up to `.git`, follow a `.git` file to
   its `gitdir` and `commondir`, take `origin` (else the first remote) and
   normalise it; `local:<root>` without a remote; `path:<folder>` outside a
   repository; the recorded repository only when the folder is gone;
 - turns, from the raw logs: Claude Code (the active branch, real prompts, one
-  request per message id, `<synthetic>` left out), pi (a user message to the
+  request per message id, `<synthetic>` left out, plus the subagent runs the
+  turn's `Agent` calls started, one part per run on its own model, each round
+  once, fork copies and off-branch runs not counted, a missing run making the
+  turn unknown; C15, `claude-code-subagents.md` §5.4 and §6), pi (a user message to the
   next, every usage), Copilot Chat (session-store rows of interactive chat,
   agent name `GitHub Copilot Chat` per
   [agentic-coding-explained.md](../agentic-coding-explained.md) §18.2, usage

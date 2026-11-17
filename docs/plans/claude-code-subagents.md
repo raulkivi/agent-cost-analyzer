@@ -371,7 +371,7 @@ Unknown is never 0. Each row is a tested reason.
 | 1-hour cache writes priced at the 5-minute rate | Cost too low | `extendedCacheWrite` on runs and `ownUsage` (§5.5) |
 | Background runs credited to an earlier turn (D1) | Per-turn figures and "most expensive turn" skewed | Documented; the run shows when it ended |
 | Schema change touches Copilot paths | Copilot regressions | Optional fields only; SA18 suite re-run |
-| V3 and V4 real-data checks assume today's totals | Their oracles disagree after the fold | Re-run both after CS10; their oracles compare `ownUsage` or add runs |
+| V3 and V4 real-data checks assume today's totals | Their oracles disagree after the fold | Re-run both after CS10; their oracles add runs by the same rules, independently (`scripts/claude-subagent-runs-oracle.mts`). Both checks read a view with a real copy of each `subagents/` folder (`claude-code-view.mts`), because a symlinked folder is refused (§5.3) and every call would read as missing |
 | Hostile `agentType` | Rendering or injection surface | Patterns, caps, text nodes (§7) |
 
 ## 10. Exit criterion
