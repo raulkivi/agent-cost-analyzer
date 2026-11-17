@@ -65,7 +65,20 @@ export const DEMO_PI_SESSION = {
 // (the self-check passes) and F4's Open replay shows a clean result.
 export const DEMO_CLAUDE_SESSION = { id: "c0000000-0000-4000-8000-0000000000d4", startedAt: "2026-11-04T10:00:00.000Z" } as const;
 
-const PI_FIXTURE = path.resolve(import.meta.dirname, "../../../server/fixtures/pi-agent/generated/pi-linear.jsonl");
+// DR12 (W2 extended): a Claude Code session in portal-api, 2026-11-02, whose second turn started one
+// subagent run (CS3's linked shape: `subagents/agent-<id>.jsonl` plus `.meta.json`, the run found by
+// the Agent call's id). Main agent on Sonnet, the run on Haiku, both priced from the book, so the
+// Turn-cell marker and the Explanation's Subagent runs block show figures. Turn one has no run, so the session opens on a turn without one.
+export const DEMO_CLAUDE_SUBAGENT_SESSION = {
+  id: "c0000000-0000-4000-8000-0000000000e5",
+  startedAt: "2026-11-02T09:00:00.000Z",
+  runId: "ae5000000000000e5",
+  toolUseId: "toolu_demo_review",
+  runModel: "claude-haiku-5-5",
+  mainModel: "claude-sonnet-5-5",
+} as const;
+
+const PI_FIXTURE =path.resolve(import.meta.dirname, "../../../server/fixtures/pi-agent/generated/pi-linear.jsonl");
 // What the generated fixture records, which the demo replaces.
 const GENERATED_FOLDER = "/home/user/project";
 const GENERATED_MODEL = "qwen3.8-flash-next:setup6";
@@ -183,12 +196,81 @@ function retitleFixtureSessions(home: string): void {
   }
 }
 
+interface Round {
+  at: number; // seconds after the session start
+  model: string;
+  msg: string;
+  content: unknown[];
+  usage: { input: number; cacheWrite: number; cacheRead: number; output: number };
+  stop: string | null;
+}
+
+function claudeSubagentSession(home: string, cwd: string): void {
+  const { id, startedAt, runId, toolUseId, runModel, mainModel } = DEMO_CLAUDE_SUBAGENT_SESSION;
+  const time = (seconds: number) => new Date(Date.parse(startedAt) + seconds * 1000).toISOString();
+  const common = { userType: "external", entrypoint: "cli", cwd, sessionId: id, version: "2.1.320", gitBranch: "main" };
+  const usage = (u: Round["usage"]) => ({
+    input_tokens: u.input,
+    cache_creation_input_tokens: u.cacheWrite,
+    cache_read_input_tokens: u.cacheRead,
+    output_tokens: u.output,
+    service_tier: "standard",
+    cache_creation: { ephemeral_1h_input_tokens: u.cacheWrite, ephemeral_5m_input_tokens: 0 },
+  });
+  // A round is one API request; a tool call gives it a second line with the same message id.
+  const assistant = (uuid: string, parentUuid: string, round: Round, sidechain: Record<string, unknown>) => ({
+    parentUuid,
+    isSidechain: false,
+    ...sidechain,
+    ...common,
+    type: "assistant",
+    message: { model: round.model, id: `msg_${round.msg}`, type: "message", role: "assistant", content: round.content, stop_reason: round.stop, usage: usage(round.usage) },
+    requestId: `req_msg_${round.msg}`,
+    uuid,
+    timestamp: time(round.at),
+  });
+  const text = (value: string) => ({ type: "text", text: value });
+
+  const call = assistant("e5-s2b", "e5-s2a", {
+    at: 304, model: mainModel, msg: "e5_s2", stop: "tool_use", usage: { input: 900, cacheWrite: 600, cacheRead: 18_000, output: 140 },
+    content: [{ type: "tool_use", id: toolUseId, name: "Agent", input: { description: "Review the session handler", subagent_type: "general-purpose", prompt: "Read the session handler and list the places that skip validation." } }],
+  }, {});
+  const lines = [
+    { parentUuid: null, isSidechain: false, ...common, type: "user", message: { role: "user", content: "Show me how the session handler is structured." }, uuid: "e5-u1", timestamp: time(0), promptId: "p1", origin: { kind: "human" } },
+    assistant("e5-s1a", "e5-u1", { at: 5, model: mainModel, msg: "e5_s1", stop: "end_turn", usage: { input: 1200, cacheWrite: 18_000, cacheRead: 0, output: 400 }, content: [text("It has three handlers: create, refresh and revoke.")] }, {}),
+    { parentUuid: "e5-s1a", isSidechain: false, ...common, type: "user", message: { role: "user", content: "Review the session handler for missing validation." }, uuid: "e5-u2", timestamp: time(300), promptId: "p2", origin: { kind: "human" } },
+    assistant("e5-s2a", "e5-u2", { at: 302, model: mainModel, msg: "e5_s2", stop: null, usage: { input: 900, cacheWrite: 600, cacheRead: 18_000, output: 140 }, content: [text("I will hand the review to a helper.")] }, {}),
+    call,
+    { parentUuid: "e5-s2b", isSidechain: false, ...common, type: "user", message: { role: "user", content: [{ type: "tool_result", tool_use_id: toolUseId, content: "Async agent launched successfully." }] }, uuid: "e5-tr1", timestamp: time(306), toolUseResult: { isAsync: true, status: "async_launched", agentId: runId, agentType: "general-purpose" } },
+    assistant("e5-s3a", "e5-tr1", { at: 340, model: mainModel, msg: "e5_s3", stop: "end_turn", usage: { input: 1500, cacheWrite: 700, cacheRead: 18_600, output: 420 }, content: [text("The helper found three handlers that skip validation.")] }, {}),
+  ];
+
+  const runCommon = { isSidechain: true, agentId: runId, ...common };
+  const runRound = (n: number, parentUuid: string, at: number, u: Round["usage"], content: unknown[], stop: string | null) =>
+    assistant(`e5-ra${n}`, parentUuid, { at, model: runModel, msg: `e5_run${n}`, content, usage: u, stop }, { isSidechain: true, agentId: runId });
+  const runLines = [
+    { parentUuid: null, ...runCommon, type: "user", message: { role: "user", content: "Read the session handler and list the places that skip validation." }, uuid: "e5-ru1", timestamp: time(305), promptId: "rp1" },
+    runRound(1, "e5-ru1", 309, { input: 400, cacheWrite: 2400, cacheRead: 0, output: 90 }, [{ type: "tool_use", id: "toolu_demo_read", name: "Read", input: { file_path: `${cwd}/src/session-handler.ts` } }], "tool_use"),
+    { parentUuid: "e5-ra1", ...runCommon, type: "user", message: { role: "user", content: [{ type: "tool_result", tool_use_id: "toolu_demo_read", content: "1\texport function handle(request) {" }] }, uuid: "e5-rtr1", timestamp: time(312) },
+    runRound(2, "e5-rtr1", 330, { input: 480, cacheWrite: 0, cacheRead: 2800, output: 260 }, [text("Three handlers skip validation: create, refresh and revoke.")], "end_turn"),
+  ];
+
+  const sessionDir = path.join(home, ".claude", "projects", cwd.replace(/[^A-Za-z0-9]/g, "-"));
+  const runDir = path.join(sessionDir, id, "subagents");
+  mkdirSync(runDir, { recursive: true });
+  const jsonl = (items: unknown[]) => `${items.map((item) => JSON.stringify(item)).join("\n")}\n`;
+  writeFileSync(path.join(sessionDir, `${id}.jsonl`), jsonl(lines));
+  writeFileSync(path.join(runDir, `agent-${runId}.jsonl`), jsonl(runLines));
+  writeFileSync(path.join(runDir, `agent-${runId}.meta.json`), `${JSON.stringify({ agentType: "general-purpose", isBuiltIn: true, model: "haiku", finished: true, toolUseId, spawnDepth: 1 }, null, 2)}\n`);
+}
+
 export function createDemoFixtureHome(home: string, options: FixtureOptions = {}): FixtureHome {
   const fixture = createFixtureHome(home, options);
   copilotUnusedToolsSessions(home, fixture.folders.scratch);
   piLocalModelSession(home, fixture.folders.scratch);
   claudeSingleModelSession(home, fixture.folders.scratch);
   retitleFixtureSessions(home);
+  claudeSubagentSession(home, fixture.folders.portalApi);
   renameModels(home);
   if (options.auditSessions) rewriteAuditText(home);
   return fixture;
