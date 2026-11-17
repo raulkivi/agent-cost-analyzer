@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 // A demo scene as data: ordered steps, each followed by a pause so a viewer can read the frame.
 
-export type SceneId = `${"E" | "W" | "M" | "F"}${number}`;
+export type SceneId = `${"E" | "W" | "M" | "F" | "N"}${number}`;
 export type DemoStep<A> = { label: string; action: A; beatMs: number };
 export type Scene<A> = { id: SceneId; slug: string; title: string; steps: DemoStep<A>[] };
 
@@ -21,7 +21,7 @@ export async function playScene<A>(
   }
 }
 
-const ID = /^[EWMF][0-9]+$/;
+const ID = /^[EWMFN][0-9]+$/;
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 // Fails early so a typo surfaces before a recording starts, not after.

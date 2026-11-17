@@ -1,6 +1,6 @@
 # VS Code UI automation of the manual checks
 
-**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **merged to `main` (#117, #121, #127; later specs #139, #157,
 #172); T15 and Q2 closed by the owner's decision D4, 2026-11-11: the job is required and runs in the release workflow (step 10.17 G1, #202)**; §6 records
@@ -637,6 +637,14 @@ Commands:
   - `AICA_DEMO_DEBUG_DIR` keeps the last frame of a failed take. That frame can show the account, so never commit it.
   - Trim each Desktop GIF to start 1 s before the view appears, at most 20 s.
   - Each take's JSON records the Desktop version. Desktop updates itself and cannot be pinned.
+- Terminal scenes (N1): `npm run demo:record:terminal -w packages/vscode-extension -- N1`. `--dry-run` plays the scene without recording and saves a frame at each template wait to `AICA_DEMO_DEBUG_DIR`, to cut templates from.
+  - Prerequisites: `xterm`, `xdotool`, Xvfb, `curl`, python3 with OpenCV (`cv2`), and Playwright's Chromium. Build the web package and the CLI first (`npm run build`).
+  - The scene runs on its own Xvfb (1600×1000, no window manager). Two `xterm` windows (Terminal A and B) fill the frame, and `xdotool` raises one at a time.
+  - `npx agent-cost-analyzer` runs from an `npm pack` tarball of `packages/cli`, installed into an empty folder (D29). `HOME` is a fixture home (`terminal-home.mts` is the one place to switch it).
+  - The CLI's own `xdg-open` call hits a wrapper first on the demo `PATH`. It posts the URL to the driver, which opens a throwaway Playwright Chromium (kiosk, fixed clock). The privacy probe reads that page. The browser opens or comes forward about 2 s after the terminal line, so the line stays on screen.
+  - Port 5199 must be free; the driver checks first and fails with a clear message.
+  - Waits poll `GET /api/health` and template-match the terminal line (`n1-start-line.png`, `n1-already-running.png`; no version in them).
+  - The terminal has no DOM: review every frame.
 
 Rules:
 
