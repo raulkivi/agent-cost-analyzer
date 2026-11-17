@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { test as base, expect } from "@playwright/test";
 import { createDemoFixtureHome } from "../../../web/e2e/support/demo-fixture-home.mts";
-import { createFixtureHome } from "../../../web/e2e/support/fixture-home.mts";
+import { createFixtureHome, FIXTURE_NOW } from "../../../web/e2e/support/fixture-home.mts";
 import { connectStdioMcp } from "../../../web/e2e/support/mcp-stdio.js";
 import { CLAUDE_SETS, VSCODE_SETS, type HostSet } from "../../test/theme/host-sets.js";
 import { hostProfileFrom, type HostProfile, type HostRecording } from "./host-context.js";
@@ -49,7 +49,7 @@ export const test = base.extend<{ hostKind: HostKind; hostSet: HostSet; withProj
     if (!existsSync(VIEWS_HTML)) throw new Error("packages/mcp-apps/dist/views.html is not built: run `npm run build --workspace=packages/mcp-apps` first");
     const home = mkdtempSync(path.join(os.tmpdir(), "aca-e2e-mcp-apps-"));
     (demoHome ? createDemoFixtureHome : createFixtureHome)(home, { projects: withProjects });
-    const server = await connectStdioMcp(home, { args: ["--app-views-html", VIEWS_HTML], clientName: "fake-mcp-apps-host" });
+    const server = await connectStdioMcp(home, { args: ["--app-views-html", VIEWS_HTML], clientName: "fake-mcp-apps-host", ...(demoHome ? { env: { AGENT_COST_ANALYZER_NOW: FIXTURE_NOW } } : {}) });
     try {
       const host = await McpHost.open(page, server, recordedProfile(hostKind, hostSet), hostSet);
       await use(host);
