@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A cache-break row (idle expiry, no idle gap, model switch) now leaves a session with any break that has no price out of its amount and lists it under the row's coverage with the reason, as the failed-calls row does; the session's own saving reads "Not priced". Before, the amount counted such a session's priced breaks only.
 
 ### Fixed
+- The Tool audit tab's status chips (Succeeded, Failed and the rest) count only the calls the Agent filter shows. With Subagents selected, the chips no longer include the main agent's calls, so each chip matches the rows it toggles.
 - Reading a Copilot or VS Code session store no longer fails with "database is locked" while VS Code or Copilot is writing to it. The read now waits up to 5 seconds for the other app's commit instead of failing at once; the analyzer still never writes those files.
 - A session in a savings row whose VS Code Agent Host title only repeated its first prompt no longer shows "Session <id>" as its title: the row shows the id alone, as for any untitled session.
 - VS Code Agent Host sessions that some VS Code Insiders builds cataloged under an `ahp-session:/` URI, instead of `copilotcli:/`, were missing everywhere: the sessions list, costs and savings. They now appear like any other Agent Host session, with their turns, AI Credits and turn text. A session cataloged under both URIs shows once.

@@ -223,6 +223,21 @@ describe("SessionAuditPanel", () => {
       expect(callRows()).toHaveLength(3);
     });
 
+    it("counts only the calls the Agent filter shows in each status chip", async () => {
+      renderSubagents();
+      const group = await screen.findByRole("group", { name: "Agent" });
+      const chipCounts = () =>
+        screen
+          .getAllByRole("button", { name: /^\S*\s?(Succeeded|Failed|Canceled|Interrupted|Denied|Unknown) \d+$/ })
+          .map((chip) => Number(/(\d+)$/.exec(chip.textContent ?? "")?.[1]));
+      const total = () => chipCounts().reduce((sum, n) => sum + n, 0);
+      expect(total()).toBe(7);
+      fireEvent.click(within(group).getByRole("button", { name: /^Main agent/ }));
+      expect(total()).toBe(4);
+      fireEvent.click(within(group).getByRole("button", { name: /^Subagents/ }));
+      expect(total()).toBe(3);
+    });
+
     it("shows Main or the run label with its depth in the Agent column", async () => {
       renderSubagents();
       await screen.findByRole("table", { name: "Tool calls" });

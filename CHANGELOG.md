@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The MCP tool descriptions and server instructions now explain Claude Code subagent runs: a turn's tokens include them, `get_session_cost`'s `subagents` gives tokens and priced cost, replay leaves them out, and an unread or unplaced run is unknown, never 0
 
 ### Fixed
+- The Tool audit tab's status chips (Succeeded, Failed and the rest) count only the calls the Agent filter shows. With Subagents selected, the chips no longer include the main agent's calls, so each chip matches the rows it toggles.
 - The replay summary of a Claude Code session with subagent runs now gives the runs' priced cost and tokens ("Their priced cost is $9.20 for 31.4M tokens.") instead of "Their cost is unknown: AI Credits are GitHub Copilot's own billing unit". A Copilot session keeps its AI Credits sentence. If the priced cost itself is unknown, the sentence says so with the reason, never 0.
 - Reading a Copilot or VS Code session store no longer fails with "database is locked" while VS Code or Copilot is writing to it. The read now waits up to 5 seconds for the other app's commit instead of failing at once; the analyzer still never writes those files.
 - A session in a savings row whose VS Code Agent Host title only repeated its first prompt no longer shows "Session <id>" as its title: the row shows the id alone, as for any untitled session.

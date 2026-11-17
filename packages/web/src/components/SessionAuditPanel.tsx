@@ -172,13 +172,16 @@ function SessionAuditBody({
   const knownOutcomes = data.outcomeCoverage.known;
   const failed = failedCountOf(data.totals);
   const shellCalls = data.byShellProgram.reduce((sum, row) => sum + row.calls, 0);
-  const statusCounts = new Map<ToolCallStatus, number>([...STATUS_ORDER, "canceled" as const].map((status) => [status, data.calls.filter((c) => statusOf(c) === status).length]));
   const canceled = canceledOf(data.totals);
   const { byOrigin, subagentRuns } = data;
-  const filtered = data.calls.filter(
+  // Chips count what the Agent filter leaves, so a chip always matches the rows it toggles.
+  const agentCalls = data.calls.filter((audited) => matchesAgentFilter(audited.call.origin, agentFilter));
+  const statusCounts = new Map<ToolCallStatus, number>(
+    [...STATUS_ORDER, "canceled" as const].map((status) => [status, agentCalls.filter((c) => statusOf(c) === status).length]),
+  );
+  const filtered = agentCalls.filter(
     (audited) =>
       statusFilter.includes(statusOf(audited)) &&
-      matchesAgentFilter(audited.call.origin, agentFilter) &&
       (!categoryFilter || audited.call.outcome?.failureCategory === categoryFilter) &&
       (!programFilter || audited.call.shell?.program === programFilter),
   );
