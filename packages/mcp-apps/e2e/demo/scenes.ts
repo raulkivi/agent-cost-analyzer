@@ -15,6 +15,8 @@ export interface DemoContext {
   view: ViewFrame;
   // The fixture's two-turn Claude Code session of 2026-10-05 (F3's replay).
   session: { sessionId: string; provider: string };
+  // Fails the take if the screen shows an owner-private string (F4 sets it; the end state of F1 to F3 is checked by their specs).
+  probe?: () => Promise<void>;
 }
 
 export const DEMO_MAX_SECONDS = 20;
@@ -130,11 +132,27 @@ export const F4 = (context: DemoContext): DemoScene => ({
   slug: "savings",
   title: "Savings: a row, its tools and sessions, replay",
   steps: [
-    { label: "Open the unused-tools row", beatMs: 1800, action: (_page, pointer) => pointer.click(context.view.content.getByRole("button", { name: UNUSED_TOOLS_ROW })) },
+    {
+      label: "Open the unused-tools row",
+      beatMs: 1800,
+      action: async (_page, pointer) => {
+        await pointer.click(context.view.content.getByRole("button", { name: UNUSED_TOOLS_ROW }));
+        await context.probe?.();
+      },
+    },
     { label: "Look at its per-tool list", beatMs: 1600, action: (_page, pointer) => pointer.glideTo(context.view.content.getByRole("region", { name: "Tools" })) },
     { label: "Look at its sessions", beatMs: 1800, action: (_page, pointer) => pointer.glideTo(context.view.content.getByRole("region", { name: "Sessions" })) },
-    { label: "Open the cheaper-model row", beatMs: 1000, action: (_page, pointer) => pointer.click(context.view.content.getByRole("button", { name: CHEAPER_MODEL_ROW })) },
-    { label: "Open replay on its session", beatMs: 2000, action: (_page, pointer) => pointer.click(context.view.content.getByRole("button", { name: /^Open replay for session/ })) },
+    // Two rows name haiku; the last is the demo home's single-model Claude Code session, whose self-check passes.
+    { label: "Open the cheaper-model row", beatMs: 1000, action: (_page, pointer) => pointer.click(context.view.content.getByRole("button", { name: CHEAPER_MODEL_ROW }).last()) },
+    {
+      label: "Open replay on its session",
+      beatMs: 2000,
+      action: async (_page, pointer) => {
+        await pointer.click(context.view.content.getByRole("button", { name: /^Open replay for session/ }));
+        await context.view.content.getByText(/Self-check passed/).waitFor();
+        await context.probe?.();
+      },
+    },
     { label: "Back to savings, focus on the session", beatMs: 1400, action: (_page, pointer) => pointer.click(context.view.backButton("Back to savings")) },
   ],
 });

@@ -15,6 +15,7 @@
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { writeClaudeCodeSession } from "../../../server/src/test-support/claude-code-session-writer.ts";
 import { writeSavingsVscodeSession } from "../../../server/src/test-support/savings-fixtures.ts";
 import { createFixtureHome, type FixtureHome, type FixtureOptions } from "./fixture-home.mts";
 import { piSessionFolder } from "./pi-session-folder.mts";
@@ -49,6 +50,11 @@ export const DEMO_PI_SESSION = {
   startedAt: "2026-10-31T10:00:00.000Z",
   prompts: ["Show me the notes folder.", "Move the old notes into an archive folder.", "Add a short index file.", "Check that nothing was lost."],
 } as const;
+
+// A single-model Claude Code session in the scratch repository, inside the 30 days: every turn on one
+// model, each reading the cache the one before wrote, so a replay on its own model matches its log
+// (the self-check passes) and F4's Open replay shows a clean result.
+export const DEMO_CLAUDE_SESSION = { id: "c0000000-0000-4000-8000-0000000000d4", startedAt: "2026-11-04T10:00:00.000Z" } as const;
 
 const PI_FIXTURE = path.resolve(import.meta.dirname, "../../../server/fixtures/pi-agent/generated/pi-linear.jsonl");
 // What the generated fixture records, which the demo replaces.
@@ -131,10 +137,21 @@ function renameModels(home: string): void {
   }
 }
 
+function claudeSingleModelSession(home: string, cwd: string): void {
+  const at = (minutes: number) => new Date(Date.parse(DEMO_CLAUDE_SESSION.startedAt) + minutes * 60_000).toISOString();
+  writeClaudeCodeSession(path.join(home, ".claude", "projects"), DEMO_CLAUDE_SESSION.id, cwd, [
+    { at: at(0), input: 3000, cacheWrite: 60_000, output: 900 },
+    { at: at(4), input: 300, cacheRead: 63_000, cacheWrite: 1700, output: 800 },
+    { at: at(8), input: 300, cacheRead: 65_000, cacheWrite: 1500, output: 700 },
+    { at: at(12), input: 300, cacheRead: 66_800, cacheWrite: 1300, output: 600 },
+  ]);
+}
+
 export function createDemoFixtureHome(home: string, options: FixtureOptions = {}): FixtureHome {
   const fixture = createFixtureHome(home, options);
   copilotUnusedToolsSessions(home, fixture.folders.scratch);
   piLocalModelSession(home, fixture.folders.scratch);
+  claudeSingleModelSession(home, fixture.folders.scratch);
   renameModels(home);
   return fixture;
 }

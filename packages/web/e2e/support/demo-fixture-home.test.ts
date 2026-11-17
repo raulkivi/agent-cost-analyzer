@@ -8,6 +8,7 @@ import { DatabaseSync } from "node:sqlite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   createDemoFixtureHome,
+  DEMO_CLAUDE_SESSION,
   DEMO_COPILOT_MODELS,
   DEMO_LOCAL_MODEL,
   DEMO_PI_SESSION,
@@ -113,6 +114,21 @@ describe("createDemoFixtureHome", () => {
     expect(declared.filter((name) => !called.includes(name)).length).toBeGreaterThan(0);
   });
 
+  it("adds a single-model Claude Code session in the window, whose cache reads follow its writes, for a replay whose self-check passes", () => {
+    const file = files(path.join(home, ".claude", "projects")).find((f) => f.includes(DEMO_CLAUDE_SESSION.id));
+    expect(file).toBeDefined();
+    const lines = readFileSync(file!, "utf8").trim().split("\n").map((line) => JSON.parse(line) as { type: string; timestamp?: string; message?: { model?: string; usage?: { cache_read_input_tokens?: number } } });
+    const assistants = lines.filter((line) => line.type === "assistant");
+    expect(assistants.length).toBeGreaterThanOrEqual(3);
+    expect(new Set(assistants.map((line) => line.message?.model)).size).toBe(1);
+    for (const line of lines) {
+      expect(NOW - Date.parse(line.timestamp!)).toBeLessThan(30 * DAY_MS);
+      expect(Date.parse(line.timestamp!)).toBeLessThan(NOW);
+    }
+    // Every later turn reads the cache the first one wrote.
+    for (const line of assistants.slice(1)) expect(line.message?.usage?.cache_read_input_tokens ?? 0).toBeGreaterThan(0);
+  });
+
   it("holds nothing of the generated fixture's folder or the owner's model alias", () => {
     const text = textOf(home, ".jsonl");
     expect(text).not.toContain("/home/user/project");
@@ -129,6 +145,7 @@ describe("the shared fixture home", () => {
       const all = files(home).join("\n") + textOf(home, ".jsonl");
       expect(all).not.toContain(DEMO_PI_SESSION.id);
       for (const session of DEMO_UNUSED_TOOLS_SESSIONS) expect(all).not.toContain(session.id);
+      expect(all).not.toContain(DEMO_CLAUDE_SESSION.id);
       expect(all).toContain("fixture-main-model");
     } finally {
       rmSync(root, { recursive: true, force: true });
