@@ -1,6 +1,6 @@
 # Demo recordings for the 1.0 features
 
-**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **approved, not started** (owner interview 2026-11-16: D29–D43, all
 recommended options accepted). Tracked as step 10.24 in
@@ -227,6 +227,24 @@ on purpose. Fixture code is written test first (as `demo-fixture.test.ts`).
 | Demo variant with realistic model names | N1, W2–W5, F4 | D21's rename (`DEMO_COPILOT_MODELS`, today used by `createDemoDesktopHome`) for the web and fake-host demos too, so no frame reads "fixture-…" (D36) |
 | Desktop demo home (`createDemoDesktopHome`) | M4, M8 (M1 after C15) | Inherits the web additions. Recommended: register the packaged server (`npx -y --prefer-offline agent-cost-analyzer mcp`, from N1's tarball) in the Desktop profile, so the takes run the 1.0 server; invisible in the GIF |
 | N1 terminal | N1 | `HOME` = a demo-variant fixture home, `AGENT_COST_ANALYZER_NOW` = `FIXTURE_NOW`, `PS1='$ '`, `npm_config_update_notifier=false`, `npm_config_fund=false`; the package installed into an empty demo folder from the tarball (D29); port 5199 free; `DEMO_FORBIDDEN` set as usual |
+
+**As built (DR1, wave 1).**
+
+- Extension demo fixture (`demo-fixture.mts`): `acmedocs` has six tools, loaded in every session of the
+  row (the sessions that carry a tool list now also carry the system prompt file, since the inventory is
+  read only from a request naming both). `fixture.savings.unusedToolsRow` names the server and its tool
+  count.
+- Web demo home: `createDemoFixtureHome` in `packages/web/e2e/support/demo-fixture-home.mts` wraps the
+  shared `createFixtureHome`, which is untouched, so no asserted figure moves. It adds two Copilot Chat
+  sessions in the scratch repository ("Draft the release notes" on 2026-11-03, "Check the API docs links"
+  on 2026-10-29) with the six-tool `acmedocs` group and billed AI Credits, and one pi session on a local
+  model ("Tidy the notes folder", 2026-10-31; a re-dated `pi-linear`, no price, `write` never run). It
+  then applies `DEMO_COPILOT_MODELS`. The pi session adds an "unexplained cache break" row (the 310 s idle
+  gap of the generated file) beside the "Not priced" `write` row.
+- Switches: the web `test` fixture's `demo` option (`test.use({ demo: true })`), the fake host's `demoHome`
+  option, and `createDemoDesktopHome`, which now calls `createDemoFixtureHome`.
+- Not as in the table: a pi session's list id is a hash of its file path, so scenes click it by title, not
+  by id.
 
 ## 5. Docs mapping and alt text
 

@@ -63,7 +63,8 @@ export interface DemoFixture {
   // E4: a model to replay readSession on (not the one it ran on).
   replayModel: string;
   // E5: the opportunity kinds the report holds over 30 days, and what they name.
-  savings: { kinds: string[]; unusedToolsServers: string[]; failedPrograms: string[] };
+  // `unusedToolsRow`: the row E5 opens, its MCP server and how many tools the server has (at least six, each loaded in every session of the row).
+  savings: { kinds: string[]; unusedToolsServers: string[]; unusedToolsRow: { server: string; tools: number }; failedPrograms: string[] };
   // E8: the Copilot CLI session with failed calls, the categories they fall in, and calls with no recorded outcome.
   auditSession: DemoSessionRef & { categories: string[]; unknownCalls: number };
   // E7: type this into the Settings editor; the month so far is `monthToDateCredits` of it (about 82 %).
@@ -125,8 +126,13 @@ const SUBAGENT_MODEL = "claude-haiku-5.5";
 const WORKSPACE_STORAGE_IDS = { demo: "a11ce5ed1f1a4e0dbf7e0c0de0000d01", ledger: "a11ce5ed1f1a4e0dbf7e0c0de0000d02" } as const;
 const SETUP_PROBLEM_REMOVED = (key: string): boolean => key.startsWith("github.copilot.");
 const BUILTIN_TOOLS = ["read_file", "grep_search", "replace_string_in_file", "run_in_terminal", "get_errors"];
-const MCP_SERVERS = ["acmedocs", "pgtools"];
-const TOOL_INVENTORY = [...BUILTIN_TOOLS, ...MCP_SERVERS.flatMap((server) => [`mcp_${server}_search`, `mcp_${server}_fetch`])];
+// E5: the first server has six tools (the list shows five, then "and 1 more (about X)", R23).
+const MCP_TOOLS: Record<string, string[]> = {
+  acmedocs: ["search", "fetch", "list_pages", "get_page", "get_comments", "get_history"],
+  pgtools: ["search", "fetch"],
+};
+const MCP_SERVERS = Object.keys(MCP_TOOLS);
+const TOOL_INVENTORY = [...BUILTIN_TOOLS, ...MCP_SERVERS.flatMap((server) => MCP_TOOLS[server]!.map((tool) => `mcp_${server}_${tool}`))];
 // The period starts this many days before the run, or the next later day whose date is 1-28 (a reset day).
 const PERIOD_START_DAYS_AGO = 20;
 const TARGET_USED_FRACTION = 0.82;
@@ -424,7 +430,7 @@ export function createDemoFixture(rootDir: string, options: DemoFixtureOptions =
     systemPrompt: DEMO_SYSTEM_PROMPT,
   };
   classic("demo", readSession);
-  const idleSession: DemoClassicSession = { id: classicId(index++), title: "Fix the flaky checkout test", startedAt: startOf(now, 1, 3, 0), cwd: repositories.demo.path, turns: idleSessionTurns(), toolInventory: TOOL_INVENTORY };
+  const idleSession: DemoClassicSession = { id: classicId(index++), title: "Fix the flaky checkout test", startedAt: startOf(now, 1, 3, 0), cwd: repositories.demo.path, turns: idleSessionTurns(), toolInventory: TOOL_INVENTORY, systemPrompt: DEMO_SYSTEM_PROMPT };
   classic("demo", idleSession);
   const todaySmall = (repo: keyof typeof REPOSITORIES, title: string, minutesAgo: number): DemoClassicSession => ({
     id: classicId(index++),
@@ -443,7 +449,8 @@ export function createDemoFixture(rootDir: string, options: DemoFixtureOptions =
       startedAt: startOf(now, spec.daysAgo, fillerIndex, 0),
       cwd: repositories[spec.repo].path,
       turns: fillerTurns(mulberry32(index * 7919), spec.title),
-      ...(spec.withTools ? { toolInventory: TOOL_INVENTORY } : {}),
+      // The tool inventory is read only from a request that names a system prompt file too.
+      ...(spec.withTools ? { toolInventory: TOOL_INVENTORY, systemPrompt: DEMO_SYSTEM_PROMPT } : {}),
     };
     classic(spec.repo, session);
   });
@@ -478,7 +485,7 @@ export function createDemoFixture(rootDir: string, options: DemoFixtureOptions =
     readSession: { id: readSession.id, title: readSession.title, turns: readSession.turns.length, subagentTurns: READ_SUBAGENT_TURNS },
     systemPromptMarker: DEMO_SYSTEM_PROMPT_MARKER,
     replayModel: REPLAY_MODEL,
-    savings: { kinds: ["unused-tools", "failed-tool-calls", "idle-cache-expiry", "model-switch"], unusedToolsServers: MCP_SERVERS, failedPrograms: ["rg", "curl"] },
+    savings: { kinds: ["unused-tools", "failed-tool-calls", "idle-cache-expiry", "model-switch"], unusedToolsServers: MCP_SERVERS, unusedToolsRow: { server: MCP_SERVERS[0]!, tools: MCP_TOOLS[MCP_SERVERS[0]!]!.length }, failedPrograms: ["rg", "curl"] },
     auditSession: { id: auditSession.id, title: auditSession.title, categories: AUDIT_CATEGORIES, unknownCalls: 1 },
     // Just above the warning threshold, so the status bar and the Sessions row say "near the limit".
     allowanceForNearLimit: Math.floor(monthToDateCredits / TARGET_USED_FRACTION),
