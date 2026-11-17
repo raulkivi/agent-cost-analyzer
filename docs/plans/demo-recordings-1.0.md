@@ -4,8 +4,8 @@
 
 Status: **in progress**: DR1–DR6 and DR9–DR12 done 2026-11-17 (PRs #394,
 #396–#399, #404–#406, #408, #415, and DR6's live takes); DR7 done: the owner approved the nine drafts and the M1, M4
-and M8 takes; M1, M4 and M8 were retaken after the two fixes (D57, D58; PRs #419, #420) and wait for
-the owner's look. Approved (owner interview 2026-11-16: D29–D43, all
+and M8 takes; M1, M4 and M8 were retaken after the two fixes (D57, D58; PRs #419, #420) and approved
+(D60). Approved (owner interview 2026-11-16: D29–D43, all
 recommended options accepted). Owner interview 2026-11-17: D44–D51 (GIFs up to
 25 s, retakes of N1, W3, W5 and E3, the recorder stops before the end checks), then D52–D55 (drafts
 approved, the tool-audit chip fix before 1.0, DR6 recorded, the version bump after DR7 and C2), then D56–D59 (M1, M4
@@ -410,3 +410,7 @@ apt. The last column names the tasks (§6) each answer feeds.
 | D57 | A Claude Code session's cost in the chat views read "AI Credits: Unknown" with no priced cost | Accepted (owner, 2026-11-17): **fix before 1.0**: the Priced cost tile and AI Credits n/a, as in the web app; M1 and M4 retaken (paid) | before V30 |
 | D58 | A savings row's coverage line repeated one reason with two counts | Accepted (owner, 2026-11-17): **fix before 1.0**: one entry per reason with the summed count; M8 retaken (paid) with M1 and M4; the free scenes on the 1.0 build (DR13) | before V30 |
 | D59 | C2 (Phase 11) | Accepted (owner, 2026-11-17): **closed**, the `/fork` and `/tree` items documented as known limitations | C2 |
+| D60 | M1, M4 and M8 retaken after PRs #419 and #420 | Owner, 2026-11-17: **all three approved**; the final Claude Desktop takes for 1.0 | DR7 |
+| D61 | The cost rollup reads AI Credits "Unknown" for Claude Code rows while the session view reads n/a | Accepted (owner, 2026-11-17): **after 1.0**, then an M1 retake | after 1.0 |
+| D62 | The version bump (V30) | Accepted (owner, 2026-11-17): **open it now**; DR13 and DR8 land on the 1.0 build | V30 |
+| D63 | The Phase 14 and 15 docs reviews | Accepted (owner, 2026-11-17): **after 1.0**; not 1.0 criteria | — |
