@@ -52,6 +52,13 @@ export class Xdotool {
     await this.xdo(["windowmove", id, "0", "0", "windowsize", id, String(frame.width), String(frame.height)]);
   }
 
+  async raise(id: string): Promise<void> {
+    await this.xdo(["windowraise", id, "windowfocus", id]);
+  }
+  async findWindowByName(instanceName: string): Promise<string | undefined> {
+    const out = await this.xdo(["search", "--onlyvisible", "--classname", instanceName]).catch(() => "");
+    return out.split("\n").find((line) => line.trim() !== "")?.trim();
+  }
   async findWindow(windowClass: string): Promise<string | undefined> {
     // xdotool exits non-zero when nothing matches; that just means "not there yet".
     const out = await this.xdo(["search", "--onlyvisible", "--class", windowClass]).catch(() => "");

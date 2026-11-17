@@ -57,4 +57,18 @@ describe("Xdotool", () => {
     const xdo = new Xdotool(":93", async () => "");
     await expect(xdo.findWindow("claude")).resolves.toBeUndefined();
   });
+  it("finds a window by its instance name", async () => {
+    const calls: string[][] = [];
+    const xdo = new Xdotool(":93", async (_c, args) => {
+      calls.push(args);
+      return "333\n";
+    });
+    await expect(xdo.findWindowByName("aica-terminal-a")).resolves.toBe("333");
+    expect(calls[0]).toEqual(["search", "--onlyvisible", "--classname", "aica-terminal-a"]);
+  });
+  it("raises a window and gives it the keyboard focus, as there is no window manager to do either", async () => {
+    const { xdo, calls } = setup();
+    await xdo.raise("333");
+    expect(calls[0].args).toEqual(["windowraise", "333", "windowfocus", "333"]);
+  });
 });

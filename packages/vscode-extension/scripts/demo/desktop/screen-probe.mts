@@ -40,6 +40,11 @@ export class ScreenProbe {
     this.frameAt = this.now();
   }
 
+  // The current frame as a PNG file, for cutting a template from a live screen.
+  async frameFilePath(): Promise<string> {
+    await this.grab();
+    return this.frameFile;
+  }
   async scores(names: string[], minX?: number): Promise<Record<string, Match>> {
     await this.grab();
     const region = minX === undefined ? [] : ["--min-x", String(minX)];
