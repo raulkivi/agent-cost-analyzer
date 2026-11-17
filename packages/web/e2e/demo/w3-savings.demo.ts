@@ -1,9 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { homedir, userInfo } from "node:os";
 import type { Page } from "@playwright/test";
-import { findForbidden, forbiddenTerms } from "../../../vscode-extension/scripts/demo/privacy-probe.mts";
 import { expect, test } from "../support/app-fixture.js";
+import { assertPrivate, probed } from "./support/privacy-probe.js";
 import { play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
 
 // W3, "Savings" (docs/plans/demo-recordings-1.0.md §3.3): Dashboard, Savings
@@ -20,26 +19,6 @@ const topRow = (page: Page) => rows(page).filter({ hasText: "Model switched" }).
 const unusedToolsRow = (page: Page) => rows(page).filter({ hasText: "acmedocs" });
 // The pi row is the last ranked row and has no price.
 const piRow = (page: Page) => rows(page).last();
-
-// The privacy probe: after every step, nothing on screen may carry an owner-private term
-// (home directory, user name, DEMO_FORBIDDEN) or a shared-fixture "fixture-" model name.
-async function assertPrivate(page: Page): Promise<void> {
-  const text = await page.evaluate(() => document.body.innerText);
-  const terms = [...forbiddenTerms(process.env.DEMO_FORBIDDEN, { homedir: homedir(), username: userInfo().username }), "fixture-"];
-  const hits = findForbidden([{ source: "app page", text: `${text}\n${page.url()}` }], terms);
-  if (hits.length > 0) throw new Error(`Forbidden text on screen: ${hits.map((hit) => `${hit.match} in ${hit.source}`).join(", ")}`);
-}
-
-const probed = (scene: DemoScene): DemoScene => ({
-  ...scene,
-  steps: scene.steps.map((step) => ({
-    ...step,
-    action: async (page, pointer) => {
-      await step.action(page, pointer);
-      await assertPrivate(page);
-    },
-  })),
-});
 
 export const W3: DemoScene = {
   id: "W3",
