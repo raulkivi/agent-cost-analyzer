@@ -235,6 +235,17 @@ describe("createDemoFixtureHome with auditSessions", () => {
       }
       expect(files(withAudit).some((file) => file.includes(AUDIT_SHELL_SESSION_ID))).toBe(true);
       expect(files(without).some((file) => file.includes(AUDIT_READ_SESSION_ID))).toBe(false);
+      // The failed call's evidence reads like a real error, and the read run's requests carry a billed figure.
+      const text = textOf(withAudit, ".jsonl");
+      expect(text).not.toContain("parse error: fixture");
+      expect(text).toContain("Regex parse error: unclosed group");
+      const run = files(withAudit).find((file) => file.endsWith("searchSubagent-call_auditexplore1.jsonl"))!;
+      expect(readFileSync(run, "utf8")).toContain('"copilotUsageNanoAiu":500000000');
+      expect(readFileSync(run, "utf8")).not.toContain('"copilotUsageNanoAiu":0,');
+      // The shared home keeps the seed's wording, which the server's tests assert.
+      const shared = path.join(root, "shared");
+      createFixtureHome(shared, { auditSessions: true });
+      expect(textOf(shared, ".jsonl")).toContain("parse error: fixture");
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

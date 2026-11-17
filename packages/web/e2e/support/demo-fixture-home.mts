@@ -17,7 +17,7 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { writeClaudeCodeSession } from "../../../server/src/test-support/claude-code-session-writer.ts";
 import { writeSavingsVscodeSession } from "../../../server/src/test-support/savings-fixtures.ts";
-import { createFixtureHome, type FixtureHome, type FixtureOptions } from "./fixture-home.mts";
+import { AUDIT_READ_SESSION_ID, AUDIT_SHELL_SESSION_ID, createFixtureHome, type FixtureHome, type FixtureOptions } from "./fixture-home.mts";
 import { piSessionFolder } from "./pi-session-folder.mts";
 
 // D21: Claude's answer must not say "fixture". The shared e2e fixture names its Copilot test models
@@ -28,6 +28,15 @@ export const DEMO_COPILOT_MODELS = {
   "fixture-sub-model": "claude-haiku-5.5",
   "fixture-search-model": "gemini-3.8-flash",
 } as const;
+
+// DR11 (W5): the audit sessions' seed text that would read like test data on screen, rewritten in the
+// demo home only (the server's tests assert the seed's own wording). The first is the failed call's
+// evidence (the classifier's own invalid-arguments example); the second gives the read run's requests a
+// billed figure like the shell run's, so its row doesn't show "0.00 AI Credits".
+export const DEMO_AUDIT_TEXT_REWRITES = [
+  ["Regex parse error: fixture", "Regex parse error: unclosed group"],
+  ['"copilotUsageNanoAiu":0,', '"copilotUsageNanoAiu":500000000,'],
+] as const;
 
 // The MCP server of the unused-tools row, and its tools (the row's list shows five, then "and 1 more (about X)").
 export const DEMO_UNUSED_TOOLS_SERVER = "acmedocs";
@@ -137,6 +146,17 @@ function renameModels(home: string): void {
   }
 }
 
+// Only the audit sessions' own logs: other fixture sessions record 0 credits on purpose.
+function rewriteAuditText(home: string): void {
+  const auditIds = [AUDIT_READ_SESSION_ID, AUDIT_SHELL_SESSION_ID];
+  for (const file of textFiles(home).filter((name) => auditIds.some((id) => name.includes(id)))) {
+    let text = readFileSync(file, "utf8");
+    const original = text;
+    for (const [from, to] of DEMO_AUDIT_TEXT_REWRITES) text = text.replaceAll(from, to);
+    if (text !== original) writeFileSync(file, text);
+  }
+}
+
 function claudeSingleModelSession(home: string, cwd: string): void {
   const at = (minutes: number) => new Date(Date.parse(DEMO_CLAUDE_SESSION.startedAt) + minutes * 60_000).toISOString();
   writeClaudeCodeSession(path.join(home, ".claude", "projects"), DEMO_CLAUDE_SESSION.id, cwd, [
@@ -170,5 +190,6 @@ export function createDemoFixtureHome(home: string, options: FixtureOptions = {}
   claudeSingleModelSession(home, fixture.folders.scratch);
   retitleFixtureSessions(home);
   renameModels(home);
+  if (options.auditSessions) rewriteAuditText(home);
   return fixture;
 }
