@@ -167,6 +167,26 @@ describe("install: plan and prompt", () => {
     expect(text(h.out)).toContain('"mcpServers"');
   });
 
+  // MC9 review R2: a refused file is a request not met, so a script that
+  // passed --client must not read success.
+  it("exits 1 when a requested client's config is unreadable", async () => {
+    const unreadable = {
+      status: { kind: "unreadable", message: "bad JSON" } as const,
+    };
+    const h = harness([
+      fakeTarget("cursor", { install: unreadable, uninstall: unreadable }),
+    ]);
+    const clients = { kind: "ids", ids: ["cursor"] } as const;
+    expect(await changeCommand(install({ clients, yes: true }), h.deps)).toBe(
+      1,
+    );
+    expect(await changeCommand(uninstall({ clients, yes: true }), h.deps)).toBe(
+      1,
+    );
+    expect(h.merges).toEqual([]);
+    expect(h.removes).toEqual([]);
+  });
+
   it("prints an unknown status kind by name", async () => {
     const h = harness([
       fakeTarget("vscode", {
@@ -246,6 +266,15 @@ describe("install: client selection", () => {
       await changeCommand(install({ clients: { kind: "detected" } }), h.deps),
     ).toBe(2);
     expect(text(h.err)).toContain("--client");
+  });
+
+  // MC9 review R3: the message named install for uninstall too.
+  it("names uninstall in the usage error of an uninstall", async () => {
+    const h = harness([fakeTarget("cursor")], { interactive: false });
+    expect(
+      await changeCommand(uninstall({ clients: { kind: "detected" } }), h.deps),
+    ).toBe(2);
+    expect(text(h.err)).toContain("mcp uninstall without a terminal");
   });
 
   it("--client all covers every target and skips scopes a client lacks", async () => {

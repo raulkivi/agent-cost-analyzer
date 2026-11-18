@@ -13,7 +13,7 @@ export interface ConfigFs {
     data: string,
     options: { mode: number; flag: "wx" },
   ): Promise<void>;
-  copyFile(source: string, destination: string): Promise<void>;
+  copyFile(source: string, destination: string, mode?: number): Promise<void>;
   rename(oldPath: string, newPath: string): Promise<void>;
   unlink(path: string): Promise<void>;
   chmod(path: string, mode: number): Promise<void>;

@@ -415,3 +415,41 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 Order: MC0 → MC1/MC2/MC19 (in parallel) → MC3 → MC4/MC5/MC6 → MC7 → MC8 →
 MC9 closes Increment 1, which ships in its own app minor release (D11).
 Increments 2 and 3 are independent of each other, and each can be released on its own.
+
+## 11. Increment 1 review (MC9, 2026-11-18)
+
+Read on `main` at `9a8eee95`: `packages/server/src/mcp/client-setup/`,
+`packages/cli/src/mcp-setup/`, the CLI entry files (`args`, `usage`, `run`,
+`cli`, `serve-command`, `serve-wiring`), `packages/cli/smoke/setup-*.mts`
+and their tests, against §5.1-§5.5, §6 and D1-D13.
+
+Nothing found breaks the core guarantees. No code path uses a shell: the
+client CLIs run through `execFile` with an argument array, and every
+argument is a fixed string, the semver-checked version or an enum flag
+value. Writes go only to the printed config paths, their backups and
+same-folder temporary files (`wx`, removed on failure). Modes are kept,
+non-TTY runs need `--yes` and `--client`, and exit codes follow §5.1. One
+real safety defect was found (R1, a link at the backup name) and fixed,
+with two small exit-code and wording fixes. The rest are recorded.
+
+| ID | File | Finding | Severity | Outcome |
+|---|---|---|---|---|
+| R1 | `config-file-store.ts` | The backup `copyFile` followed a link at `<file>.agent-cost-analyzer.bak`. In a project-scope install inside a cloned repository, a link committed beside `.cursor/mcp.json` received that file's bytes (attacker-written JSON) at any path the user can write, such as a shell startup file, through a relative `../..` link. | Medium | Fixed in this PR: the old backup is unlinked, then copied with `COPYFILE_EXCL`, which never follows a link. Test: "%s replaces a link at the backup path instead of writing through it". |
+| R2 | `change-command.ts` | A config refused as unreadable (invalid JSON, comments, a key path that is not objects) printed the snippet and "Nothing to change." but exited 0, so a script with `--client … --yes` read success while nothing was registered. Uninstall did the same. | Low | Fixed in this PR: exit 1, as for a planning error. Test: "exits 1 when a requested client's config is unreadable". |
+| R3 | `resolve-clients.ts` | `mcp uninstall` without a terminal and without `--client` said "mcp install without a terminal needs --client …". | Low | Fixed in this PR: the message names the subcommand. Test: "names uninstall in the usage error of an uninstall". |
+| R4 | `serve-command.ts` | The doc comment still said stdout gets only the start line; MC6 added the hint as a second line. | Low | Fixed in this PR (comment only). |
+| R5 | `describe.ts`, `print-plan.ts`, `cli-command-plans.ts` | §5.4 and §6 say a differing entry's message "shows both versions". The plan shows the launch kinds only ("differs: latest → pinned 1.0.0"; a command of the user's own reads "differs: differs → latest"). Claude Code and Gemini replace through their own `remove` then `add`, with no backup of ours, so the old command is not recoverable, and an `add` that fails after the `remove` leaves the client unregistered without saying so. | Medium | Recorded. Showing the existing command needs `RegistrationStatus` to carry it, which touches every adapter and about 20 test assertions. Owner decision: a follow-up task before Increment 2, or accept with the confirmation prompt as the safeguard. |
+| R6 | `atomic-write.ts`, `config-file-store.ts` | Project scope follows links for the config itself. A `.cursor/mcp.json` committed as a link makes the merge land at the link's target: an existing JSON object file gains our entry, and a dangling link creates its target and parent folders. The content is ours, not an attacker's. The plan prints the link path, not the target. `mcp status --scope project` reads a linked `.mcp.json` or `.gemini/settings.json` with no size limit, so a link to `/dev/zero` hangs it. | Low | Recorded. Options: refuse links for project scope, or print the resolved target in the plan. Threat model residual (e). |
+| R7 | `resolve-clients.ts` | §5.1: `install` without `--client` "asks which ones to register". It plans for every detected client and asks one `[y/N]`. The plan names each client, and `--client` narrows it. | Low | No change; the User Guide describes the actual behavior. |
+| R8 | `codex-target.ts`, `gemini-target.ts` | §5.3: Codex and Gemini "check `codex mcp list` / `gemini mcp list` before `add`". The adapters read `config.toml` and `settings.json` instead, so planning runs no client process. | Info | No change: reading the file is safer than the plan's wording. |
+| R9 | `status-command.ts` | §6 ("A pinned launch spec going stale"): `status` shows "pinned <version>" but not the running version beside it. A header line would change the output the MC7 smoke parses. | Low | Recorded for Increment 2: the panel can show both versions. |
+| R10 | `codex-target.ts`, `gemini-target.ts`, `client-env.ts` | Codex and Gemini count as detected by their folder alone. Without the CLI on `PATH`, `install` plans `mcp add` and fails when it applies ("codex was not found on PATH", exit 1). An unreadable `~/.codex/config.toml` (permissions) reads as "not registered". A Gemini `settings.json` with comments is refused as unreadable, though `gemini mcp add` would handle it. | Low | Recorded; `mcp config` is the fallback. |
+| R11 | `vscode-target.ts` | The extension check lists `~/.vscode/extensions` for `raulkivi.ai-credits-analyzer-*`. It does not cover a folder VS Code keeps for a while after an uninstall, Insiders, VSCodium, `.vscode-server` or `--extensions-dir`. While the extension is installed, `uninstall` also skips an entry written to `mcp.json` before. | Low | Recorded; MC8 checks a real VS Code. |
+| R12 | `windows-command.ts` | `cmd.exe /d /s /c` without `/v:off`: a shim path that holds `!` would expand if delayed expansion is turned on in the registry. Arguments are limited to the safe set; the path is quoted, and `"` and `%` are refused. | Low | Recorded as a D13 residual (untested on Windows); threat model residual (a). |
+| R13 | several | Dead or duplicated code. `ClientEntry.target` is optional and "not supported yet" is unreachable now that all six adapters exist; it is kept as the extension seam, and a test covers it. `CmdInvocation.verbatim` is never read. `ApplyResult` and `Step` repeat `CommandResult`. The scope is checked three times (parser, `clientSetup`, `requireScope`). `describe.ts` calls `provided-by-extension` and `registered-unverified` kinds "a newer adapter may add", though both are in the union. | Info | No change: harmless, and the scope checks are deliberate defense in depth. |
+
+Docs updated in the same PR (§5.9): the User Guide's MCP section, standalone-app.md, the root
+README, vision.md §6, architecture.md §2 (constraint 7) and §4.1, and
+threat-model.md (the bin row, a new `mcp install`/`uninstall` row, the
+browser-opener and §8 CI rows). The CHANGELOG `[Unreleased]` entry already
+matches the code.

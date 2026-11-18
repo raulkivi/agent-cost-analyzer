@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { randomBytes } from "node:crypto";
+import { constants } from "node:fs";
 import * as nodeFs from "node:fs/promises";
 import {
   createFileExclusively,
@@ -107,7 +108,14 @@ export function createConfigFileStore(
     loaded: Extract<Loaded, { kind: "loaded" }>,
   ): Promise<string> {
     const backupPath = path + BACKUP_SUFFIX;
-    await fs.copyFile(loaded.target, backupPath);
+    // copyFile writes through a link at the destination, so a link planted
+    // at the backup name (a cloned repository's .cursor/ folder) would get
+    // the bytes. Drop the old backup, then copy exclusively, which never
+    // follows a link; anything that appears in between fails the copy.
+    await fs.unlink(backupPath).catch((error: unknown) => {
+      if (errorCode(error) !== "ENOENT") throw error;
+    });
+    await fs.copyFile(loaded.target, backupPath, constants.COPYFILE_EXCL);
     await replaceFileAtomically(
       fs,
       loaded.target,
