@@ -4,7 +4,8 @@
 
 Status: **Approved 2026-11-18** (owner interview, D1-D12 in §8). MC0 done
 2026-11-18 (§3.2); MC1, MC2 and MC19 done 2026-11-18 (PRs #431, #432,
-#430). MC3 done 2026-11-18. Next: MC4, MC5 and MC6.
+#430). MC3 and MC4 done 2026-11-18 (PRs #434, #436). Next: MC5 and MC6.
+Testing is Linux only (D13).
 
 Phase 18 in [implementation-plan.md](../implementation-plan.md#phase-18--mcp-client-setup-for-the-standalone-app).
 Task IDs are `MC0`-`MC18` (§10).
@@ -80,7 +81,7 @@ depends on it.
 | Claude Code | `claude mcp add [--scope local\|project\|user] <name> -- <cmd> [args…]`; `claude mcp remove <name> [--scope]`; `claude mcp get <name>` (starts the server to check it); `claude mcp add-json <name> '<inner json>'`. No login needed. A name that exists exits 1 with "already exists"; removing a missing name exits 1. | `~/.claude.json` (local and user scopes; user scope is the top-level `mcpServers`); `.mcp.json` at the project root (project scope). Entry: `{"type":"stdio","command","args","env":{}}` | code.claude.com/docs/en/mcp; MC0 |
 | Claude Desktop | Edit the file, then restart Claude Desktop | macOS `~/Library/Application Support/Claude/claude_desktop_config.json`; Windows `%APPDATA%\Claude\claude_desktop_config.json`; Linux `~/.config/Claude/claude_desktop_config.json` (as documented). Shape: `{"mcpServers":{name:{command,args,env}}}`. The file also holds Claude Desktop's own settings (`preferences` and others). | modelcontextprotocol.io/docs/develop/connect-local-servers; MC0 |
 | Claude Desktop bundle | `.mcpb` (formerly DXT). `manifest.json` with `manifest_version: "0.3"`, `server.type: "node"`, `entry_point`, `mcp_config`; `mcp_config.args` may hold extra arguments after the entry point. The bundle ships the server. Packed with `@anthropic-ai/mcpb` 2.1.2. Whether it has a `validate` command is unconfirmed (MC15). | — | github.com/modelcontextprotocol/mcpb MANIFEST.md; MC0 |
-| VS Code | `code --add-mcp '{"name","type":"stdio","command","args"}'` adds to the user profile. There is no command to remove a server. The `vscode:mcp/install?` URL is not in the official docs. | User `mcp.json`, top-level `servers`: Linux `~/.config/Code/User/mcp.json`, macOS `~/Library/Application Support/Code/User/mcp.json`, Windows `%APPDATA%\Code\User\mcp.json` (third-party sources; the docs name only the "MCP: Open User Configuration" command; unconfirmed, MC8). The `servers` format is labeled deprecated in favor of Copilot's `mcpServers` in `.mcp.json` or `~/.copilot/mcp-config.json`. | code.visualstudio.com/docs/agents/reference/mcp-configuration; MC0 |
+| VS Code | `code --add-mcp '{"name","type":"stdio","command","args"}'` adds to the user profile (not used by `mcp install`: §5.3). There is no command to remove a server. The `vscode:mcp/install?` URL is not in the official docs. | User `mcp.json`, top-level `servers`: Linux `~/.config/Code/User/mcp.json`, macOS `~/Library/Application Support/Code/User/mcp.json`, Windows `%APPDATA%\Code\User\mcp.json` (third-party sources; the docs name only the "MCP: Open User Configuration" command; unconfirmed, MC8). The `servers` format is labeled deprecated in favor of Copilot's `mcpServers` in `.mcp.json` or `~/.copilot/mcp-config.json`. | code.visualstudio.com/docs/agents/reference/mcp-configuration; MC0 |
 | Cursor | Edit the file. Install link `cursor://anysphere.cursor-deeplink/mcp/install?name=<name>&config=<config>`, where `config` is the base64 of the inner server JSON (`{"command","args"}`), percent-encoded. | `~/.cursor/mcp.json`, project `.cursor/mcp.json`, `{"mcpServers":{…}}` | cursor.com/docs/context/mcp, cursor.com/docs/mcp/install-links; MC0 |
 | Codex CLI | `codex mcp add <name> -- <cmd> [args…]`; `codex mcp list`. The docs show no `remove`. What `add` does with a name that exists is undocumented. | `~/.codex/config.toml`, `[mcp_servers.<name>]` | OpenAI Codex docs; MC0 |
 | Gemini CLI | `gemini mcp add [-s user\|project] <name> <cmd> [args…]` (default scope: project); `gemini mcp remove -s <scope> <name>`. What `add` does with a name that exists is undocumented. | `~/.gemini/settings.json`, `mcpServers` | geminicli.com/docs/tools/mcp-server; MC0 |
@@ -104,8 +105,8 @@ installed on the owner's machine, so their rows rest on their docs.
   Codex do not (§5.3).
 - **Registry:** the first registry publish needs an npm release that carries
   `mcpName`, so Increment 1's release adds it (MC19).
-- **Not checked on a real install:** VS Code (`code --add-mcp`, the user
-  `mcp.json` path, the extension check), Codex and Gemini. MC4's tests use
+- **Not checked on a real install:** VS Code (the user `mcp.json` path,
+  the extension check), Codex and Gemini. MC4's tests use
   the documented shapes; MC8 checks VS Code on a machine that has it.
 
 ## 4. Options considered
@@ -138,6 +139,8 @@ agent-cost-analyzer mcp status
 - `install` with no `--client` lists the clients it detected and asks which
   ones to register. When stdin is not a TTY it requires `--client` and does
   not prompt.
+- A client named with `--client` that is not detected gets its `mcp config`
+  snippet printed and nothing written.
 - Before changing anything, `install` prints each planned action ("add
   `agent-cost-analyzer` to ~/.cursor/mcp.json"). It applies them only after
   the user confirms or passes `--yes`. `--dry-run` prints the plan and
@@ -186,7 +189,7 @@ Increment 1 adapters:
 | `claude-code` | Status read from `~/.claude.json` or `.mcp.json` (never `claude mcp get`, which starts the server). `RunCommand claude mcp add --scope <s> agent-cost-analyzer -- <spec>`; a changed entry is replaced by `claude mcp remove` then `add`, after confirmation; uninstall with `claude mcp remove` | user (default), project, local |
 | `claude-desktop` | `MergeJsonEntry` into `claude_desktop_config.json` under `mcpServers` | user |
 | `cursor` | `MergeJsonEntry` into `~/.cursor/mcp.json` or `.cursor/mcp.json` under `mcpServers` | user, project |
-| `vscode` | `RunCommand code --add-mcp '<json>'` (for Insiders, `code-insiders`). Skipped with a message when `code --list-extensions` lists `raulkivi.ai-credits-analyzer` (D6). Uninstall removes the key from the user `mcp.json` under `servers` (§5.4); a file with comments is refused and the user is told to use "MCP: Open User Configuration". | user |
+| `vscode` | `MergeJsonEntry` into the user `mcp.json` under `servers`; uninstall removes the key (§5.4). Not `code --add-mcp`: on Windows its JSON argument would have to pass through `cmd.exe`. A file with comments is refused and the user is told to use "MCP: Open User Configuration". Skipped, with status "provided by the AI Credits Analyzer extension", when `~/.vscode/extensions` holds a `raulkivi.ai-credits-analyzer-*` folder (D6; found without running `code`). | user |
 | `codex` | Checks `codex mcp list` before `add`. `RunCommand codex mcp add agent-cost-analyzer -- <spec>`. No remove command and no TOML editing (§2): uninstall prints the `[mcp_servers.agent-cost-analyzer]` table to delete from `~/.codex/config.toml`. | user |
 | `gemini` | Checks `gemini mcp list` before `add`. `RunCommand gemini mcp add -s <s> agent-cost-analyzer <spec>` (always passes `-s`, since the default is project); uninstall with `gemini mcp remove -s <s>` | user, project |
 
@@ -296,7 +299,7 @@ line.
 | Threat | Mitigation |
 |---|---|
 | Clobbering a user's config (other servers lost, invalid JSON written) | Merge only the named key. Refuse files that are not valid JSON. Backup, atomic rename, mode kept. Tests over fixtures with other servers and odd formatting. |
-| Command injection through the client CLIs | `execFile` with an argument array and no shell. Arguments come from `McpLaunchSpec` only; no user text reaches them except the enum `--client` and `--scope` values. On Windows, `cmd /c` appears in the written config only, never in the command run. |
+| Command injection through the client CLIs | `execFile` with an argument array and no shell. Arguments come from `McpLaunchSpec` only; no user text reaches them except the enum `--client` and `--scope` values. On Windows, npm's `.cmd` launchers (claude, codex, gemini) cannot be started without `cmd.exe`, so the runner uses `cmd.exe /d /s /c` only when every argument matches `[A-Za-z0-9@._:/=+,-]+`, and refuses otherwise (MC5). |
 | Writing somewhere the user did not expect | The plan names every path and command before applying them. `--dry-run`; confirmation unless `--yes`. Paths come from documented per-OS locations and `os.homedir()`/`APPDATA`, never from config contents. |
 | Replacing an entry the user customized | An entry that differs is not replaced without confirmation; the message shows both. |
 | A web route used to write configs (DNS rebinding, cross-site) | No writing route exists. `GET /api/mcp/setup` is read-only and behind the Host guard. |
@@ -305,8 +308,8 @@ line.
 
 ## 7. Exit criterion and checks
 
-Phase 18's exit criterion: on Linux, macOS and Windows, from the packed
-tarball, with a temporary home:
+Phase 18's exit criterion: on Linux, from the packed tarball, with a
+temporary home:
 
 1. `mcp install --client <id> --yes` writes what each client expects:
    - JSON-file clients (`claude-desktop`, `cursor`): the entry matches the
@@ -317,6 +320,11 @@ tarball, with a temporary home:
 2. `mcp uninstall` returns a pre-existing config file to its original bytes.
    A file the install created ends with `mcpServers` empty.
 3. `status` reports each state correctly.
+
+macOS and Windows are not tested (D13). Their config paths and the Windows
+command runner are covered only by unit tests that inject the platform.
+The existing `npm-package` CI job still runs the serve smoke on all three
+runners; Phase 18 adds nothing to its macOS and Windows legs.
 4. The serve smoke's home snapshot is unchanged: serving still writes
    nothing outside the settings folder.
 5. Increment 2: a Playwright spec opens the panel, copies each snippet and
@@ -348,6 +356,7 @@ recommended option.
 | D10 | A failed registry publish during a release | Warn without failing the run: a separate job after the npm publish, re-run later |
 | D11 | Order and releases | Increment 1 ships in its own app minor release. Increments 2 and 3 follow in either order, each releasable on its own. |
 | D12 | Plan approval | Approved; start with MC0 |
+| D13 | Operating systems tested (owner, 2026-11-18) | Linux only: macOS and Windows cannot be tested. Their code paths stay, unit-tested with an injected platform; MC7, MC8 and the exit criterion run on Linux. |
 
 ## 9. Risks
 
@@ -360,6 +369,9 @@ recommended option.
 - **Clients not checked on a real install** (VS Code, Codex, Gemini): their
   adapters follow the docs; MC8 checks VS Code, and `mcp config` stays the
   fallback.
+- **macOS and Windows are untested** (D13). The macOS and Windows config
+  paths, `cmd /c` for Claude Code and the Windows command runner rest on the
+  clients' docs and unit tests. A user report is the first real check.
 - **Claude Desktop has no official Linux build.** The adapter writes the
   documented Linux path, and `detect` finds the folder only when it exists.
 - **A client writes its config while `install` runs** (MC2). The store has
@@ -384,10 +396,10 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 | MC1 | `McpLaunchSpec` and per-client snippet builders (pure), with table-driven tests per OS and flag. **Done 2026-11-18** (PR #431: `launch-spec.ts`, `client-setup.ts`, `toml.ts`) | 1 | low | Sonnet | MC0 |
 | MC2 | `ConfigFileStore`: merge and remove, backup, atomic write, invalid-JSON refusal, indentation kept; tests over temporary folders. **Done 2026-11-18** (PR #432; residual risks in §9) | 1 | medium | Opus | — |
 | MC3 | `McpClientTarget` interface and the `claude-code`, `claude-desktop`, `cursor` adapters with detection. **Done 2026-11-18** (PR #434) | 1 | medium | Sonnet | MC1, MC2 |
-| MC4 | `vscode`, `codex` and `gemini` adapters; skip VS Code when the extension is present (D6). Check whether `gemini mcp add` needs `--` before the launch command so its parser does not take `-y` and `--prefer-offline` (MC1 builds it without) | 1 | medium | Sonnet | MC3 |
+| MC4 | `vscode`, `codex` and `gemini` adapters; skip VS Code when the extension is present (D6). Check whether `gemini mcp add` needs `--` before the launch command so its parser does not take `-y` and `--prefer-offline` (MC1 builds it without). **Done 2026-11-18** (PR #436; no `--` needed: gemini-cli's `mcp add` sets yargs `unknown-options-as-args`) | 1 | medium | Sonnet | MC3 |
 | MC5 | CLI: argument parsing for `config`, `install`, `uninstall` and `status`; plan printing, prompt and `--dry-run`/`--yes`; exit codes; `usage.ts` | 1 | medium | Sonnet | MC3 |
 | MC6 | Start-up hint line (D7) | 1 | low | Haiku | — |
-| MC7 | Tarball smoke on three OSes: install, status and uninstall per client in a temporary home; JSON clients launched with the SDK stdio client; stub CLIs record argv; serve home snapshot unchanged | 1 | high | Opus | MC4, MC5 |
+| MC7 | Tarball smoke on Linux (D13): install, status and uninstall per client in a temporary home; JSON clients launched with the SDK stdio client; stub CLIs record argv; serve home snapshot unchanged | 1 | high | Opus | MC4, MC5 |
 | MC8 | `npm run test:real-clients:mcp-setup` on the owner's machine with real `claude` and `code` | 1 | medium | Sonnet + owner run | MC7 |
 | MC9 | Docs: User Guide, standalone-app.md, README, CHANGELOG; vision, architecture and threat-model amendments (D1); review of Increment 1 | 1 | medium | Opus | MC7 |
 | MC10 | Mock-up board for the "Connect an agent" panel; owner approves | 2 | low | Sonnet + owner | MC9 |
