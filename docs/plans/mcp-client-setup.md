@@ -1,11 +1,11 @@
 # MCP client setup for the standalone app (Phase 18)
 
-**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-19 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **Approved 2026-11-18** (owner interview, D1-D12 in §8). MC0-MC9
-and MC19 done 2026-11-18 (MC8 signed off by the owner). Before Increment 1's
-release: MC20 (VS Code Insiders, D14) and MC21 (review findings R5 and R6,
-D15). Testing is Linux only (D13).
+and MC19 done 2026-11-18 (MC8 signed off by the owner). MC20 (VS Code
+Insiders, D14) and MC21 (review findings R5 and R6, D15) done 2026-11-18
+(PRs #443, #444). Increment 1 is complete and ships in app 1.1.0. Testing is Linux only (D13).
 
 Phase 18 in [implementation-plan.md](../implementation-plan.md#phase-18--mcp-client-setup-for-the-standalone-app).
 Task IDs are `MC0`-`MC21` (§10).
@@ -414,8 +414,8 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 | MC17 | Increment 3 docs (User Guide install options) and a threat-model row for the release assets | 3 | low | Sonnet | MC14-MC16 |
 | MC18 | Owner: the first release with registry, bundle and plugin; check that each one installs | 3 | low | Owner | MC17 |
 | MC19 | `"mcpName": "io.github.raulkivi/agent-cost-analyzer"` in `packages/cli/package.json`, with a manifest test, so Increment 1's release carries it (§3.2). **Done 2026-11-18** (PR #430) | 1 | low | Haiku | — |
-| MC20 | VS Code Insiders as its own client `vscode-insiders` (D14): detect `code-insiders` or its `Code - Insiders/User` folder, write `Code - Insiders/User/mcp.json` under `servers`, skip when `~/.vscode-insiders/extensions` holds the AI Credits Analyzer extension; MC7 smoke and MC8 check extended | 1 | low | Sonnet | MC9 |
-| MC21 | Review findings R5 and R6 (D15): a registration's status carries the existing entry, the plan prints old and new in full, a remove-then-add whose add fails says the server is now unregistered and prints the old entry to restore; a symlinked project-scope config is refused | 1 | medium | Opus | MC9 |
+| MC20 | VS Code Insiders as its own client `vscode-insiders` (D14): detect `code-insiders` or its `Code - Insiders/User` folder, write `Code - Insiders/User/mcp.json` under `servers`, skip when `~/.vscode-insiders/extensions` holds the AI Credits Analyzer extension; MC7 smoke and MC8 check extended. **Done 2026-11-18** (PR #443) | 1 | low | Sonnet | MC9 |
+| MC21 | Review findings R5 and R6 (D15): a registration's status carries the existing entry, the plan prints old and new in full, a remove-then-add whose add fails says the server is now unregistered and prints the old entry to restore; a symlinked project-scope config is refused. **Done 2026-11-18** (PR #444) | 1 | medium | Opus | MC9 |
 
 Order: MC0 → MC1/MC2/MC19 (in parallel) → MC3 → MC4/MC5/MC6 → MC7 → MC8 →
 MC9 closes Increment 1, which ships in its own app minor release (D11).
