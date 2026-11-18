@@ -25,6 +25,7 @@ async function main(): Promise<number> {
       layout,
       stdout,
       stderr,
+      stdoutIsTty: process.stdout.isTTY === true,
       onSignal: (handler) => {
         process.once("SIGINT", handler);
         process.once("SIGTERM", handler);
