@@ -11,12 +11,13 @@ const path = new URL("../.github/workflows/release-app.yml", import.meta.url);
 const text = readFileSync(path, "utf8");
 const workflow = parse(text);
 const { build, publish } = workflow.jobs;
+const registry = workflow.jobs["mcp-registry"];
 const runs = (job) => job.steps.map((step) => step.run ?? "");
 const indexOfRun = (job, pattern) => runs(job).findIndex((run) => pattern.test(run));
 const usesStep = (job, prefix) => job.steps.find((s) => s.uses?.startsWith(prefix));
 
-test("two jobs: build then publish", () => {
-  assert.deepEqual(Object.keys(workflow.jobs), ["build", "publish"]);
+test("jobs: build, publish, then the MCP Registry listing", () => {
+  assert.deepEqual(Object.keys(workflow.jobs), ["build", "publish", "mcp-registry"]);
   assert.equal(publish.needs, "build");
 });
 
@@ -196,8 +197,49 @@ test("no release step reads a pipe synchronously or pipes npm output into node (
   }
 });
 
+test("the tag check also covers server.json's version", () => {
+  const check = build.steps.find((s) => s.id === "check");
+  assert.match(check.run, /--also packages\/cli\/server\.json/);
+});
+
+// mcp-client-setup.md §5.7, D10: a registry failure warns and never fails the release.
+test("the MCP Registry job runs after the npm publish, on a tag push only", () => {
+  assert.equal(registry.needs, "publish");
+  assert.match(registry.if, /event_name == 'push'/);
+  assert.match(registry.if, /startsWith\(github\.ref, 'refs\/tags\/app-v'\)/);
+});
+
+test("the MCP Registry job signs in through OIDC with the least permissions, and a failure only warns", () => {
+  assert.deepEqual(registry.permissions, { contents: "read", "id-token": "write" });
+  assert.equal(registry["continue-on-error"], true);
+  assert.equal(registry.environment, undefined);
+  assert.equal(usesStep(registry, "actions/checkout@").with["persist-credentials"], false);
+});
+
+test("the publisher is pinned to a release and verified before it runs", () => {
+  assert.match(registry.env.MCP_PUBLISHER_VERSION, /^v\d+\.\d+\.\d+$/);
+  assert.match(registry.env.MCP_PUBLISHER_SHA256, /^[0-9a-f]{64}$/);
+  const steps = registry.steps.map((s) => s.run ?? "");
+  const download = steps.findIndex((r) => /releases\/download\/\$\{?MCP_PUBLISHER_VERSION/.test(r));
+  assert.ok(download >= 0, "download step is missing");
+  assert.doesNotMatch(steps[download], /releases\/latest/);
+  assert.match(steps[download], /sha256sum --check|sha256sum -c/);
+  assert.match(steps[download], /cosign verify-blob/);
+  assert.match(steps[download], /--certificate-identity/);
+  assert.ok(usesStep(registry, "sigstore/cosign-installer@"));
+  const login = steps.findIndex((r) => /mcp-publisher login github-oidc/.test(r));
+  const publishIt = steps.findIndex((r) => /mcp-publisher publish/.test(r));
+  assert.ok(download < login && login < publishIt);
+});
+
+test("the registry publish runs from packages/cli, where server.json is, and uses no token login", () => {
+  const step = registry.steps.find((s) => /mcp-publisher publish/.test(s.run ?? ""));
+  assert.equal(step["working-directory"], "packages/cli");
+  assert.doesNotMatch(text, /mcp-publisher login (?!github-oidc)/);
+});
+
 test("third-party actions are pinned to a commit SHA", () => {
-  for (const job of [build, publish]) {
+  for (const job of [build, publish, registry]) {
     for (const step of job.steps) {
       if (step.uses) assert.match(step.uses, /@[0-9a-f]{40}$/, step.uses);
     }
