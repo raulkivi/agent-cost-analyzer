@@ -2,7 +2,8 @@
 
 **Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **Approved 2026-11-18** (owner interview, D1-D12 in §8). Next: MC0.
+Status: **Approved 2026-11-18** (owner interview, D1-D12 in §8). MC0 done
+2026-11-18 (§3.2). Next: MC1 and MC2.
 
 Phase 18 in [implementation-plan.md](../implementation-plan.md#phase-18--mcp-client-setup-for-the-standalone-app).
 Task IDs are `MC0`-`MC18` (§10).
@@ -69,21 +70,42 @@ Read on `main` at `f7793274`.
 
 ### 3.1 Client facts (checked 2026-11-18)
 
-Checked against each client's docs on 2026-11-18. **Unconfirmed** marks a
-fact that MC0 checks on a real install before any code depends on it.
+Checked against each client's docs on 2026-11-18, then by MC0 (§3.2).
+**Unconfirmed** marks a fact that the named task checks before code
+depends on it.
 
 | Client | How to register | Config file and shape | Source |
 |---|---|---|---|
-| Claude Code | `claude mcp add [--scope local\|project\|user] <name> -- <cmd> [args…]`; `claude mcp remove <name> [--scope]`; `claude mcp get <name>`; `claude mcp add-json <name> '<inner json>'` | `~/.claude.json` (local and user scopes); `.mcp.json` at the project root (project scope), `{"mcpServers":{…}}` | code.claude.com/docs/en/mcp |
-| Claude Desktop | Edit the file, then restart Claude Desktop | macOS `~/Library/Application Support/Claude/claude_desktop_config.json`; Windows `%APPDATA%\Claude\claude_desktop_config.json`; Linux `~/.config/Claude/claude_desktop_config.json` (as documented). Shape: `{"mcpServers":{name:{command,args,env}}}` | modelcontextprotocol.io/docs/develop/connect-local-servers |
-| Claude Desktop bundle | `.mcpb` (formerly DXT). `manifest.json` with `server.type: "node"`, `entry_point`, `mcp_config`. The bundle ships the server (calling npx from a bundle is unconfirmed). The current `manifest_version` is unconfirmed. | — | github.com/modelcontextprotocol/mcpb |
-| VS Code | `code --add-mcp '{"name","type":"stdio","command","args"}'` adds to the user profile. URL `vscode:mcp/install?<urlencoded json>` (Insiders: `vscode-insiders:`) opens a review page. | Its own `servers` format is now labeled deprecated in favor of Copilot's `mcpServers` in `.mcp.json` or `~/.copilot/mcp-config.json`. The per-OS path of the user `mcp.json` is unconfirmed. | code.visualstudio.com/docs/agents/reference/mcp-configuration |
-| Cursor | Edit the file. Deep link `cursor://anysphere.cursor-deeplink/mcp/install?name=…&config=<base64 of the inner JSON>` is **unconfirmed** in Cursor's docs. | `~/.cursor/mcp.json`, project `.cursor/mcp.json`, `{"mcpServers":{…}}` | cursor.com/docs/context/mcp |
-| Codex CLI | `codex mcp add <name> -- <cmd> [args…]` | `~/.codex/config.toml`, `[mcp_servers.<name>]` | OpenAI Codex docs |
-| Gemini CLI | `gemini mcp add [-s user\|project] <name> <cmd> [args…]` | `~/.gemini/settings.json`, `mcpServers` | geminicli.com/docs/tools/mcp-server |
-| MCP Registry | `mcpName: "io.github.<user>/<name>"` in `package.json`; `server.json` with `packages[{registryType:"npm", identifier, version, transport:{type:"stdio"}}]`; `mcp-publisher login github-oidc` from Actions (`id-token: write`). How to pass the `mcp` subcommand (`packageArguments`?) is unconfirmed. | — | modelcontextprotocol.io/registry/quickstart, /registry/github-actions |
-| Claude Code plugin | A plugin root with `.claude-plugin/plugin.json` and `.mcp.json`. A repository marketplace has `.claude-plugin/marketplace.json`. Users run `/plugin marketplace add raulkivi/agent-cost-analyzer`, then `/plugin install <name>@<marketplace>`. `claude plugin validate <dir>`. | — | code.claude.com/docs/en/plugins-reference |
+| Claude Code | `claude mcp add [--scope local\|project\|user] <name> -- <cmd> [args…]`; `claude mcp remove <name> [--scope]`; `claude mcp get <name>` (starts the server to check it); `claude mcp add-json <name> '<inner json>'`. No login needed. A name that exists exits 1 with "already exists"; removing a missing name exits 1. | `~/.claude.json` (local and user scopes; user scope is the top-level `mcpServers`); `.mcp.json` at the project root (project scope). Entry: `{"type":"stdio","command","args","env":{}}` | code.claude.com/docs/en/mcp; MC0 |
+| Claude Desktop | Edit the file, then restart Claude Desktop | macOS `~/Library/Application Support/Claude/claude_desktop_config.json`; Windows `%APPDATA%\Claude\claude_desktop_config.json`; Linux `~/.config/Claude/claude_desktop_config.json` (as documented). Shape: `{"mcpServers":{name:{command,args,env}}}`. The file also holds Claude Desktop's own settings (`preferences` and others). | modelcontextprotocol.io/docs/develop/connect-local-servers; MC0 |
+| Claude Desktop bundle | `.mcpb` (formerly DXT). `manifest.json` with `manifest_version: "0.3"`, `server.type: "node"`, `entry_point`, `mcp_config`; `mcp_config.args` may hold extra arguments after the entry point. The bundle ships the server. Packed with `@anthropic-ai/mcpb` 2.1.2. Whether it has a `validate` command is unconfirmed (MC15). | — | github.com/modelcontextprotocol/mcpb MANIFEST.md; MC0 |
+| VS Code | `code --add-mcp '{"name","type":"stdio","command","args"}'` adds to the user profile. There is no command to remove a server. The `vscode:mcp/install?` URL is not in the official docs. | User `mcp.json`, top-level `servers`: Linux `~/.config/Code/User/mcp.json`, macOS `~/Library/Application Support/Code/User/mcp.json`, Windows `%APPDATA%\Code\User\mcp.json` (third-party sources; the docs name only the "MCP: Open User Configuration" command; unconfirmed, MC8). The `servers` format is labeled deprecated in favor of Copilot's `mcpServers` in `.mcp.json` or `~/.copilot/mcp-config.json`. | code.visualstudio.com/docs/agents/reference/mcp-configuration; MC0 |
+| Cursor | Edit the file. Install link `cursor://anysphere.cursor-deeplink/mcp/install?name=<name>&config=<config>`, where `config` is the base64 of the inner server JSON (`{"command","args"}`), percent-encoded. | `~/.cursor/mcp.json`, project `.cursor/mcp.json`, `{"mcpServers":{…}}` | cursor.com/docs/context/mcp, cursor.com/docs/mcp/install-links; MC0 |
+| Codex CLI | `codex mcp add <name> -- <cmd> [args…]`; `codex mcp list`. The docs show no `remove`. What `add` does with a name that exists is undocumented. | `~/.codex/config.toml`, `[mcp_servers.<name>]` | OpenAI Codex docs; MC0 |
+| Gemini CLI | `gemini mcp add [-s user\|project] <name> <cmd> [args…]` (default scope: project); `gemini mcp remove -s <scope> <name>`. What `add` does with a name that exists is undocumented. | `~/.gemini/settings.json`, `mcpServers` | geminicli.com/docs/tools/mcp-server; MC0 |
+| MCP Registry | `mcpName: "io.github.<user>/<name>"` in `package.json`; `server.json` with `packages[{registryType:"npm", identifier, version, transport:{type:"stdio"}}]`; `mcp-publisher login github-oidc` from Actions (`id-token: write`). The `mcp` subcommand: `packageArguments: [{"type":"positional","value":"mcp"}]`. Schema `https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json`. The registry checks `mcpName` in the published npm version; 1.0.0 has none. | — | modelcontextprotocol.io/registry/quickstart, /registry/github-actions; MC0 |
+| Claude Code plugin | A plugin root with `.claude-plugin/plugin.json` and `.mcp.json`. A repository marketplace has `.claude-plugin/marketplace.json`. Users run `/plugin marketplace add raulkivi/agent-cost-analyzer`, then `/plugin install <name>@<marketplace>`. `claude plugin validate <dir>` runs without login: `plugin.json` needs only `name`; `marketplace.json` needs `name`, `owner.name` and `plugins[].source`. | — | code.claude.com/docs/en/plugins-reference; MC0 |
 | npm scripts | npm 12 (2026) no longer runs dependency install scripts unless the project allows them. pnpm 10+ blocks them by default. | — | github.blog changelog 2026-06-09; pnpm.io/settings/build |
+
+### 3.2 MC0 results (2026-11-18)
+
+Claude Code was run with a throwaway home on Linux; no other client CLI is
+installed on the owner's machine, so their rows rest on their docs.
+
+- **Windows `cmd /c`:** only Claude Code's docs ask for `cmd /c npx` on
+  native Windows, and an April 2026 issue says Claude Code 2.1.119 dropped
+  that warning. Claude Desktop, Cursor, VS Code, Codex and Gemini document
+  plain `npx`. §5.2 follows this.
+- **Duplicates:** Claude Code refuses a name that exists; Codex and Gemini
+  do not document it. Adapters read the client's config, or its `list`
+  command, before `add` (§5.3).
+- **Removal:** Claude Code and Gemini have a remove command; VS Code and
+  Codex do not (§5.3).
+- **Registry:** the first registry publish needs an npm release that carries
+  `mcpName`, so Increment 1's release adds it (MC19).
+- **Not checked on a real install:** VS Code (`code --add-mcp`, the user
+  `mcp.json` path, the extension check), Codex and Gemini. MC4's tests use
+  the documented shapes; MC8 checks VS Code on a machine that has it.
 
 ## 4. Options considered
 
@@ -133,8 +155,9 @@ It holds no I/O.
 - Default: `npx -y --prefer-offline agent-cost-analyzer mcp`.
 - `--pin`: `npx -y --prefer-offline agent-cost-analyzer@<running version> mcp`.
 - `--project-billing-details` is appended after `mcp`.
-- On Windows the command becomes `cmd` with `["/c", "npx", …]` for clients
-  that do not resolve `.cmd` files (MC0 records which clients those are).
+- On Windows, the `claude-code` adapter writes `cmd` with `["/c", "npx", …]`,
+  as Claude Code's docs ask; that note may be stale (§3.2), so it is a
+  per-adapter flag. Every other client gets plain `npx`.
 - The server name is always `agent-cost-analyzer` (D5).
 
 ### 5.3 Client adapters (open for extension)
@@ -159,12 +182,12 @@ Increment 1 adapters:
 
 | id | Mechanism | Scopes |
 |---|---|---|
-| `claude-code` | `RunCommand claude mcp add --scope <s> agent-cost-analyzer -- <spec>`; remove with `claude mcp remove` | user (default), project, local |
+| `claude-code` | Status read from `~/.claude.json` or `.mcp.json` (never `claude mcp get`, which starts the server). `RunCommand claude mcp add --scope <s> agent-cost-analyzer -- <spec>`; a changed entry is replaced by `claude mcp remove` then `add`, after confirmation; uninstall with `claude mcp remove` | user (default), project, local |
 | `claude-desktop` | `MergeJsonEntry` into `claude_desktop_config.json` under `mcpServers` | user |
 | `cursor` | `MergeJsonEntry` into `~/.cursor/mcp.json` or `.cursor/mcp.json` under `mcpServers` | user, project |
-| `vscode` | `RunCommand code --add-mcp '<json>'` (for Insiders, `code-insiders`). Skipped with a message when `code --list-extensions` lists `raulkivi.ai-credits-analyzer` (D6). Removal: MC0 decides between a JSON edit and printed steps. | user |
-| `codex` | `RunCommand codex mcp add agent-cost-analyzer -- <spec>` | user |
-| `gemini` | `RunCommand gemini mcp add -s <s> agent-cost-analyzer <spec>` | user, project |
+| `vscode` | `RunCommand code --add-mcp '<json>'` (for Insiders, `code-insiders`). Skipped with a message when `code --list-extensions` lists `raulkivi.ai-credits-analyzer` (D6). Uninstall removes the key from the user `mcp.json` under `servers` (§5.4); a file with comments is refused and the user is told to use "MCP: Open User Configuration". | user |
+| `codex` | Checks `codex mcp list` before `add`. `RunCommand codex mcp add agent-cost-analyzer -- <spec>`. No remove command and no TOML editing (§2): uninstall prints the `[mcp_servers.agent-cost-analyzer]` table to delete from `~/.codex/config.toml`. | user |
+| `gemini` | Checks `gemini mcp list` before `add`. `RunCommand gemini mcp add -s <s> agent-cost-analyzer <spec>` (always passes `-s`, since the default is project); uninstall with `gemini mcp remove -s <s>` | user, project |
 
 A new client means a new adapter and its tests. The command code does not
 change.
@@ -203,7 +226,7 @@ line.
 
 - **API:** `GET /api/mcp/setup` returns the launch spec and one entry per
   client: the snippet, the command, and an install link where the client has
-  one (VS Code, plus Cursor if MC0 confirms its link). It is read-only,
+  one (Cursor; VS Code only if MC8 confirms its URL, §9). It is read-only,
   computed from the version and the server's OS, and goes through the
   existing Host guard.
 - **UI:** a header button opens a dialog with one tab per client: copy
@@ -224,20 +247,27 @@ line.
   - In `release-app.yml`, after the npm publish: `mcp-publisher login
     github-oidc` and `publish`, with the publisher binary pinned and verified
     by its checksum or cosign.
-  - How the `mcp` argument is passed: MC0.
+  - `server.json` passes the subcommand as
+    `packageArguments: [{"type":"positional","value":"mcp"}]`, against the
+    2025-12-11 schema.
+  - The registry checks `mcpName` in the published npm version, so
+    `mcpName` ships in Increment 1's release (MC19), before the first
+    registry publish.
 - **`.mcpb` bundle.**
   - Built from the CLI's `dist/` (already a zero-dependency bundle) with a
-    `manifest.json`: `server.type: "node"`, entry `dist/cli.js`, args
-    `["mcp"]`, `compatibility.runtimes.node: ">=22.18"`.
-  - Packed with `@anthropic-ai/mcpb` as a pinned dev dependency.
+    `manifest.json`: `manifest_version: "0.3"`, `server.type: "node"`, entry
+    `dist/cli.js`, `mcp_config.args: ["${__dirname}/dist/cli.js", "mcp"]`,
+    `compatibility.runtimes.node: ">=22.18"`.
+  - Packed with `@anthropic-ai/mcpb` 2.1.2, a pinned dev dependency.
   - Attached to the `app-v*` GitHub Release. CI validates the manifest and
     starts the bundled server, which must answer `tools/list`.
 - **Claude Code plugin.**
   - The plugin lives in `plugins/agent-cost-analyzer/`: `plugin.json`, plus
     a `.mcp.json` with the npx launch spec.
   - `.claude-plugin/marketplace.json` at the repository root lists it.
-  - CI runs `claude plugin validate`, or a JSON-schema check if the CLI is
-    not available in CI (MC0).
+  - CI installs a pinned Claude Code CLI and runs `claude plugin validate`
+    on the plugin and on the marketplace; neither needs a login.
+    `marketplace.json` carries `owner.name`.
 
 ### 5.8 Module placement
 
@@ -323,8 +353,12 @@ recommended option.
 - **Clients change their formats.** VS Code has already relabeled `servers`
   as deprecated. Mitigation: one adapter per client, MC0's checks, the
   real-client check (MC8), and `mcp config` as the fallback.
-- **Cursor's deep link is undocumented.** Use it only if MC0 confirms it.
-  Otherwise the panel shows Cursor's file snippet.
+- **VS Code's install URL is undocumented.** The panel's VS Code tab shows
+  the `code --add-mcp` command; the `vscode:mcp/install` link is added only
+  if MC8 checks it in a real VS Code.
+- **Clients not checked on a real install** (VS Code, Codex, Gemini): their
+  adapters follow the docs; MC8 checks VS Code, and `mcp config` stays the
+  fallback.
 - **Claude Desktop has no official Linux build.** The adapter writes the
   documented Linux path, and `detect` finds the folder only when it exists.
 - **The registry is still in preview.** Increment 3 only. A failed registry
@@ -337,7 +371,7 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 
 | ID | Task | Inc. | Complexity | Model | Depends on |
 |---|---|---|---|---|---|
-| MC0 | Spike: on the owner's machine confirm the §3.1 unconfirmed facts (Cursor deep link, VS Code user `mcp.json` path and removal, which clients need `cmd /c`, registry `packageArguments`, `.mcpb` manifest version, `claude plugin validate` in CI). Record the results in §3.1. | 1 | medium | Sonnet | Plan approved |
+| MC0 | Spike: on the owner's machine confirm the §3.1 unconfirmed facts (Cursor deep link, VS Code user `mcp.json` path and removal, which clients need `cmd /c`, registry `packageArguments`, `.mcpb` manifest version, `claude plugin validate` in CI). Record the results in §3.1. **Done 2026-11-18** (§3.2). | 1 | medium | Sonnet | Plan approved |
 | MC1 | `McpLaunchSpec` and per-client snippet builders (pure), with table-driven tests per OS and flag | 1 | low | Sonnet | MC0 |
 | MC2 | `ConfigFileStore`: merge and remove, backup, atomic write, invalid-JSON refusal, indentation kept; tests over temporary folders | 1 | medium | Opus | — |
 | MC3 | `McpClientTarget` interface and the `claude-code`, `claude-desktop`, `cursor` adapters with detection | 1 | medium | Sonnet | MC1, MC2 |
@@ -356,7 +390,8 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 | MC16 | Claude Code plugin and repository marketplace, with CI validation | 3 | low | Haiku | MC0 |
 | MC17 | Increment 3 docs (User Guide install options) and a threat-model row for the release assets | 3 | low | Sonnet | MC14-MC16 |
 | MC18 | Owner: the first release with registry, bundle and plugin; check that each one installs | 3 | low | Owner | MC17 |
+| MC19 | `"mcpName": "io.github.raulkivi/agent-cost-analyzer"` in `packages/cli/package.json`, with a manifest test, so Increment 1's release carries it (§3.2) | 1 | low | Haiku | — |
 
-Order: MC0 → MC1/MC2 (in parallel) → MC3 → MC4/MC5/MC6 → MC7 → MC8 →
+Order: MC0 → MC1/MC2/MC19 (in parallel) → MC3 → MC4/MC5/MC6 → MC7 → MC8 →
 MC9 closes Increment 1, which ships in its own app minor release (D11).
 Increments 2 and 3 are independent of each other, and each can be released on its own.
