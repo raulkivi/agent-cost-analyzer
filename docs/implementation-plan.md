@@ -1872,7 +1872,7 @@ for Opus run on Sonnet, each reviewed against its plan before merging.
 | V34 | VB1: the right VS Code install is read (a variant counts only when its folder has `User`); unit tests over temp homes | C16 | low | Sonnet | — |
 | V35 | Third-party license notices in the VS Code extension's `.vsix` (owner 2026-11-15: fix in the next extension release; done 2026-11-15, PR #323) | Release | low | Sonnet | — |
 | V30 | 1.0.0 bump PR: both products to 1.0.0, both CHANGELOGs, README, the Gantt (done 2026-11-17, PR #423; the root CHANGELOG's 1.0.0 entry lists pi's `/fork` limitation) | Release | low | Haiku | C1-C16 met |
-| V31 | Release procedure below | Release | low | Owner step | V30 merged |
+| V31 | Release procedure below (done 2026-11-18: real-data 80 of 80, gate `PASS` on 08cc152b; extension published from `ext-v1.0.0` on 08cc152b; the app's first run failed its alias dry run under npm 11, fixed in PR #426, and `app-v1.0.0` moved to d191ce0e, which changes only `release-app.yml`) | Release | low | Owner step | V30 merged |
 
 ### Suggested order
 
