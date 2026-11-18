@@ -2,12 +2,13 @@
 
 **Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **Approved 2026-11-18** (owner interview, D1-D12 in §8). MC0-MC7
-and MC19 done 2026-11-18. Next: MC8 (owner run) and MC9. Testing is Linux
-only (D13).
+Status: **Approved 2026-11-18** (owner interview, D1-D12 in §8). MC0-MC9
+and MC19 done 2026-11-18 (MC8 signed off by the owner). Before Increment 1's
+release: MC20 (VS Code Insiders, D14) and MC21 (review findings R5 and R6,
+D15). Testing is Linux only (D13).
 
 Phase 18 in [implementation-plan.md](../implementation-plan.md#phase-18--mcp-client-setup-for-the-standalone-app).
-Task IDs are `MC0`-`MC18` (§10).
+Task IDs are `MC0`-`MC21` (§10).
 
 ## 1. Why
 
@@ -356,6 +357,8 @@ recommended option.
 | D11 | Order and releases | Increment 1 ships in its own app minor release. Increments 2 and 3 follow in either order, each releasable on its own. |
 | D12 | Plan approval | Approved; start with MC0 |
 | D13 | Operating systems tested (owner, 2026-11-18) | Linux only: macOS and Windows cannot be tested. Their code paths stay, unit-tested with an injected platform; MC7, MC8 and the exit criterion run on Linux. |
+| D14 | VS Code Insiders (owner, 2026-11-18; found by MC8: the owner's machine has only Insiders) | Support it before Increment 1's release (MC20) |
+| D15 | Review findings R5 and R6 (owner, 2026-11-18) | Fix before Increment 1's release (MC21) |
 
 ## 9. Risks
 
@@ -399,8 +402,8 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 | MC5 | CLI: argument parsing for `config`, `install`, `uninstall` and `status`; plan printing, prompt and `--dry-run`/`--yes`; exit codes; `usage.ts`. **Done 2026-11-18** (PR #437) | 1 | medium | Sonnet | MC3 |
 | MC6 | Start-up hint line (D7). **Done 2026-11-18** (PR #435) | 1 | low | Haiku | — |
 | MC7 | Tarball smoke on Linux (D13): install, status and uninstall per client in a temporary home; JSON clients launched with the SDK stdio client; stub CLIs record argv; serve home snapshot unchanged. **Done 2026-11-18** (PR #439: `npm run smoke:mcp-setup`, on the `npm-package` job's Linux legs; it found that `install` printed a client's backup and notes under the previous client's "done" line, fixed in `change-command.ts`) | 1 | high | Opus | MC4, MC5 |
-| MC8 | `npm run test:real-clients:mcp-setup` on the owner's machine with real `claude` and `code` | 1 | medium | Sonnet + owner run | MC7 |
-| MC9 | Docs: User Guide, standalone-app.md, README, CHANGELOG; vision, architecture and threat-model amendments (D1); review of Increment 1 | 1 | medium | Opus | MC7 |
+| MC8 | `npm run test:real-clients:mcp-setup` on the owner's machine with real `claude` and `code`. **Done 2026-11-18** (PR #440). The owner signed off its output 2026-11-18: Claude Code user, local and `--pin` connected; project scope pending Claude Code's folder approval, as expected; VS Code's file layout matched with `code-insiders`; Gemini, Codex and Claude Desktop skipped (not installed, or a GUI). | 1 | medium | Sonnet + owner run | MC7 |
+| MC9 | Docs: User Guide, standalone-app.md, README, CHANGELOG; vision, architecture and threat-model amendments (D1); review of Increment 1. **Done 2026-11-18** (PR #441). Review in §11. | 1 | medium | Opus | MC7 |
 | MC10 | Mock-up board for the "Connect an agent" panel; owner approves | 2 | low | Sonnet + owner | MC9 |
 | MC11 | `GET /api/mcp/setup` (read-only) with route and Host-guard tests | 2 | low | Sonnet | MC1 |
 | MC12 | The panel and its header button, with component tests | 2 | medium | Sonnet | MC10, MC11 |
@@ -411,6 +414,8 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 | MC17 | Increment 3 docs (User Guide install options) and a threat-model row for the release assets | 3 | low | Sonnet | MC14-MC16 |
 | MC18 | Owner: the first release with registry, bundle and plugin; check that each one installs | 3 | low | Owner | MC17 |
 | MC19 | `"mcpName": "io.github.raulkivi/agent-cost-analyzer"` in `packages/cli/package.json`, with a manifest test, so Increment 1's release carries it (§3.2). **Done 2026-11-18** (PR #430) | 1 | low | Haiku | — |
+| MC20 | VS Code Insiders as its own client `vscode-insiders` (D14): detect `code-insiders` or its `Code - Insiders/User` folder, write `Code - Insiders/User/mcp.json` under `servers`, skip when `~/.vscode-insiders/extensions` holds the AI Credits Analyzer extension; MC7 smoke and MC8 check extended | 1 | low | Sonnet | MC9 |
+| MC21 | Review findings R5 and R6 (D15): a registration's status carries the existing entry, the plan prints old and new in full, a remove-then-add whose add fails says the server is now unregistered and prints the old entry to restore; a symlinked project-scope config is refused | 1 | medium | Opus | MC9 |
 
 Order: MC0 → MC1/MC2/MC19 (in parallel) → MC3 → MC4/MC5/MC6 → MC7 → MC8 →
 MC9 closes Increment 1, which ships in its own app minor release (D11).
