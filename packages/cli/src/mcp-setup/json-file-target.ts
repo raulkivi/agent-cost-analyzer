@@ -19,11 +19,15 @@ export interface JsonFileClient {
   label: string;
   detect(env: ClientEnv): Promise<boolean>;
   configPath(scope: McpScope, env: ClientEnv): string;
+  /** Object holding the servers; Claude Desktop and Cursor use mcpServers. */
+  keyPath?: readonly string[];
+  /** True when another product already supplies the server (VS Code D6). */
+  providedElsewhere?(env: ClientEnv): Promise<boolean>;
   /** Appended after install and uninstall actions, e.g. a restart reminder. */
   followUp?: readonly SetupAction[];
 }
 
-const KEY_PATH = ["mcpServers"] as const;
+const DEFAULT_KEY_PATH = ["mcpServers"] as const;
 
 /** Clients whose whole setup is one entry in a JSON file: no CLI to run. */
 export function createJsonFileTarget(
@@ -31,14 +35,17 @@ export function createJsonFileTarget(
   client: JsonFileClient,
 ): McpClientTarget {
   const followUp = client.followUp ?? [];
+  const keyPath = client.keyPath ?? DEFAULT_KEY_PATH;
   const ref = (scope: McpScope, env: ClientEnv) => ({
     path: client.configPath(scope, env),
-    keyPath: KEY_PATH,
+    keyPath,
     name: MCP_SERVER_NAME,
   });
 
   const status: McpClientTarget["status"] = async (scope, env, expected) => {
     requireScope(client.id, scope);
+    if (await client.providedElsewhere?.(env))
+      return { kind: "provided-by-extension" };
     if (!(await client.detect(env))) return { kind: "not-detected" };
     return readRegistration(deps.store, ref(scope, env), expected.launch);
   };
