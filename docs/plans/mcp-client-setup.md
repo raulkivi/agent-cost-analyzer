@@ -244,13 +244,20 @@ line.
 ### 5.6.1 Mock-up boards (MC10)
 
 Boards for the header button and the dialog, light and dark, are in
-[mockups/mcp-client-setup/](mockups/mcp-client-setup/README.md), drawn
-2026-11-19 and awaiting owner approval before MC12. Open questions: button
-placement (after Retention or last), label or icon only at 1440 px, the
-button in Learn mode, a "Pin this version" switch (the plan leaves `--pin`
-out of the UI), vertical tabs or a wrapping row, arrow keys selecting at
-once, default tab, the Cursor-only install link, copy wording, and paths for
-other operating systems.
+[mockups/mcp-client-setup/](mockups/mcp-client-setup/README.md). Boards
+approved by the owner 2026-11-19 with these answers:
+
+- The button sits after Retention, shows in Learn and Analyze mode, and is
+  icon plus text at 1440 px, icon only (with accessible name) below 768 px.
+- No "Pin this version" switch; pinning stays the terminal `--pin` flag (D3).
+- Vertical tabs, a select at 360 px; arrow keys select at once.
+- Default tab: Claude Code the first time, then the last tab viewed,
+  remembered per browser in `localStorage` like the color mode (access in
+  try/catch; works without it).
+- Install link for Cursor only (VS Code's URL is undocumented, §9).
+- Copy wording as drawn; by-hand paths are those of the server's OS only.
+- Code blocks never wrap mid-token: they scroll sideways inside the block,
+  and the dialog never scrolls sideways.
 
 ### 5.7 Distribution channels (Increment 3)
 

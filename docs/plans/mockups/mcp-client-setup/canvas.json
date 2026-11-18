@@ -21,35 +21,35 @@
       "x": 0,
       "y": 1056,
       "w": 1488,
-      "h": 1512,
+      "h": 1460,
       "title": "2 · Dialog, light and dark: Claude Code (default) and Cursor tabs"
     },
     "DialogMore.dc.html": {
       "x": 0,
-      "y": 2688,
+      "y": 2636,
       "w": 1488,
-      "h": 3898,
+      "h": 3754,
       "title": "2b · Dialog, light and dark: Claude Desktop, VS Code, VS Code Insiders, Codex CLI, Gemini CLI"
     },
     "States.dc.html": {
       "x": 0,
-      "y": 6706,
+      "y": 6510,
       "w": 1488,
-      "h": 3574,
-      "title": "3 · States, light and dark: copied, loading, API error, pin option"
+      "h": 2388,
+      "title": "3 · States, light and dark: copied, loading, API error"
     },
     "Narrow.dc.html": {
       "x": 0,
-      "y": 10400,
+      "y": 9018,
       "w": 1888,
-      "h": 2190,
+      "h": 2102,
       "title": "4 · Narrow, light and dark: 768 and 360 px headers, dialogs"
     },
     "A11y.dc.html": {
       "x": 0,
-      "y": 12710,
+      "y": 11240,
       "w": 1488,
-      "h": 3628,
+      "h": 3366,
       "title": "5 · Accessibility: focus, keys, roles, announcements, contrast"
     }
   },
