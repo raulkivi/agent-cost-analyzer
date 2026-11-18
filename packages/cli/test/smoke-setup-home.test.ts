@@ -13,11 +13,12 @@ import { createConfigFileStore } from "../src/mcp-setup/config-file-store.js";
 import { DETECTED_FOLDERS, SEEDED_CONFIGS, seedSetupHome, setupSmokeEnv, stubScript, writableInHome } from "../smoke/setup-home.mts";
 
 describe("SEEDED_CONFIGS", () => {
-  it("seeds the three JSON-file clients with another server and other top-level keys, as 2-space JSON with a final newline", () => {
+  it("seeds the four JSON-file clients with another server and other top-level keys, as 2-space JSON with a final newline", () => {
     expect(SEEDED_CONFIGS.map((config) => [config.client, config.file, config.keyPath])).toEqual([
       ["claude-desktop", ".config/Claude/claude_desktop_config.json", ["mcpServers"]],
       ["cursor", ".cursor/mcp.json", ["mcpServers"]],
       ["vscode", ".config/Code/User/mcp.json", ["servers"]],
+      ["vscode-insiders", ".config/Code - Insiders/User/mcp.json", ["servers"]],
     ]);
     for (const config of SEEDED_CONFIGS) {
       const value = JSON.parse(config.text) as Record<string, Record<string, unknown>>;
@@ -38,6 +39,8 @@ describe("writableInHome", () => {
       ".cursor/mcp.json.agent-cost-analyzer.bak",
       ".config/Code/User/mcp.json",
       ".config/Code/User/mcp.json.agent-cost-analyzer.bak",
+      ".config/Code - Insiders/User/mcp.json",
+      ".config/Code - Insiders/User/mcp.json.agent-cost-analyzer.bak",
       ".claude.json",
       ".gemini/settings.json",
       ".codex/config.toml",
@@ -80,6 +83,6 @@ describe("seedSetupHome", () => {
     const env = createClientEnv({ platform: "linux", home, cwd: home, env: { PATH: "", XDG_CONFIG_HOME: path.join(home, ".config") } });
     const detected = [];
     for (const target of createClientTargets({ store: createConfigFileStore() })) if (await target.detect(env)) detected.push(target.id);
-    expect(detected).toEqual(["claude-desktop", "cursor", "vscode", "codex", "gemini"]);
+    expect(detected).toEqual(["claude-desktop", "cursor", "vscode", "vscode-insiders", "codex", "gemini"]);
   });
 });

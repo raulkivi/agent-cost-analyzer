@@ -26,7 +26,7 @@ export function usageText(): string {
     "  --project-billing-details    mcp: share client names and billing codes",
     "  --app-views-html <path>      mcp: serve this HTML file as the app views",
     "  --client <id>                mcp install|uninstall|config: claude-code, claude-desktop,",
-    "                               cursor, vscode, codex, gemini; a comma list or all",
+    "                               cursor, vscode, vscode-insiders, codex, gemini; a comma list or all",
     "  --scope <s>                  mcp: user (default), project or local, where the client has it",
     "  --pin                        mcp install|config: register this exact version, not the latest",
     "  --dry-run                    mcp install|uninstall: show the plan and stop",

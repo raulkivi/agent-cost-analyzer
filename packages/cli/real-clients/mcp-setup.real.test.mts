@@ -187,42 +187,58 @@ describe.skipIf(!enabled)("Claude Code (real claude)", () => {
   });
 });
 
-describe.skipIf(!enabled)("VS Code (real code)", () => {
-  it("writes the user mcp.json entry the real `code --add-mcp` writes", async (ctx) => {
-    await check(ctx, "VS Code", "user", "code", "neither code nor code-insiders is on PATH", async () => {
-      const made = sandbox();
-      // VS Code is detected by its user folder; the real `code` is never given the real profile.
-      const profile = path.join(made.home, ".config", "Code", "User");
-      mkdirSync(profile, { recursive: true });
-      const install = await made.aca(["mcp", "install", "--client", "vscode", "--yes"]);
-      expect(install.code, out(install)).toBe(0);
-      const ours = readJson(path.join(profile, "mcp.json")).servers?.[NAME];
-      expect(ours, "our install wrote a servers entry").toBeDefined();
+interface VscodeVariant {
+  id: "vscode" | "vscode-insiders";
+  label: string;
+  tool: "code" | "code-insiders";
+  /** The profile folder under ~/.config that detection looks for. */
+  profileFolder: string;
+}
 
-      const dataDir = path.join(made.root, "code-user-data");
-      const setup = clientSetup("vscode", { version, pin: false, projectBillingDetails: false, platform: "linux", scope: "user" });
-      const json = JSON.stringify({ name: NAME, ...(setup.json?.entry ?? {}) });
-      let real: Awaited<ReturnType<Sandbox["client"]>>;
-      try {
-        real = await made.client("code", ["--add-mcp", json, "--user-data-dir", dataDir, "--extensions-dir", path.join(made.root, "code-extensions")], made.project, VSCODE_TIMEOUT);
-      } catch (error) {
-        rows.push({ client: "VS Code", scope: "user", result: `skipped: real code did not finish headless within ${VSCODE_TIMEOUT / 1000} s` });
-        ctx.skip(`real code did not finish headless within ${VSCODE_TIMEOUT / 1000} s: ${String(error)}`);
-        return;
-      }
-      expect(real.code, out(real)).toBe(0);
-      const realFile = path.join(dataDir, "User", "mcp.json");
-      expect(existsSync(realFile), `real code wrote ${path.relative(made.root, realFile)}`).toBe(true);
-      const problems = vscodeEntryProblems(
-        { file: path.relative(path.join(made.home, ".config", "Code"), path.join(profile, "mcp.json")), entry: ours },
-        { file: path.relative(dataDir, realFile), entry: readJson(realFile).servers?.[NAME] },
-      );
-      expect(problems).toEqual([]);
-      expect(statusRow((await made.aca(["mcp", "status"])).stdout, "VS Code")).toBe("registered (latest)");
-      return `${path.basename(tools.code ?? "code")}: same User/mcp.json path and servers entry`;
+const VSCODE_VARIANTS: readonly VscodeVariant[] = [
+  { id: "vscode", label: "VS Code", tool: "code", profileFolder: "Code" },
+  { id: "vscode-insiders", label: "VS Code Insiders", tool: "code-insiders", profileFolder: "Code - Insiders" },
+];
+
+for (const variant of VSCODE_VARIANTS) {
+  describe.skipIf(!enabled)(`${variant.label} (real ${variant.tool})`, () => {
+    it(`writes the user mcp.json entry the real \`${variant.tool} --add-mcp\` writes`, async (ctx) => {
+      await check(ctx, variant.label, "user", variant.tool, `${variant.tool} is not on PATH`, async () => {
+        const made = sandbox();
+        // Detected by its user folder; the real client is never given the real profile.
+        const profileRoot = path.join(made.home, ".config", variant.profileFolder);
+        const profile = path.join(profileRoot, "User");
+        mkdirSync(profile, { recursive: true });
+        const install = await made.aca(["mcp", "install", "--client", variant.id, "--yes"]);
+        expect(install.code, out(install)).toBe(0);
+        const ours = readJson(path.join(profile, "mcp.json")).servers?.[NAME];
+        expect(ours, "our install wrote a servers entry").toBeDefined();
+
+        const dataDir = path.join(made.root, `${variant.tool}-user-data`);
+        const setup = clientSetup(variant.id, { version, pin: false, projectBillingDetails: false, platform: "linux", scope: "user" });
+        const json = JSON.stringify({ name: NAME, ...(setup.json?.entry ?? {}) });
+        let real: Awaited<ReturnType<Sandbox["client"]>>;
+        try {
+          real = await made.client(variant.tool, ["--add-mcp", json, "--user-data-dir", dataDir, "--extensions-dir", path.join(made.root, `${variant.tool}-extensions`)], made.project, VSCODE_TIMEOUT);
+        } catch (error) {
+          rows.push({ client: variant.label, scope: "user", result: `skipped: real ${variant.tool} did not finish headless within ${VSCODE_TIMEOUT / 1000} s` });
+          ctx.skip(`real ${variant.tool} did not finish headless within ${VSCODE_TIMEOUT / 1000} s: ${String(error)}`);
+          return;
+        }
+        expect(real.code, out(real)).toBe(0);
+        const realFile = path.join(dataDir, "User", "mcp.json");
+        expect(existsSync(realFile), `real ${variant.tool} wrote ${path.relative(made.root, realFile)}`).toBe(true);
+        const problems = vscodeEntryProblems(
+          { file: path.relative(profileRoot, path.join(profile, "mcp.json")), entry: ours },
+          { file: path.relative(dataDir, realFile), entry: readJson(realFile).servers?.[NAME] },
+        );
+        expect(problems).toEqual([]);
+        expect(statusRow((await made.aca(["mcp", "status"])).stdout, variant.label)).toBe("registered (latest)");
+        return `${variant.tool}: same User/mcp.json path and servers entry`;
+      });
     });
   });
-});
+}
 
 describe.skipIf(!enabled)("Gemini CLI (real gemini)", () => {
   it("installs through `gemini mcp add`, reads it back and uninstalls", async (ctx) => {

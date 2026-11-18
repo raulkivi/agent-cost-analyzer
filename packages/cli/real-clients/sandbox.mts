@@ -13,7 +13,7 @@ import { runToEnd, type Finished } from "../smoke/io.mts";
 import { setupSmokeEnv, stubScript, writeStub } from "../smoke/setup-home.mts";
 import { parseShimLog, sandboxEnvProblems, shimScript, stripClientVariables, type ShimCall } from "./checks.mts";
 
-export type RealTool = "claude" | "code" | "codex" | "gemini";
+export type RealTool = "claude" | "code" | "code-insiders" | "codex" | "gemini";
 
 const STUB_MODULE = pathToFileURL(path.join(import.meta.dirname, "..", "smoke", "client-stubs.mts")).href;
 const REPO_ROOT = path.resolve(import.meta.dirname, "..", "..", "..");
@@ -40,7 +40,8 @@ export function onPath(name: string, searchPath: string | undefined = process.en
 export function realTools(): Record<RealTool, string | undefined> {
   return {
     claude: onPath("claude"),
-    code: onPath("code") ?? onPath("code-insiders"),
+    code: onPath("code"),
+    "code-insiders": onPath("code-insiders"),
     codex: onPath("codex"),
     gemini: onPath("gemini"),
   };

@@ -6,6 +6,10 @@ import {
   codexHome,
   geminiSettingsPath,
   pathFlavor,
+  vscodeExtensionsDir,
+  vscodeInsidersConfigPath,
+  vscodeInsidersExtensionsDir,
+  vscodeInsidersUserDir,
   vscodeUserDir,
 } from "../../src/mcp-setup/client-paths.js";
 import { fakeEnv } from "./fake-client-env.js";
@@ -86,6 +90,44 @@ describe("vscodeUserDir", () => {
     );
     expect(vscodeUserDir(fakeEnv(base))).toBe(
       "C:\\Users\\u\\AppData\\Roaming\\Code\\User",
+    );
+  });
+});
+
+describe("vscodeInsidersUserDir", () => {
+  it("uses ~/.config/Code - Insiders/User on Linux, honoring XDG_CONFIG_HOME", () => {
+    expect(vscodeInsidersUserDir(fakeEnv())).toBe(
+      "/home/u/.config/Code - Insiders/User",
+    );
+    expect(
+      vscodeInsidersUserDir(fakeEnv({ env: { XDG_CONFIG_HOME: "/x" } })),
+    ).toBe("/x/Code - Insiders/User");
+  });
+
+  it("uses Application Support on macOS", () => {
+    const env = fakeEnv({ platform: "darwin", home: "/Users/u" });
+    expect(vscodeInsidersUserDir(env)).toBe(
+      "/Users/u/Library/Application Support/Code - Insiders/User",
+    );
+    expect(vscodeInsidersConfigPath(env)).toBe(
+      "/Users/u/Library/Application Support/Code - Insiders/User/mcp.json",
+    );
+  });
+
+  it("uses APPDATA on Windows, falling back under home", () => {
+    const base = { platform: "win32", home: "C:\\Users\\u" } as const;
+    expect(
+      vscodeInsidersUserDir(fakeEnv({ ...base, env: { APPDATA: "D:\\R" } })),
+    ).toBe("D:\\R\\Code - Insiders\\User");
+    expect(vscodeInsidersConfigPath(fakeEnv(base))).toBe(
+      "C:\\Users\\u\\AppData\\Roaming\\Code - Insiders\\User\\mcp.json",
+    );
+  });
+
+  it("keeps the extensions folders apart", () => {
+    expect(vscodeExtensionsDir(fakeEnv())).toBe("/home/u/.vscode/extensions");
+    expect(vscodeInsidersExtensionsDir(fakeEnv())).toBe(
+      "/home/u/.vscode-insiders/extensions",
     );
   });
 });

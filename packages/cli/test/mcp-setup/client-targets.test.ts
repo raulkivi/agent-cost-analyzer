@@ -85,6 +85,7 @@ describe("createClientTargets", () => {
       "claude-desktop",
       "cursor",
       "vscode",
+      "vscode-insiders",
       "codex",
       "gemini",
     ]);

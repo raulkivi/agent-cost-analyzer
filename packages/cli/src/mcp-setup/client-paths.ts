@@ -37,21 +37,39 @@ export function cursorConfigPath(
   return pathFlavor(env.platform).join(base, ".cursor", "mcp.json");
 }
 
-/** VS Code's user folder, which holds `mcp.json` and `settings.json`. */
-export function vscodeUserDir(env: ClientEnv): string {
+/** The per-user config root of an Electron app on the target platform. */
+function appDataDir(env: ClientEnv): string {
   const p = pathFlavor(env.platform);
   if (env.platform === "darwin")
-    return p.join(env.home, "Library", "Application Support", "Code", "User");
+    return p.join(env.home, "Library", "Application Support");
   if (env.platform === "win32")
-    return p.join(
-      env.env.APPDATA || p.join(env.home, "AppData", "Roaming"),
-      "Code",
-      "User",
-    );
-  return p.join(
-    env.env.XDG_CONFIG_HOME || p.join(env.home, ".config"),
-    "Code",
+    return env.env.APPDATA || p.join(env.home, "AppData", "Roaming");
+  return env.env.XDG_CONFIG_HOME || p.join(env.home, ".config");
+}
+
+/** VS Code's user folder, which holds `mcp.json` and `settings.json`. */
+export function vscodeUserDir(env: ClientEnv): string {
+  return pathFlavor(env.platform).join(appDataDir(env), "Code", "User");
+}
+
+/** Insiders is a separate install with its own profile folder. */
+export function vscodeInsidersUserDir(env: ClientEnv): string {
+  return pathFlavor(env.platform).join(
+    appDataDir(env),
+    "Code - Insiders",
     "User",
+  );
+}
+
+export function vscodeInsidersConfigPath(env: ClientEnv): string {
+  return pathFlavor(env.platform).join(vscodeInsidersUserDir(env), "mcp.json");
+}
+
+export function vscodeInsidersExtensionsDir(env: ClientEnv): string {
+  return pathFlavor(env.platform).join(
+    env.home,
+    ".vscode-insiders",
+    "extensions",
   );
 }
 

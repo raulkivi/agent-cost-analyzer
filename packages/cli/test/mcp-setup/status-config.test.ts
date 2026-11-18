@@ -30,10 +30,11 @@ describe("status", () => {
       await statusCommand({ kind: "mcp-status", scope: "user" }, h.deps),
     ).toBe(0);
     const lines = joined(h.out).split("\n").filter(Boolean);
-    expect(lines).toHaveLength(6);
+    expect(lines).toHaveLength(7);
     expect(lines[0]).toMatch(/^Claude Code\s+registered \(pinned 1\.0\.0\)$/);
     expect(lines[2]).toMatch(/^Cursor\s+not detected$/);
     expect(lines[3]).toMatch(/^vscode\s+not supported yet$/);
+    expect(lines[4]).toMatch(/^vscode-insiders\s+not supported yet$/);
   });
 
   it.each([
