@@ -65,6 +65,16 @@ jobs:
       # (set by Actions) a missing dist fails it instead of skipping.
       - run: npm run build
       - run: npm test
+      # The Claude Code plugin and its marketplace (MC16). A pinned CLI, and a
+      # throwaway HOME so validation never reads or writes a real ~/.claude.
+      - name: Validate the Claude Code plugin and marketplace
+        env:
+          CLAUDE_CODE_VERSION: 2.1.327
+        run: |
+          npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
+          mkdir -p "$RUNNER_TEMP/claude-home"
+          HOME="$RUNNER_TEMP/claude-home" claude plugin validate plugins/agent-cost-analyzer
+          HOME="$RUNNER_TEMP/claude-home" claude plugin validate .
 
   # The standalone app's usage-scenario suite (Phase 15 step 15.9,
   # docs/plans/cost-by-repository-and-project.md §12.4): the real server and

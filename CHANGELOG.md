@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- A Claude Code plugin in this repository registers the MCP server: `/plugin marketplace add raulkivi/agent-cost-analyzer`, then `/plugin install agent-cost-analyzer@agent-cost-analyzer`.
+
 ## [1.1.0] - 2026-11-19
 
 ### Added
