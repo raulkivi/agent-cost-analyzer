@@ -1,6 +1,6 @@
 # AI Credits Analyzer
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 See where your GitHub Copilot Chat tokens and AI Credits go. AI Credits
 Analyzer reads the logs Copilot Chat writes on your machine and shows each
@@ -63,7 +63,7 @@ reads those and Copilot Chat.
   Credits, its coverage and **Copy text**. It adds no total and changes no
   setting or file.
 
-  ![The Savings tab over 7, 30 and 90 days: a row's detail with range and coverage, Copy text, Include simulated and the Not analysed list](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/demo/e5-savings.gif)
+  ![The Savings tab: a row's sessions with title, date and saving, an unused-tools row listing its tools with estimated tokens, Include simulated and the Not analysed list](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/demo/e5-savings.gif) <!-- codespell:ignore analysed -->
 - **Replay on another model.** Pick a model in **Replay on** to see what a
   session would have cost about there, beside what it did cost, in
   Simulated columns with a summary of coverage and assumptions. **Compare

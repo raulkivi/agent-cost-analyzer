@@ -1,6 +1,6 @@
 # agent-cost-analyzer
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 See where the tokens and money go when an AI agent writes code for you. This
 package runs the standalone **Agent Cost Analyzer** app: it reads the session
@@ -18,6 +18,8 @@ Needs Node.js 22.18 or newer.
 ```sh
 npx agent-cost-analyzer
 ```
+
+![A terminal runs npx agent-cost-analyzer: the app starts on 127.0.0.1:5199 and opens in the browser, Analyze mode lists sample sessions, and a second run opens the running app instead of starting another](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/demo/n1-npx-quick-start.gif)
 
 The app starts on http://127.0.0.1:5199 and opens in your browser. If it is
 already running, a second start opens that instance. If another program holds
@@ -39,6 +41,8 @@ Ctrl+C stops the app. It never listens beyond `127.0.0.1`; there is no
 `agent-cost-analyzer mcp` runs the same analysis as a read-only MCP server
 over stdio, so an MCP client can answer "what drove my spend this week?". The
 interactive views for hosts that support MCP Apps are included.
+
+![Claude Desktop answering "What did my coding agents cost in October?" with a cost rollup for Claude Code, Copilot and pi, opened in the side pane, then one session and one turn](https://raw.githubusercontent.com/raulkivi/agent-cost-analyzer/main/docs/images/demo/m1-cost-rollup.gif)
 
 ```sh
 claude mcp add agent-cost-analyzer -- npx -y --prefer-offline agent-cost-analyzer mcp

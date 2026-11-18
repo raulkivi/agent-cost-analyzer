@@ -1,6 +1,6 @@
 # AI Credits Analyzer: extension guide
 
-**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 AI Credits Analyzer is a VS Code extension that shows where your GitHub
 Copilot Chat tokens and AI Credits go. It reads the logs Copilot Chat
@@ -208,7 +208,7 @@ filter, a **Calls by agent** split and a **Subagent runs** table; see
 the log doesn't state shows as **Unknown**, with the reason, rather than
 counting as a success or a failure.
 
-![Show Tool Audit from a session's context menu: failure categories and Unknown outcomes, the All sessions audit, and the Copy Advice Bundle dialog with its Preview](images/demo/e8-tool-audit.gif)
+![Show Tool Audit: calls split between the main agent and subagent runs, the Subagents filter with the Agent column and the runs table, then the All sessions audit](images/demo/e8-tool-audit.gif)
 
 ![The same panel in Light Modern](images/vscode/panel-light.png)
 
@@ -272,7 +272,7 @@ a row, the labels (**up to**, range, **estimate**, **inferred**, **Not
 priced**, **Simulated**) and the checks are in the User Guide's
 [The savings report](UserGuide.md#the-savings-report).
 
-![The Savings tab over 7, 30 and 90 days: a row's detail with range and coverage, Copy text, Include simulated and the Not analysed list](images/demo/e5-savings.gif)
+![The Savings tab: a row's sessions with title, date and saving, an unused-tools row listing its tools with estimated tokens, Include simulated and the Not analysed list](images/demo/e5-savings.gif) <!-- codespell:ignore analysed -->
 
 What differs in the panel:
 
@@ -681,6 +681,8 @@ VS Code shows the views inline in the chat only (no fullscreen). They need
 no setup beyond the MCP server being on: the views ship inside the
 extension. They use the extension's name and colours and follow your VS Code
 theme. Claude Code CLI keeps the text answer.
+
+![The savings view on its own in a test host: a ranked row opens in place with its tools and sessions, one session's replay opens, then Back](images/demo/f4-savings.gif)
 
 What you can click:
 

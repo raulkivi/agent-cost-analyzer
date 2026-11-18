@@ -1,6 +1,6 @@
 # User Guide
 
-**Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 A walkthrough of the Agent Cost Analyzer's two modes — **Learn** (guided,
 bundled example sessions) and **Analyze** (your own real sessions from VS
@@ -25,6 +25,8 @@ immediately. Analyze mode lists
 whatever real Copilot Chat sessions it finds in your local VS Code session
 store — see [Analyze mode](#analyze-mode) below for what to expect there,
 including turning on debug logging for full per-turn numbers.
+
+![A terminal runs npx agent-cost-analyzer: the app starts on 127.0.0.1:5199 and opens in the browser, Analyze mode lists sample sessions, and a second run opens the running app instead of starting another](images/demo/n1-npx-quick-start.gif)
 
 ![The app on load: header, Learn/Analyze mode switch, session list, and the config warning banner](images/landing-page.png)
 
@@ -475,7 +477,7 @@ other model's vendor caching rules and prices. Only caching and prices
 change. Every replayed figure is labeled **Simulated**, and the measured
 figures stay as they are, beside it.
 
-![Analyze mode on a Claude Code session: the turn inspector opens, then Replay on another model adds Simulated columns and opens the Replay summary](images/demo/w2-analyze-replay.gif)
+![A Claude Code session in Analyze mode: a turn with subagent runs, their tokens and priced cost in the Explanation panel, then Replay on another model with Simulated columns and the runs it left out](images/demo/w2-analyze-replay.gif)
 
 **Choose a model.** With a session open, the **Replay on** select sits in
 the session's header row. It starts at **Off (measured only)**. Models are
@@ -655,6 +657,8 @@ of the real error as evidence.
   that still counts every agent says so.
 
 ![Tool audit for one session](images/audit-session.png)
+
+![The Tool audit tab on a Copilot session: calls from subagent runs counted apart from the main agent's, the Subagents filter, and a run that couldn't be read with its reason](images/demo/w5-tool-audit.gif)
 
 **All sessions** rolls the audit up over the last 7, 30, or 90 days (or
 all time). It shows failures per day, top failing commands with how many
@@ -1026,7 +1030,7 @@ how many turns each figure covers.
 **Session picker.** A list of Claude Code sessions. **Analyse** puts a
 request for one session in the chat, and Claude answers it.
 
-![A list of Claude Code sessions in Claude Desktop; clicking Analyse on one fills the chat with a request, which Claude then answers](images/demo/m4-analyse-session.gif)
+![A list of Claude Code sessions in Claude Desktop; the button on one reads Added to chat, the request is sent and Claude answers](images/demo/m4-analyse-session.gif)
 
 **Findings.** Findings across providers for October, filtered to anomalies,
 with one finding's evidence opened.
@@ -1042,16 +1046,28 @@ model's replay turn by turn. The figures are **Simulated**.
 
 ![Estimate view in Claude Desktop: a cost range for ten more active days, labeled as an estimate](images/demo/m7-estimate.gif)
 
-**Getting the views.** Run `npm run build` in the repo, then register
-`scripts/mcp-server.sh` as above (for Claude Desktop, as the `command` of an
-entry in `claude_desktop_config.json`, then restart it). The script adds
+**Savings.** Asked "What could I have saved on my coding agents in October?",
+Claude Desktop shows the savings view in the side pane. A row opens in place
+with its tools and sessions, then one session's cost, then Back.
+
+![Claude Desktop answering "What could I have saved on my coding agents in October?" with the savings view in the side pane: a row opened with its tools and sessions, each with its date and saving, then one session's cost and Back](images/demo/m8-savings.gif)
+
+**Getting the views.** The npm package includes them. Register
+`npx -y --prefer-offline agent-cost-analyzer mcp` as the server's command, as
+in [Querying the audit from Claude Code](#querying-the-audit-from-claude-code-mcp).
+For Claude Desktop, add an entry to `claude_desktop_config.json` whose
+`command` is `npx` and whose arguments are `-y --prefer-offline
+agent-cost-analyzer mcp`, then restart it. To run from a clone instead, run
+`npm run build` in the repo, then register `scripts/mcp-server.sh` as above
+(for Claude Desktop, as the `command` of an entry in
+`claude_desktop_config.json`, then restart it). The script adds
 `--app-views-html packages/mcp-apps/dist/views.html` for you when the built
 file exists. The VS Code extension includes the views; there is nothing to
 build.
 
 **No view appears?**
 
-- **Standalone server:** the build is missing, so the server starts with
+- **Standalone server from a clone:** the build is missing, so the server starts with
   text results only and says nothing. Run `npm run build`, then restart the
   server (or the host).
 - **Your host doesn't support MCP Apps.** Claude Code CLI doesn't; it shows
@@ -1071,6 +1087,8 @@ this machine. Claude Code, pi and mitmproxy sessions record no AI Credits and
 are not counted. Learn mode has no gauge. The VS Code extension has the same
 gauge in its status bar (see the
 [extension guide](vscode-extension-guide.md#monthly-allowance-gauge)).
+
+![Setting a monthly AI Credits allowance in the standalone app's header: the gauge shows at least the month's AI Credits against the allowance, near limit, and its details show the period, coverage and the split between Copilot Chat and Agent Host](images/demo/w4-allowance.gif)
 
 **Set it.** Until you set an allowance the header shows **Set monthly
 allowance**. Click it and fill in the dialog:
@@ -1436,7 +1454,7 @@ view of the Dashboard's view switch, after **Billing**. It reads the most
 recent sessions in the window from the selected providers (at most 500)
 and computes the report when you open it; nothing is stored.
 
-![The Savings view: the 7, 30 and 90 day windows, a ranked row opened for its detail, and Open in Analyze](images/demo/w3-savings.gif)
+![The Savings view: a row's sessions with title, date and saving, an unused-tools row listing its tools, a pi row marked Not priced, and Open in Analyze](images/demo/w3-savings.gif)
 
 ![The Savings report at desktop width: two ranked changes in US dollars with their per-week amounts and bars, and a Not analysed list below](images/guide-dashboard-savings.png)
 
@@ -1563,7 +1581,8 @@ ranked rows (in VS Code Copilot Chat, Copilot sessions only), cut to the 10
 highest unless it asks for up to 20, with session ids (each with its date
 and its saving over the window), model ids and up to 20 tools of an
 unused-tools row, but no session titles or prompts. In a host with MCP Apps it opens the savings view
-([Interactive views in the chat](#interactive-views-in-the-chat)).
+([Interactive views in the chat](#interactive-views-in-the-chat)). A recording
+of the view in Claude Desktop is there too.
 
 ## Charts as tables
 

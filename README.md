@@ -1,6 +1,6 @@
 # Agent Cost Analyzer
 
-**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 [![Works with GitHub Copilot Chat](https://img.shields.io/badge/works_with-GitHub_Copilot_Chat-informational)](docs/UserGuide.md#choosing-a-log-provider)
 [![Works with Claude Code](https://img.shields.io/badge/works_with-Claude_Code-informational)](docs/UserGuide.md#choosing-a-log-provider)
@@ -80,6 +80,8 @@ Needs Node.js 22.18 or newer.
 npx agent-cost-analyzer
 ```
 
+![A terminal runs npx agent-cost-analyzer: the app starts on 127.0.0.1:5199 and opens in the browser, Analyze mode lists sample sessions, and a second run opens the running app instead of starting another](docs/images/demo/n1-npx-quick-start.gif)
+
 It starts the app on http://127.0.0.1:5199 and opens it in your browser.
 `npx agent-cost-analyser` (British spelling) also works: it is an alias of the same package. The <!-- codespell:ignore analyser -->
 server listens on your own machine only. If the app is already running, a
@@ -104,8 +106,6 @@ on Linux (or under `XDG_CONFIG_HOME`),
 `~/Library/Application Support/agent-cost-analyzer` on macOS and
 `%APPDATA%\agent-cost-analyzer` on Windows. It holds your chosen provider,
 the retention threshold, your projects file and issued statements.
-
-![The standalone app in Learn mode, switched from Light to Dark: a scenario's turn table with cache reads and writes, and a compaction marker on one turn](docs/images/demo/w1-learn.gif)
 
 ![The standalone app on load, with Learn and Analyze modes](docs/images/landing-page.png)
 

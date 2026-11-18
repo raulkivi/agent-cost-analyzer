@@ -1,6 +1,6 @@
 # VS Code UI automation of the manual checks
 
-**Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **merged to `main` (#117, #121, #127; later specs #139, #157,
 #172); T15 and Q2 closed by the owner's decision D4, 2026-11-11: the job is required and runs in the release workflow (step 10.17 G1, #202)**; §6 records
@@ -639,7 +639,7 @@ Commands:
   - Each take's JSON records the Desktop version. Desktop updates itself and cannot be pinned.
 - Terminal scenes (N1): `npm run demo:record:terminal -w packages/vscode-extension -- N1`. `--dry-run` plays the scene without recording and saves a frame at each template wait to `AICA_DEMO_DEBUG_DIR`, to cut templates from.
   - Prerequisites: `xterm`, `xdotool`, Xvfb, `curl`, python3 with OpenCV (`cv2`), and Playwright's Chromium. Build the web package and the CLI first (`npm run build`).
-  - The scene runs on its own Xvfb (1600×1000, no window manager). Two `xterm` windows (Terminal A and B) fill the frame, and `xdotool` raises one at a time.
+  - The scene runs on its own Xvfb (1600×1000, no window manager). The browser fills the top 1600×700, and a full-width 300 px strip below it holds the two `xterm` windows (Terminal A and B), which share that rect; `xdotool` raises one at a time, so the browser stays in view (D47).
   - `npx agent-cost-analyzer` runs from an `npm pack` tarball of `packages/cli`, installed into an empty folder (D29). `HOME` is a fixture home (`terminal-home.mts` is the one place to switch it).
   - The CLI's own `xdg-open` call hits a wrapper first on the demo `PATH`. It posts the URL to the driver, which opens a throwaway Playwright Chromium (kiosk, fixed clock). The privacy probe reads that page. The browser opens or comes forward about 2 s after the terminal line, so the line stays on screen.
   - Port 5199 must be free; the driver checks first and fails with a clear message.
