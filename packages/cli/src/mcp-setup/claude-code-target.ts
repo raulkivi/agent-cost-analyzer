@@ -5,9 +5,9 @@ import { MCP_SERVER_NAME } from "../../../server/src/mcp/client-setup/launch-spe
 import type { ClientEnv } from "./client-env.js";
 import { pathFlavor } from "./client-paths.js";
 import type { ConfigFileStore, JsonEntryRef } from "./config-file-store.js";
-import type { McpClientTarget, SetupAction } from "./mcp-client-target.js";
+import type { McpClientTarget } from "./mcp-client-target.js";
+import { planCliInstall, planCliUninstall } from "./cli-command-plans.js";
 import {
-  installMode,
   readRegistration,
   removalSetup,
   requireScope,
@@ -42,12 +42,6 @@ function entryRef(scope: McpScope, env: ClientEnv): JsonEntryRef {
   }
 }
 
-const run = (argv: readonly string[]): SetupAction => ({
-  kind: "run",
-  file: argv[0] ?? CLAUDE,
-  args: argv.slice(1),
-});
-
 export function createClaudeCodeTarget(deps: {
   store: ConfigFileStore;
 }): McpClientTarget {
@@ -66,33 +60,12 @@ export function createClaudeCodeTarget(deps: {
     status,
 
     async planInstall(setup, env) {
-      const current = await status(setup.scope, env, setup);
-      const mode = installMode(current);
-      const { command, remove } = setup;
-      if (!command) throw new Error("claude-code setup has no add command");
-      const actions: SetupAction[] = [];
-      if (mode === "replace") {
-        // claude refuses an existing name, so replacing is remove then add.
-        if (!remove) throw new Error("claude-code setup has no remove command");
-        actions.push(run(remove));
-      }
-      if (mode === "add" || mode === "replace") actions.push(run(command));
-      return {
-        status: current,
-        actions,
-        needsConfirmation: mode === "replace",
-      };
+      return planCliInstall(setup, await status(setup.scope, env, setup));
     },
 
     async planUninstall(scope, env) {
       const setup = removalSetup("claude-code", scope, env.platform);
-      const current = await status(scope, env, setup);
-      // claude exits 1 when asked to remove a name that is not there.
-      const actions =
-        current.kind === "registered" && setup.remove
-          ? [run(setup.remove)]
-          : [];
-      return { status: current, actions };
+      return planCliUninstall(setup, await status(scope, env, setup));
     },
   };
 }
