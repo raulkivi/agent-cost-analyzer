@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import { homedir } from "node:os";
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
 import {
   createStandaloneApiService,
@@ -8,6 +9,8 @@ import {
 import { ApiError, BadRequestError, statusForApiError } from "./services/api/api-errors.js";
 import { createLoopbackHostGuard } from "./http/loopback-host-guard.js";
 import { APP_ID } from "./app-id.js";
+import { mcpSetupResponse } from "./mcp/client-setup/setup-response.js";
+import type { PathEnv } from "./mcp/client-setup/config-paths.js";
 
 export interface CreateAppOptions extends StandaloneApiServiceOptions {
   // Ports a request's Host header may name (DNS-rebinding guard,
@@ -15,6 +18,8 @@ export interface CreateAppOptions extends StandaloneApiServiceOptions {
   // whose proxy forwards the browser's Host unchanged. Omitted (tests on an
   // ephemeral port) accepts any port, still on a loopback hostname only.
   allowedHostPorts?: readonly number[];
+  // The machine GET /api/mcp/setup describes; tests inject a fake home.
+  mcpSetupHost?: PathEnv;
 }
 
 // Route params arrive as strings; Record<string, string> accepts every
@@ -46,7 +51,7 @@ export function createApp(options: CreateAppOptions = {}): Express {
   const app = express();
   // Also when mounted in the npm package's server, which disables it too.
   app.disable("x-powered-by");
-  const { allowedHostPorts, ...serviceOptions } = options;
+  const { allowedHostPorts, mcpSetupHost, ...serviceOptions } = options;
   const api = createStandaloneApiService(serviceOptions);
 
   // First, before any route or body parsing touches session data.
@@ -56,6 +61,15 @@ export function createApp(options: CreateAppOptions = {}): Express {
   app.get("/api/health", route(async (_req, res) => {
     // `app` lets the CLI tell a running instance of this app from any other server on its port (npm-package.md §4.4).
     res.json({ app: APP_ID, ...(await api.getHealth()) });
+  }));
+
+  // Phase 18 MC11: what the "Connect an agent" panel shows. Read-only by
+  // design (mcp-client-setup.md D1): no route writes a client config, the
+  // terminal command is the only writer. The body shows home as `~`.
+  app.get("/api/mcp/setup", route(async (_req, res) => {
+    const { version } = await api.getHealth();
+    const host = mcpSetupHost ?? { platform: process.platform, home: homedir(), env: process.env };
+    res.set("Cache-Control", "no-store").json(mcpSetupResponse({ version, ...host }));
   }));
 
   app.get("/api/product", route(async (_req, res) => {
