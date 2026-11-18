@@ -1,6 +1,6 @@
 # Changelog
 
-**Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 All notable changes to this project are documented in this file.
 
@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### Added
+- `agent-cost-analyzer mcp install`, `uninstall`, `status` and `config` register the MCP server with Claude Code, Claude Desktop, Cursor, VS Code, Codex and Gemini CLI. `install` and `uninstall` show each step first and ask before applying (`--dry-run` stops after the plan, `--yes` skips the question); `status` reads without writing; `config` prints the command, JSON or TOML to paste yourself.
 
 ## [1.0.0] - 2026-11-17
 

@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { parseCliArgs, type McpCommand, type ServeCommand } from "./args.js";
+import { parseCliArgs, type McpCommand, type ServeCommand, type SetupCommand } from "./args.js";
 import { usageText } from "./usage.js";
 
 /** Everything `run` touches, injected so tests need no process, port or stdio. */
@@ -12,6 +12,8 @@ export interface CliDeps {
   serve(options: ServeCommand): Promise<number>;
   /** Resolves to the process exit code once the stdio server has ended. */
   mcp(options: McpCommand): Promise<number>;
+  /** `mcp config|install|uninstall|status`: resolves to the exit code. */
+  setup(command: SetupCommand): Promise<number>;
 }
 
 export async function run(argv: readonly string[], deps: CliDeps): Promise<number> {
@@ -26,13 +28,23 @@ export async function run(argv: readonly string[], deps: CliDeps): Promise<numbe
     case "error":
       deps.stderr(`${command.message}\n\n${usageText()}`);
       return 2;
-    case "serve":
-    case "mcp":
+    default:
       try {
-        return await (command.kind === "serve" ? deps.serve(command) : deps.mcp(command));
+        return await dispatch(command, deps);
       } catch (error) {
         deps.stderr(`${error instanceof Error ? error.message : String(error)}\n`);
         return 1;
       }
+  }
+}
+
+function dispatch(command: ServeCommand | McpCommand | SetupCommand, deps: CliDeps): Promise<number> {
+  switch (command.kind) {
+    case "serve":
+      return deps.serve(command);
+    case "mcp":
+      return deps.mcp(command);
+    default:
+      return deps.setup(command);
   }
 }

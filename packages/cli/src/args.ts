@@ -4,6 +4,9 @@ import { parseArgs } from "node:util";
 // One source of truth for the mcp flags; esbuild follows the relative import
 // into the bundle (npm-package.md §4.3).
 import { parseStdioArgs } from "../../server/src/mcp/stdio-args.js";
+import { isSetupSubcommand, parseSetupArgs, type SetupCommand } from "./mcp-setup/setup-args.js";
+
+export type { SetupCommand } from "./mcp-setup/setup-args.js";
 
 export interface ServeCommand {
   kind: "serve";
@@ -16,7 +19,7 @@ export interface McpCommand {
   projectBillingDetails: boolean;
   appViewsHtml?: string;
 }
-export type CliCommand = ServeCommand | McpCommand | { kind: "help" } | { kind: "version" } | { kind: "error"; message: string };
+export type CliCommand = ServeCommand | McpCommand | SetupCommand | { kind: "help" } | { kind: "version" } | { kind: "error"; message: string };
 
 const BILLING_FLAG = "--project-billing-details";
 const VIEWS_FLAG = "--app-views-html";
@@ -46,7 +49,11 @@ function parsePort(text: string): number | undefined {
 }
 
 export function parseCliArgs(argv: readonly string[]): CliCommand {
-  if (argv[0] === "mcp") return parseMcp(argv.slice(1));
+  if (argv[0] === "mcp") {
+    const sub = argv[1];
+    // Only the four subcommand words leave the server parsing, which stays strict.
+    return isSetupSubcommand(sub) ? parseSetupArgs(sub, argv.slice(2)) : parseMcp(argv.slice(1));
+  }
   let values;
   try {
     ({ values } = parseArgs({
