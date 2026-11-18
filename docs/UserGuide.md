@@ -726,7 +726,16 @@ How each client is registered:
   Analyzer extension is installed in them, since the extension registers its
   own server.
 - An entry with a different launch (another version, or a command of your
-  own) is replaced only after you confirm, or with `--yes`.
+  own) is replaced only after you confirm, or with `--yes`. The plan prints
+  your old entry and the new one in full, as one line of JSON each. Claude
+  Code and Gemini CLI replace through their own `remove` then `add` and keep
+  no backup: if the `add` fails, the command exits with 1, says the server
+  is no longer registered in that client, and prints how to restore your
+  old entry (for Claude Code, a `claude mcp add-json` command).
+- For `--scope project`, a config file or folder in the project that is a
+  link (`.mcp.json`, `.cursor`, `.gemini` and the files in them) is refused:
+  a cloned repository could point it anywhere. The plan names the link's
+  target, changes nothing for that client and exits with 1.
 
 `npx agent-cost-analyzer mcp status` prints one line per client, such as
 `registered (latest)`, `registered (pinned 1.0.0)`, `not registered`, `not

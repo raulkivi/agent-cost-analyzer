@@ -14,6 +14,7 @@ import {
   homeChangeProblems,
   jsonInstallProblems,
   parseStatus,
+  replacePlanProblems,
   statusProblems,
   withoutEntry,
 } from "../smoke/setup-checks.mts";
@@ -107,6 +108,29 @@ describe("jsonInstallProblems", () => {
     ]);
     expect(jsonInstallProblems({ ...facts, backup: undefined })).toEqual(["Claude Desktop: no backup"]);
     expect(jsonInstallProblems({ ...facts, backup: `${seeded} ` })).toEqual(["Claude Desktop: the backup differs from the seeded file"]);
+  });
+});
+
+describe("replacePlanProblems", () => {
+  const old = { command: "node", args: ["/x/server.js"] };
+  const wanted = { command: "npx", args: LATEST };
+  const block = (label: string, lines: string[]) => [`${label} (user scope): registered (differs)`, ...lines].join("\n");
+  const shown = ["  This replaces your existing entry; the file is backed up to /h/.bak first.", `    old: ${JSON.stringify(old)}`, `    new: ${JSON.stringify(wanted)}`];
+
+  it("accepts a client's block that shows both entries in full", () => {
+    const stdout = `${block("Claude Code", [])}\n\n${block("Cursor", shown)}\n\nDry run: nothing was changed.\n`;
+    expect(replacePlanProblems(stdout, "Cursor", old, wanted)).toEqual([]);
+  });
+
+  it("names each missing line, and a missing block", () => {
+    const stdout = `${block("Cursor", [shown[0]!, shown[1]!])}\n\n${block("Claude Code", shown)}\n`;
+    expect(replacePlanProblems(stdout, "Cursor", old, wanted)).toEqual([`Cursor: the plan does not show ${JSON.stringify(shown[2]!.trim())}`]);
+    expect(replacePlanProblems(stdout, "Gemini CLI", old, wanted)).toEqual(["Gemini CLI: no plan block"]);
+  });
+
+  it("requires the replace warning", () => {
+    const stdout = block("Cursor", shown.slice(1));
+    expect(replacePlanProblems(stdout, "Cursor", old, wanted)).toEqual(["Cursor: the plan does not say it replaces the existing entry"]);
   });
 });
 

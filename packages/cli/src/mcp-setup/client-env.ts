@@ -3,6 +3,7 @@
 import { access, constants, readdir, readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { pathFlavor } from "./client-paths.js";
+import { configFileRefusal } from "./config-limits.js";
 
 /** Everything adapters need to know about the machine, injected (DIP). */
 export interface ClientEnv {
@@ -14,7 +15,10 @@ export interface ClientEnv {
   exists(path: string): Promise<boolean>;
   /** Entry names of a folder; a missing or unreadable folder is empty. */
   readDir(path: string): Promise<string[]>;
-  /** File text, or undefined when the file is missing or unreadable. */
+  /**
+   * File text, or undefined when the file is missing or unreadable. Rejects
+   * a path that is not a regular file or is too large to be a config.
+   */
   readText(path: string): Promise<string | undefined>;
 }
 
@@ -37,6 +41,14 @@ export function pathCandidates(
     ? (env.PATHEXT || DEFAULT_PATHEXT).split(";").filter(Boolean)
     : [""];
   return dirs.flatMap((dir) => exts.map((ext) => p.join(dir, cmd + ext)));
+}
+
+async function readConfigText(path: string): Promise<string | undefined> {
+  const stats = await stat(path).catch(() => undefined);
+  if (!stats) return undefined;
+  const refusal = configFileRefusal(path, stats);
+  if (refusal) throw new Error(refusal);
+  return readFile(path, "utf8").catch(() => undefined);
 }
 
 async function isRunnable(path: string, platform: NodeJS.Platform) {
@@ -72,6 +84,6 @@ export function createClientEnv(
         () => false,
       ),
     readDir: (path) => readdir(path).catch(() => []),
-    readText: (path) => readFile(path, "utf8").catch(() => undefined),
+    readText: readConfigText,
   };
 }

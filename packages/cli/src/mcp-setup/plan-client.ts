@@ -2,11 +2,16 @@
 // SPDX-License-Identifier: MIT
 import {
   clientSetup,
+  type ClientSetup,
   type McpScope,
 } from "../../../server/src/mcp/client-setup/client-setup.js";
+import { BACKUP_SUFFIX, type JsonValue } from "./config-file-store.js";
 import { configText } from "./config-text.js";
-import { differsText } from "./describe.js";
-import type { RegistrationStatus, SetupAction } from "./mcp-client-target.js";
+import type {
+  InstallPlan,
+  RegistrationStatus,
+  SetupAction,
+} from "./mcp-client-target.js";
 import type { ClientEntry } from "./resolve-clients.js";
 import type { SetupDeps } from "./setup-deps.js";
 
@@ -18,6 +23,14 @@ export interface LaunchChoice {
 export type ChangeMode =
   ({ mode: "install" } & LaunchChoice) | { mode: "uninstall" };
 
+/** The entry a replace drops and the one it writes, both shown in full. */
+export interface Replacing {
+  existing: JsonValue;
+  wanted: JsonValue;
+  /** Where a JSON file is backed up; absent when the client's CLI replaces it. */
+  backupPath?: string;
+}
+
 /** One client's part of the plan, ready to print and to apply. */
 export interface PlannedClient {
   id: ClientEntry["id"];
@@ -27,8 +40,8 @@ export interface PlannedClient {
   status?: RegistrationStatus;
   actions: SetupAction[];
   needsConfirmation: boolean;
-  /** "latest → pinned 1.0.0" when the plan replaces an entry. */
-  differs?: string;
+  /** Set when the plan replaces an entry that differs. */
+  replacing?: Replacing;
   /** Hand-registration text, shown when the plan cannot act. */
   snippet?: string;
   error?: string;
@@ -36,6 +49,24 @@ export interface PlannedClient {
 
 /** Only these change anything; notes just inform. */
 export const isChange = (action: SetupAction) => action.kind !== "note";
+
+function replacingOf(
+  plan: InstallPlan,
+  setup: ClientSetup,
+): Replacing | undefined {
+  if (!plan.needsConfirmation || plan.status.kind !== "registered")
+    return undefined;
+  const merge = plan.actions.find((a) => a.kind === "merge-json");
+  const launch = {
+    command: setup.launch.command,
+    args: [...setup.launch.args],
+  };
+  return {
+    existing: plan.status.existing,
+    wanted: merge?.entry ?? (setup.json?.entry as JsonValue) ?? launch,
+    ...(merge && { backupPath: merge.path + BACKUP_SUFFIX }),
+  };
+}
 
 async function planInstall(
   entry: ClientEntry,
@@ -52,14 +83,12 @@ async function planInstall(
   const plan = await entry.target!.planInstall(setup, deps.env);
   const stuck =
     plan.status.kind === "not-detected" || plan.status.kind === "unreadable";
-  const differs = plan.needsConfirmation
-    ? differsText(plan.status, setup)
-    : undefined;
+  const replacing = replacingOf(plan, setup);
   return {
     status: plan.status,
     actions: plan.actions,
     needsConfirmation: plan.needsConfirmation,
-    ...(differs && { differs }),
+    ...(replacing && { replacing }),
     ...(stuck && { snippet: configText(setup) }),
   };
 }

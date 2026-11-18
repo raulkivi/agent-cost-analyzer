@@ -1,19 +1,45 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { McpScope } from "../../../server/src/mcp/client-setup/client-setup.js";
+import type {
+  ClientSetup,
+  McpScope,
+} from "../../../server/src/mcp/client-setup/client-setup.js";
 import { MCP_SERVER_NAME } from "../../../server/src/mcp/client-setup/launch-spec.js";
 import type { ClientEnv } from "./client-env.js";
 import { pathFlavor } from "./client-paths.js";
 import type { ConfigFileStore, JsonEntryRef } from "./config-file-store.js";
 import type { McpClientTarget } from "./mcp-client-target.js";
-import { planCliInstall, planCliUninstall } from "./cli-command-plans.js";
 import {
+  planCliInstall,
+  planCliUninstall,
+  type CliRestore,
+} from "./cli-command-plans.js";
+import {
+  projectRootOf,
   readRegistration,
   removalSetup,
   requireScope,
 } from "./registration-status.js";
+import { shellLine } from "./shell-quote.js";
 
 const CLAUDE = "claude";
+const LABEL = "Claude Code";
+
+// `add-json` takes the entry exactly as Claude Code stored it, env included.
+const restoreWith = (setup: ClientSetup): CliRestore => ({
+  label: LABEL,
+  restore: (existing) =>
+    "To restore the old entry, run:\n  " +
+    shellLine([
+      CLAUDE,
+      "mcp",
+      "add-json",
+      "--scope",
+      setup.scope,
+      MCP_SERVER_NAME,
+      JSON.stringify(existing),
+    ]),
+});
 
 // Where `claude mcp add --scope <s>` keeps the entry, so status can be read
 // from the file: `claude mcp get` would start the server to check it.
@@ -38,6 +64,7 @@ function entryRef(scope: McpScope, env: ClientEnv): JsonEntryRef {
         path: p.join(env.cwd, ".mcp.json"),
         keyPath: ["mcpServers"],
         name,
+        ...projectRootOf(scope, env),
       };
   }
 }
@@ -55,12 +82,13 @@ export function createClaudeCodeTarget(deps: {
 
   return {
     id: "claude-code",
-    label: "Claude Code",
+    label: LABEL,
     detect,
     status,
 
     async planInstall(setup, env) {
-      return planCliInstall(setup, await status(setup.scope, env, setup));
+      const current = await status(setup.scope, env, setup);
+      return planCliInstall(setup, current, restoreWith(setup));
     },
 
     async planUninstall(scope, env) {

@@ -12,6 +12,14 @@ import { argsOf, classifyLaunch } from "./classify-launch.js";
 import type { ConfigFileStore, JsonEntryRef } from "./config-file-store.js";
 import type { RegistrationStatus } from "./mcp-client-target.js";
 
+/** Project-scope configs live under the working folder and may not be links there. */
+export function projectRootOf(
+  scope: McpScope,
+  env: { cwd: string },
+): { projectRoot?: string } {
+  return scope === "project" ? { projectRoot: env.cwd } : {};
+}
+
 export function requireScope(client: McpClientId, scope: McpScope): void {
   if (!supportedScopes(client).includes(scope))
     throw new Error(`${client} does not support scope "${scope}"`);
@@ -30,12 +38,14 @@ export async function readRegistration(
       return { kind: "not-registered" };
     case "invalid-json":
     case "invalid-shape":
+    case "unsafe-file":
       return { kind: "unreadable", message: result.message };
     case "present":
       return {
         kind: "registered",
         launch: classifyLaunch(result.entry),
         matches: sameLaunch(result.entry, expected),
+        existing: result.entry,
       };
   }
 }

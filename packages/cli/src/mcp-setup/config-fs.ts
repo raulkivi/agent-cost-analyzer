@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
+import type { ConfigFileStats } from "./config-limits.js";
 
 /**
  * The part of `node:fs/promises` the config writer uses, injected so tests
@@ -18,7 +19,7 @@ export interface ConfigFs {
   unlink(path: string): Promise<void>;
   chmod(path: string, mode: number): Promise<void>;
   mkdir(path: string, options: { recursive: true }): Promise<unknown>;
-  stat(path: string): Promise<{ mode: number }>;
+  stat(path: string): Promise<{ mode: number } & ConfigFileStats>;
   realpath(path: string): Promise<string>;
   readlink(path: string): Promise<string>;
 }

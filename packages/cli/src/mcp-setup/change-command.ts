@@ -19,6 +19,9 @@ import {
 
 const QUESTION = "Apply these changes? [y/N] ";
 
+// A failure's later lines (how to restore an entry) read as its details.
+const indentRest = (text: string) => text.replaceAll("\n", "\n  ");
+
 async function applyAll(
   planned: readonly PlannedClient[],
   deps: SetupDeps,
@@ -35,7 +38,7 @@ async function applyAll(
     if (result.ok) deps.io.out(`${client.label}: done\n`);
     else {
       exit = EXIT_FAILED;
-      deps.io.err(`${client.label}: failed: ${result.message}\n`);
+      deps.io.err(`${client.label}: failed: ${indentRest(result.message)}\n`);
     }
     for (const line of details) deps.io.out(line);
   }

@@ -7,25 +7,26 @@ import type {
 } from "../../../server/src/mcp/client-setup/client-setup.js";
 import type { LaunchKind } from "./classify-launch.js";
 import type { ClientEnv } from "./client-env.js";
-import type { JsonValue } from "./config-file-store.js";
+import type { JsonEntryRef, JsonValue } from "./config-file-store.js";
 
 /** One step of a plan. Adapters only describe steps; MC5 executes them. */
 export type SetupAction =
-  | { kind: "run"; file: string; args: readonly string[] }
   | {
+      kind: "run";
+      file: string;
+      args: readonly string[];
+      /**
+       * Printed when this step fails: the state the client is left in and
+       * how to restore it, e.g. an add that fails after its remove ran.
+       */
+      onFailure?: string;
+    }
+  | (JsonEntryRef & {
       kind: "merge-json";
-      path: string;
-      keyPath: readonly string[];
-      name: string;
       entry: JsonValue;
       replace: boolean;
-    }
-  | {
-      kind: "remove-json";
-      path: string;
-      keyPath: readonly string[];
-      name: string;
-    }
+    })
+  | (JsonEntryRef & { kind: "remove-json" })
   | { kind: "note"; text: string };
 
 export type RegistrationStatus =
@@ -36,12 +37,15 @@ export type RegistrationStatus =
       launch: LaunchKind;
       /** Command and args equal the expected launch; type and env are ignored. */
       matches: boolean;
+      /** The entry as read, so a replace can show it and say how to restore it. */
+      existing: JsonValue;
     }
   /**
    * Registered, but the launch could not be read from the client's config
-   * (Codex's TOML is read only as far as one-line values).
+   * (Codex's TOML is read only as far as one-line values). `existing` holds
+   * the fields that could be read.
    */
-  | { kind: "registered-unverified" }
+  | { kind: "registered-unverified"; existing?: JsonValue }
   /** The AI Credits Analyzer VS Code extension supplies the server (D6). */
   | { kind: "provided-by-extension" }
   | { kind: "unreadable"; message: string };

@@ -52,6 +52,7 @@ async function mergeStep(
       };
     case "invalid-json":
     case "invalid-shape":
+    case "unsafe-file":
       return { ok: false, message: result.message };
   }
 }
@@ -70,8 +71,14 @@ async function removeStep(
       return OK;
     case "invalid-json":
     case "invalid-shape":
+    case "unsafe-file":
       return { ok: false, message: result.message };
   }
+}
+
+function failed(action: SetupAction, message: string): ApplyResult {
+  const recovery = action.kind === "run" ? action.onFailure : undefined;
+  return { ok: false, message: recovery ? `${message}\n${recovery}` : message };
 }
 
 /** In order; stops at the first failure so later steps never run on a broken base. */
@@ -82,12 +89,12 @@ export async function applyActions(
   for (const action of actions) {
     try {
       const step = await apply(action, deps);
-      if (!step.ok) return step;
+      if (!step.ok) return failed(action, step.message);
     } catch (error) {
-      return {
-        ok: false,
-        message: error instanceof Error ? error.message : String(error),
-      };
+      return failed(
+        action,
+        error instanceof Error ? error.message : String(error),
+      );
     }
   }
   return { ok: true };

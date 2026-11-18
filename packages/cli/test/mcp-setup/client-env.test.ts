@@ -109,4 +109,25 @@ describe.skipIf(process.platform === "win32")("createClientEnv", () => {
     expect(await env.readText(join(dir, "f.toml"))).toBe("x = 1\n");
     expect(await env.readText(join(dir, "nope"))).toBeUndefined();
   });
+
+  // MC9 review R6: a status read must finish, whatever the path holds.
+  it.skipIf(process.platform === "win32")(
+    "rejects a path that is not a regular file instead of reading forever",
+    async () => {
+      const path = join(dir, "config.toml");
+      await fsp.symlink("/dev/zero", path);
+      await expect(createClientEnv({ env: {} }).readText(path)).rejects.toThrow(
+        `${path} is not a regular file`,
+      );
+    },
+  );
+
+  it("rejects a file over 10 MB", async () => {
+    const path = join(dir, "config.toml");
+    await fsp.writeFile(path, "");
+    await fsp.truncate(path, 10 * 1024 * 1024 + 1);
+    await expect(createClientEnv({ env: {} }).readText(path)).rejects.toThrow(
+      "is larger than 10 MB",
+    );
+  });
 });

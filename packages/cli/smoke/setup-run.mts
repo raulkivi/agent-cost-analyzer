@@ -20,7 +20,7 @@ import { snapshotTree, treeChanges, type TreeSnapshot } from "./home.mts";
 import { kill, runToEnd, start, withTimeout, type Finished, type Running } from "./io.mts";
 import { RecordingStdioTransport } from "./mcp-transport.mts";
 import { installedBin } from "./processes.mts";
-import { CLIENT_LABELS, argvLogProblems, expectedArgv, homeChangeProblems, jsonInstallProblems, statusProblems } from "./setup-checks.mts";
+import { CLIENT_LABELS, argvLogProblems, expectedArgv, homeChangeProblems, jsonInstallProblems, replacePlanProblems, statusProblems } from "./setup-checks.mts";
 import { EXTENSION_FOLDER, SEEDED_CONFIGS, STUB_TOOLS, seedSetupHome, setupSmokeEnv, stubScript, writableInHome, writeStub } from "./setup-home.mts";
 import { buildAndPack, exitProblems, logger, MINUTE, step, StepFailed, warningProblems, type Log } from "./steps.mts";
 import type { StubTool } from "./client-stubs.mts";
@@ -277,6 +277,29 @@ async function smoke(context: Context, tarballOption: string | undefined): Promi
       ];
     })();
   });
+
+  await step(log, "an entry of the user's own in Cursor and Claude Code: install --dry-run shows the old and the new entry in full", async () => {
+    const own = { command: "node", args: ["/opt/checkout/server.js"] };
+    const claudeOwn = { type: "stdio", ...own, env: {} };
+    putEntry(inHome(context, ".cursor/mcp.json"), own);
+    putEntry(inHome(context, ".claude.json"), claudeOwn);
+    const setup = (id: "cursor" | "claude-code") => clientSetup(id, { version, pin: false, projectBillingDetails: false, platform: "linux", scope: "user" });
+    const { launch } = setup("claude-code");
+    return nothingDone(context, "the replacing dry run", async () => {
+      const run = await cli(context, ["mcp", "install", "--client", "cursor,claude-code", "--dry-run"]);
+      return [
+        ...cliProblems("mcp install --dry-run over entries of the user's own", run),
+        ...replacePlanProblems(run.stdout, CLIENT_LABELS.cursor, own, setup("cursor").json?.entry),
+        ...replacePlanProblems(run.stdout, CLIENT_LABELS["claude-code"], claudeOwn, { command: launch.command, args: launch.args }),
+      ];
+    })();
+  });
+}
+
+/** Sets our server's entry under `mcpServers` in a JSON file, keeping the rest. */
+function putEntry(file: string, entry: unknown): void {
+  const config = JSON.parse(readIfThere(file) ?? "{}") as { mcpServers?: Record<string, unknown> };
+  writeFileSync(file, `${JSON.stringify({ ...config, mcpServers: { ...config.mcpServers, [SERVER_NAME]: entry } }, null, 2)}\n`);
 }
 
 /** Runs the smoke; resolves to the process exit code. */
