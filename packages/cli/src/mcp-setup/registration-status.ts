@@ -41,7 +41,7 @@ export async function readRegistration(
 }
 
 // Only command and args: Claude Code adds `type` and `env` on its own.
-function sameLaunch(entry: unknown, expected: McpLaunchSpec): boolean {
+export function sameLaunch(entry: unknown, expected: McpLaunchSpec): boolean {
   const command = (entry as { command?: unknown } | null)?.command;
   const args = argsOf(entry);
   return (
@@ -58,6 +58,10 @@ export function installMode(status: RegistrationStatus): InstallMode {
     case "not-detected":
     case "unreadable":
       return "skip";
+    // Nothing to add or replace: something else owns the entry.
+    case "registered-unverified":
+    case "provided-by-extension":
+      return "none";
     case "not-registered":
       return "add";
     case "registered":

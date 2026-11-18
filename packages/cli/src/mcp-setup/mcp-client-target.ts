@@ -37,6 +37,13 @@ export type RegistrationStatus =
       /** Command and args equal the expected launch; type and env are ignored. */
       matches: boolean;
     }
+  /**
+   * Registered, but the launch could not be read from the client's config
+   * (Codex's TOML is read only as far as one-line values).
+   */
+  | { kind: "registered-unverified" }
+  /** The AI Credits Analyzer VS Code extension supplies the server (D6). */
+  | { kind: "provided-by-extension" }
   | { kind: "unreadable"; message: string };
 
 export interface InstallPlan {

@@ -20,6 +20,8 @@ export function fakeEnv(opts: FakeEnvOptions = {}): ClientEnv {
     env: {},
     onPath: async (cmd) => onPath.has(cmd),
     exists: async (path) => existing.has(path),
+    readDir: async () => [],
+    readText: async () => undefined,
     ...rest,
   };
 }
