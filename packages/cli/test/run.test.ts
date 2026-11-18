@@ -20,6 +20,10 @@ function fakes(overrides: (calls: unknown[]) => Partial<CliDeps> = () => ({})) {
       calls.push(options);
       return 0;
     },
+    setup: async (command) => {
+      calls.push(command);
+      return 0;
+    },
     ...overrides(calls),
   };
   return { deps, out, err, calls };
@@ -85,5 +89,32 @@ describe("usageText", () => {
       expect(text).toContain(part);
     }
     expect(text.endsWith("\n")).toBe(true);
+  });
+
+  it("hands mcp install to the setup runner and returns its exit code", async () => {
+    const { deps, calls } = fakes(() => ({ setup: async () => 1 }));
+    expect(await run(["mcp", "install", "--client", "cursor", "--yes"], deps)).toBe(1);
+    const ok = fakes();
+    expect(await run(["mcp", "status"], ok.deps)).toBe(0);
+    expect(ok.calls).toEqual([{ kind: "mcp-status", scope: "user" }]);
+    expect(calls).toEqual([]);
+  });
+
+  it("exits 2 with usage for a bad setup flag", async () => {
+    const { deps, err, calls } = fakes();
+    expect(await run(["mcp", "install", "--client", "nope"], deps)).toBe(2);
+    expect(err.join("")).toContain("Unknown client");
+    expect(err.join("")).toContain("mcp install");
+    expect(calls).toEqual([]);
+  });
+
+  it("reports a setup runner crash on stderr with exit 1", async () => {
+    const { deps, err } = fakes(() => ({
+      setup: async () => {
+        throw new Error("boom");
+      },
+    }));
+    expect(await run(["mcp", "status"], deps)).toBe(1);
+    expect(err.join("")).toBe("boom\n");
   });
 });
