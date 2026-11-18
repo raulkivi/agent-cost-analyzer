@@ -2,6 +2,7 @@
   "name": "agent-cost-analyzer",
   "version": "1.0.0",
   "description": "Local app that analyzes agentic coding costs: prompt caching, token accounting, and turn-by-turn Copilot Chat, Claude Code, pi and mitmproxy sessions.",
+  "mcpName": "io.github.raulkivi/agent-cost-analyzer",
   "keywords": ["agentic-coding", "cost", "tokens", "copilot", "claude-code", "mcp"],
   "license": "MIT",
   "author": "Raul Kivi",
