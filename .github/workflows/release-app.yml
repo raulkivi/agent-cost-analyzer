@@ -160,9 +160,16 @@ jobs:
         env:
           TARBALL: ${{ steps.pack.outputs.tarball }}
           ALIAS_TARBALL: ${{ steps.pack-alias.outputs.tarball }}
+          ALIAS_VERSION: ${{ steps.pack-alias.outputs.version }}
+        # npm 11 refuses a dry run of a version already on npm, and the alias
+        # keeps its version across app releases; skip it as the publish does.
         run: |
           npm publish --dry-run "./npm-release/$TARBALL"
-          npm publish --dry-run "./npm-release/$ALIAS_TARBALL"
+          if npm view "agent-cost-analyser@$ALIAS_VERSION" version > "$RUNNER_TEMP/alias-version.txt" 2>/dev/null && [ -s "$RUNNER_TEMP/alias-version.txt" ]; then # codespell:ignore analyser
+            echo "agent-cost-analyser@$ALIAS_VERSION is already on npm; skipping the alias dry run (already published)." # codespell:ignore analyser
+          else
+            npm publish --dry-run "./npm-release/$ALIAS_TARBALL"
+          fi
 
   publish:
     needs: build
