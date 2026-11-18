@@ -10,5 +10,5 @@
     "allowImportingTsExtensions": true,
     "types": ["node"]
   },
-  "include": ["bin", "src", "test", "scripts", "smoke"]
+  "include": ["bin", "src", "test", "scripts", "smoke", "real-clients"]
 }
