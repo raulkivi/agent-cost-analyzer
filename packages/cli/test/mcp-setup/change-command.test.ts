@@ -284,6 +284,26 @@ describe("applying", () => {
     expect(text(h.out)).toContain("Restart Cursor.");
   });
 
+  // Found by the MC7 smoke: the details printed before the client's own
+  // "done" line, so they read as the previous client's.
+  it("prints a client's details after its own done line", async () => {
+    const note: SetupAction = { kind: "note", text: "Restart Cursor." };
+    const h = harness([
+      fakeTarget("claude-code", { label: "Claude Code", ...planning(add) }),
+      fakeTarget("cursor", { label: "Cursor", ...planning(merge, note) }),
+    ]);
+    await changeCommand(
+      install({
+        clients: { kind: "ids", ids: ["claude-code", "cursor"] },
+        yes: true,
+      }),
+      h.deps,
+    );
+    expect(text(h.out)).toContain(
+      "Claude Code: done\nCursor: done\n  backup: /bak/one\n  Restart Cursor.\n",
+    );
+  });
+
   it("stops a client at its first failure, continues with others, exits 1", async () => {
     const second: SetupAction = {
       kind: "run",

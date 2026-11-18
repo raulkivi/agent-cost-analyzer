@@ -1792,8 +1792,8 @@ vision.md §6 and the threat model (task MC9).
 
 **Status (2026-11-18)**: plan approved in an owner interview (D1-D12, all
 recommended options). Increment 1 ships in its own app minor release. MC0
-(spike on the client facts), MC1-MC4 and MC19 done 2026-11-18. Next: MC5 and MC6.
-Testing is Linux only (D13).
+(spike on the client facts), MC1-MC7 and MC19 done 2026-11-18. Next: MC8
+(owner run) and MC9. Testing is Linux only (D13).
 
 ## 1.0.0 release
 

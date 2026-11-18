@@ -171,7 +171,16 @@ jobs:
       - run: npx playwright install --with-deps chromium
       # Builds and packs, then runs every check against the tarball.
       - run: npm run smoke:npm-package
-      # The smoke's log, the server's and MCP server's stderr, the MCP stdout
+      # `mcp install`, `status` and `uninstall` from the tarball, for all six
+      # clients in a temporary home with stub CLIs (mcp-client-setup.md §7,
+      # MC7). Linux only (D13): the macOS and Windows legs run the serve smoke
+      # alone. Packs the build the step above made.
+      - if: runner.os == 'Linux'
+        run: |
+          mkdir -p "$RUNNER_TEMP/mcp-setup-pack"
+          npm pack --workspace=packages/cli --pack-destination "$RUNNER_TEMP/mcp-setup-pack"
+          npm run smoke:mcp-setup -- --tarball "$RUNNER_TEMP"/mcp-setup-pack/agent-cost-analyzer-*.tgz
+      # The smokes' logs, the server's and MCP server's stderr, the MCP stdout
       # lines, npm's debug logs and Playwright's failure screenshots.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()

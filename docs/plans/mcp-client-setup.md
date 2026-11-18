@@ -2,10 +2,9 @@
 
 **Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **Approved 2026-11-18** (owner interview, D1-D12 in §8). MC0 done
-2026-11-18 (§3.2); MC1, MC2 and MC19 done 2026-11-18 (PRs #431, #432,
-#430). MC3 and MC4 done 2026-11-18 (PRs #434, #436). Next: MC5 and MC6.
-Testing is Linux only (D13).
+Status: **Approved 2026-11-18** (owner interview, D1-D12 in §8). MC0-MC7
+and MC19 done 2026-11-18. Next: MC8 (owner run) and MC9. Testing is Linux
+only (D13).
 
 Phase 18 in [implementation-plan.md](../implementation-plan.md#phase-18--mcp-client-setup-for-the-standalone-app).
 Task IDs are `MC0`-`MC18` (§10).
@@ -312,10 +311,10 @@ Phase 18's exit criterion: on Linux, from the packed tarball, with a
 temporary home:
 
 1. `mcp install --client <id> --yes` writes what each client expects:
-   - JSON-file clients (`claude-desktop`, `cursor`): the entry matches the
-     §3.1 shape. Launching the written command and arguments with the MCP
-     SDK's stdio client lists the server's tools.
-   - CLI clients (`claude-code`, `vscode`, `codex`, `gemini`): a recording
+   - JSON-file clients (`claude-desktop`, `cursor`, `vscode`): the entry
+     matches the §3.1 shape. Launching the written command and arguments with
+     the MCP SDK's stdio client lists the server's tools.
+   - CLI clients (`claude-code`, `codex`, `gemini`): a recording
      stub on `PATH` receives exactly the documented argument array.
 2. `mcp uninstall` returns a pre-existing config file to its original bytes.
    A file the install created ends with `mcpServers` empty.
@@ -397,9 +396,9 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 | MC2 | `ConfigFileStore`: merge and remove, backup, atomic write, invalid-JSON refusal, indentation kept; tests over temporary folders. **Done 2026-11-18** (PR #432; residual risks in §9) | 1 | medium | Opus | — |
 | MC3 | `McpClientTarget` interface and the `claude-code`, `claude-desktop`, `cursor` adapters with detection. **Done 2026-11-18** (PR #434) | 1 | medium | Sonnet | MC1, MC2 |
 | MC4 | `vscode`, `codex` and `gemini` adapters; skip VS Code when the extension is present (D6). Check whether `gemini mcp add` needs `--` before the launch command so its parser does not take `-y` and `--prefer-offline` (MC1 builds it without). **Done 2026-11-18** (PR #436; no `--` needed: gemini-cli's `mcp add` sets yargs `unknown-options-as-args`) | 1 | medium | Sonnet | MC3 |
-| MC5 | CLI: argument parsing for `config`, `install`, `uninstall` and `status`; plan printing, prompt and `--dry-run`/`--yes`; exit codes; `usage.ts` | 1 | medium | Sonnet | MC3 |
-| MC6 | Start-up hint line (D7) | 1 | low | Haiku | — |
-| MC7 | Tarball smoke on Linux (D13): install, status and uninstall per client in a temporary home; JSON clients launched with the SDK stdio client; stub CLIs record argv; serve home snapshot unchanged | 1 | high | Opus | MC4, MC5 |
+| MC5 | CLI: argument parsing for `config`, `install`, `uninstall` and `status`; plan printing, prompt and `--dry-run`/`--yes`; exit codes; `usage.ts`. **Done 2026-11-18** (PR #437) | 1 | medium | Sonnet | MC3 |
+| MC6 | Start-up hint line (D7). **Done 2026-11-18** (PR #435) | 1 | low | Haiku | — |
+| MC7 | Tarball smoke on Linux (D13): install, status and uninstall per client in a temporary home; JSON clients launched with the SDK stdio client; stub CLIs record argv; serve home snapshot unchanged. **Done 2026-11-18** (PR #MC7PR: `npm run smoke:mcp-setup`, on the `npm-package` job's Linux legs; it found that `install` printed a client's backup and notes under the previous client's "done" line, fixed in `change-command.ts`) | 1 | high | Opus | MC4, MC5 |
 | MC8 | `npm run test:real-clients:mcp-setup` on the owner's machine with real `claude` and `code` | 1 | medium | Sonnet + owner run | MC7 |
 | MC9 | Docs: User Guide, standalone-app.md, README, CHANGELOG; vision, architecture and threat-model amendments (D1); review of Increment 1 | 1 | medium | Opus | MC7 |
 | MC10 | Mock-up board for the "Connect an agent" panel; owner approves | 2 | low | Sonnet + owner | MC9 |

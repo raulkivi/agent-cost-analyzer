@@ -15,7 +15,6 @@ import {
   jsonRpcLineProblems,
   mcpSurfaceProblems,
   moduleScriptPath,
-  nodeWarningLines,
   parseStartLine,
   serveProblems,
   type McpSurface,
@@ -26,6 +25,7 @@ import { appSettingsDirIn, changesOutside, snapshotTree, treeChanges } from "./h
 import { firstStdoutLine, httpGet, kill, runToEnd, start, stop, withTimeout, type Running } from "./io.mts";
 import { RecordingStdioTransport } from "./mcp-transport.mts";
 import { installedBin, invocation, isolatedEnv } from "./processes.mts";
+import { buildAndPack, exitProblems, logger, MINUTE, step, StepFailed, warningProblems } from "./steps.mts";
 import { tarballProblems } from "./tarball.mts";
 
 export interface SmokeOptions {
@@ -39,8 +39,6 @@ export interface SmokeOptions {
   platform?: NodeJS.Platform;
 }
 
-class StepFailed extends Error {}
-
 interface Context {
   platform: NodeJS.Platform;
   repoRoot: string;
@@ -50,46 +48,6 @@ interface Context {
   aliasVersion: string;
   env: Record<string, string>;
   running: Running[];
-}
-
-const MINUTE = 60_000;
-
-function logger(outDir: string) {
-  const file = path.join(outDir, "smoke.log");
-  writeFileSync(file, "");
-  return (line: string) => {
-    process.stdout.write(`${line}\n`);
-    writeFileSync(file, `${line}\n`, { flag: "a" });
-  };
-}
-
-async function step(log: (line: string) => void, name: string, run: () => Promise<string[]> | string[]): Promise<void> {
-  log(`- ${name}`);
-  const problems = await run();
-  if (problems.length > 0) {
-    for (const problem of problems) log(`  FAIL ${problem}`);
-    throw new StepFailed(name);
-  }
-  log("  ok");
-}
-
-const exitProblems = (label: string, code: number | string, expected: number | string = 0): string[] =>
-  code === expected ? [] : [`${label} ended with ${code}, expected ${expected}`];
-
-const warningProblems = (label: string, stderr: string): string[] => nodeWarningLines(stderr).map((line) => `${label} printed a Node warning: ${line}`);
-
-async function buildAndPack(context: Context): Promise<string> {
-  const { platform, repoRoot } = context;
-  const build = await runToEnd(invocation(platform, "npm", ["run", "build"]), { cwd: repoRoot, env: process.env, timeoutMs: 15 * MINUTE, echo: true });
-  if (build.code !== 0) throw new Error(`npm run build ended with ${build.code}`);
-  const pack = await runToEnd(invocation(platform, "npm", ["pack", "--workspace=packages/cli", "--pack-destination", context.dirs.pack, "--json"]), {
-    cwd: repoRoot,
-    env: process.env,
-    timeoutMs: 5 * MINUTE,
-  });
-  if (pack.code !== 0) throw new Error(`npm pack ended with ${pack.code}:\n${pack.stderr}`);
-  const [report] = JSON.parse(pack.stdout) as { filename: string }[];
-  return path.join(context.dirs.pack, report!.filename);
 }
 
 async function serveChecks(context: Context, log: (line: string) => void): Promise<string[]> {
@@ -194,7 +152,7 @@ async function smoke(context: Context, tarballOption: string | undefined, aliasO
   const { platform, dirs, version } = context;
   let tarball = tarballOption ?? "";
   await step(log, tarballOption === undefined ? "build and pack (npm run build, npm pack)" : `use ${tarballOption}`, async () => {
-    if (tarballOption === undefined) tarball = await buildAndPack(context);
+    if (tarballOption === undefined) tarball = await buildAndPack(platform, context.repoRoot, dirs.pack);
     return existsSync(tarball) ? [] : [`${tarball} does not exist`];
   });
   await step(log, `check the tarball (${path.basename(tarball)})`, () => tarballProblems(readFileSync(tarball), version));
