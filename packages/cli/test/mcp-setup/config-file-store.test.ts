@@ -374,6 +374,30 @@ describe("ConfigFileStore: backup and atomic write", () => {
     expect(await text(path + BACKUP_SUFFIX)).toBe(original);
   });
 
+  // MC9 review R1: a link at the backup name (say, committed next to
+  // .cursor/mcp.json in a cloned repository, for a project-scope install)
+  // made copyFile write the config's bytes through it to any file.
+  it.skipIf(isWindows).each([
+    ["merge", '{"mcpServers":{}}'],
+    ["remove", '{"mcpServers":{"agent-cost-analyzer":{}}}'],
+  ] as const)(
+    "%s replaces a link at the backup path instead of writing through it",
+    async (operation, original) => {
+      const path = await seed("mcp.json", original);
+      const victim = await seed("victim.txt", "precious");
+      await fsp.symlink(victim, path + BACKUP_SUFFIX);
+      const store = createConfigFileStore();
+
+      if (operation === "merge")
+        await store.merge({ ...ref("mcp.json"), entry: ENTRY, replace: false });
+      else await store.remove(ref("mcp.json"));
+
+      expect(await text(victim)).toBe("precious");
+      expect((await fsp.lstat(path + BACKUP_SUFFIX)).isFile()).toBe(true);
+      expect(await text(path + BACKUP_SUFFIX)).toBe(original);
+    },
+  );
+
   it("leaves no temporary file behind after a successful write", async () => {
     await seed("mcp.json", "{}");
     const store = createConfigFileStore();

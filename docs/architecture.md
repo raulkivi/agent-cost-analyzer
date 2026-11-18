@@ -1,6 +1,6 @@
 # Architecture: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 ## 1. Purpose & scope
 
@@ -46,7 +46,15 @@ before deviating from this document:
    wherever the underlying text itself isn't captured.
 7. **Single-developer, single-machine.** No multi-tenant concerns, no auth
    system — but still no unnecessary exposure of the local filesystem (see
-   §11.2 Security).
+   §11.2 Security). The app reads logs and writes only its own settings
+   folder; it never changes another tool's settings or files (vision §6).
+   The one exception (Phase 18, D1 in
+   [plans/mcp-client-setup.md](plans/mcp-client-setup.md)) is the explicit
+   terminal commands `mcp install` and `mcp uninstall` in `packages/cli`,
+   which write MCP client config files only after printing the plan and
+   getting confirmation or `--yes`, with a backup of each JSON file. The
+   local server, the MCP server and the web app never write client config,
+   and no HTTP route does.
 8. **Rich `main.jsonl` content is opt-in, not default.** Verified directly:
    without the advanced, off-by-default VS Code setting
    `github.copilot.chat.agentDebugLog.fileLogging.enabled` (requires a
@@ -161,7 +169,15 @@ shared domain model, and expose it over a small REST API. Never makes
 outbound network calls. In the npm package the same server also serves the
 built web app (`http/web-app-server.ts`, same origin, read-only; §11.2), and
 `packages/cli` owns the entry, argument parsing, port choice and browser
-opener around it (§10).
+opener around it (§10). The server never writes MCP client config. Its
+`mcp/client-setup/` modules (`launch-spec.ts`, `client-setup.ts`,
+`toml.ts`) are pure: they build the launch command and each client's
+command, JSON entry or TOML table, and do no I/O. The only writer is
+`packages/cli/src/mcp-setup/`, behind the terminal's `mcp install` and
+`mcp uninstall` (constraint 7; [plans/mcp-client-setup.md](plans/mcp-client-setup.md)
+§5.3-§5.4): one adapter per client, a `ConfigFileStore` that merges one key
+with a backup and an atomic rename, and a `CommandRunner` that runs client
+CLIs with `execFile`, never a shell.
 
 | Module | Responsibility |
 |---|---|

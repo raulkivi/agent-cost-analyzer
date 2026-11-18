@@ -1,6 +1,6 @@
 # Vision: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-14 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 ## 1. Problem
 
@@ -229,6 +229,14 @@ showing the behavioral-proxy fallback silently.
   the app never changes settings or files (the one write it can cause is the
   navigation state of "Open in Analyze" switching the selected provider,
   which the app saves in its own settings, as the Provider select does).
+  One exception outside the app's own settings (Phase 18, D1 in
+  [plans/mcp-client-setup.md](plans/mcp-client-setup.md)): the terminal
+  commands `agent-cost-analyzer mcp install` and `mcp uninstall`, run
+  explicitly by the user, register or remove the MCP server in MCP client
+  config files. They print every command and file first, apply only after
+  confirmation or `--yes`, and back up each JSON file they change. The
+  local server, the MCP server and the web app never write a client's
+  config.
 - Not an invoicing or accounting system. Phase 15
   ([plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md))
   adds cost by repository and project, price history, frozen billing

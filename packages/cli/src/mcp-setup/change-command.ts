@@ -72,7 +72,12 @@ export async function changeCommand(
           projectBillingDetails: command.projectBillingDetails,
         }
       : { mode: "uninstall" };
-  const resolved = await resolveClients(command.clients, command.scope, deps);
+  const resolved = await resolveClients(
+    command.clients,
+    command.scope,
+    request.mode,
+    deps,
+  );
   if (resolved.kind === "usage-error") {
     deps.io.err(`${resolved.message}\n`);
     return EXIT_USAGE;
@@ -88,7 +93,10 @@ export async function changeCommand(
     planned.push(await planClient(entry, command.scope, request, deps));
   for (const client of planned)
     deps.io.out(`${formatPlanned(client, request.mode)}\n\n`);
-  const planFailed = planned.some((p) => p.error !== undefined);
+  // A refused config file is a request not met, like a planning error.
+  const planFailed = planned.some(
+    (p) => p.error !== undefined || p.status?.kind === "unreadable",
+  );
   const failedExit = planFailed ? EXIT_FAILED : EXIT_OK;
 
   if (!hasChanges(planned)) {

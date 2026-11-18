@@ -107,6 +107,12 @@ on Linux (or under `XDG_CONFIG_HOME`),
 `%APPDATA%\agent-cost-analyzer` on Windows. It holds your chosen provider,
 the retention threshold, your projects file and issued statements.
 
+To connect its MCP server to Claude Code, Claude Desktop, Cursor, VS Code,
+Codex or Gemini CLI, run `npx agent-cost-analyzer mcp install`: it shows
+what it will change and asks first. It and `mcp uninstall` are the only
+commands that write outside that folder, and they back up each config file
+they edit.
+
 ![The standalone app on load, with Learn and Analyze modes](docs/images/landing-page.png)
 
 ### From source (contributors)
@@ -144,7 +150,8 @@ Claude Desktop shows a month's cost for every provider at once, and opens the vi
 
 - Extension: turn on the `aiCreditsAnalyzer.mcp.enabled` setting. See
   [the MCP server for Copilot agent mode](docs/vscode-extension-guide.md#the-mcp-server-for-copilot-agent-mode).
-- Standalone app: `claude mcp add agent-cost-analyzer -- npx -y --prefer-offline agent-cost-analyzer mcp`.
+- Standalone app: `npx agent-cost-analyzer mcp install`, or by hand
+  `claude mcp add agent-cost-analyzer -- npx -y --prefer-offline agent-cost-analyzer mcp`.
   `--prefer-offline` starts the cached copy at once when the npm registry is
   unreachable. Other clients, Windows and an offline install: see
   [Querying the audit from Claude Code (MCP)](docs/UserGuide.md#querying-the-audit-from-claude-code-mcp)

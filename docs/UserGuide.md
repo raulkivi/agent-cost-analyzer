@@ -680,7 +680,73 @@ The analyzer is also available as a local, read-only MCP server, so you
 can ask an agent about your own sessions: "what drove my spend this
 week?", "which commands failed most, and why?", "did my agents do
 anything risky?". Register the npm package with your MCP
-client; no clone is needed:
+clients; no clone is needed:
+
+```bash
+npx agent-cost-analyzer mcp install
+```
+
+`mcp install` finds the MCP clients on this machine (Claude Code, Claude
+Desktop, Cursor, VS Code, Codex CLI and Gemini CLI) and prints a plan: each
+client, its status, every command it will run and every file it will
+change. It applies the plan only after you answer `y` to `Apply these
+changes? [y/N]`. The server is registered as `agent-cost-analyzer` and
+launched with `npx -y --prefer-offline agent-cost-analyzer mcp`.
+
+- `--client <id>` picks the clients: `claude-code`, `claude-desktop`,
+  `cursor`, `vscode`, `codex`, `gemini`, a comma list, or `all`. Without it,
+  `install` plans for every client it detects. A run without a terminal (a
+  script) must name `--client`. A named client that is not installed gets
+  the text to register it by hand, and nothing is written for it.
+- `--scope user` (the default: every project), `project` (Claude Code,
+  Cursor and Gemini CLI, in the current folder) or `local` (Claude Code
+  only).
+- `--dry-run` prints the plan and stops. `--yes` applies without asking; a
+  run without a terminal needs it.
+- `--pin` registers the version you are running
+  (`agent-cost-analyzer@<version>`) instead of the latest release.
+- `--project-billing-details` adds that flag after `mcp`, to share client
+  names and billing codes.
+
+How each client is registered:
+
+- Claude Code, Codex CLI and Gemini CLI: through the client's own `mcp add`
+  command, run directly, never through a shell.
+- Claude Desktop, Cursor and VS Code: the entry is merged into the client's
+  JSON file (`claude_desktop_config.json`, `~/.cursor/mcp.json`, VS Code's
+  user `mcp.json`). Other servers and settings stay as they were, in their
+  order. The file is first copied to `<file>.agent-cost-analyzer.bak`
+  (replacing an earlier backup), and the new file replaces the old one in a
+  single rename. A file that is not plain JSON, such as one with comments, is
+  left alone: the plan shows the entry to paste yourself and the command
+  exits with 1. Restart Claude Desktop afterwards.
+- VS Code is skipped when the AI Credits Analyzer extension is installed,
+  since the extension registers its own server.
+- An entry with a different launch (another version, or a command of your
+  own) is replaced only after you confirm, or with `--yes`.
+
+`npx agent-cost-analyzer mcp status` prints one line per client, such as
+`registered (latest)`, `registered (pinned 1.0.0)`, `not registered`, `not
+detected` or `provided by the AI Credits Analyzer extension`. It writes
+nothing.
+
+`npx agent-cost-analyzer mcp uninstall` takes the same `--client`,
+`--scope`, `--dry-run` and `--yes`. It removes only the
+`agent-cost-analyzer` entry, again with a backup of each JSON file. Codex
+has no remove command, so for Codex it prints the
+`[mcp_servers.agent-cost-analyzer]` table to delete from
+`~/.codex/config.toml` and changes nothing.
+
+The exit code is 0 on success, 1 when a step failed or a config file could
+not be read (the message names the client) and 2 for a usage error.
+`install` and `uninstall` are the only commands that write outside the
+app's settings folder; the app and the MCP server never change a client's
+configuration. Setup is tested on Linux. macOS and Windows use each
+client's documented paths but are untested.
+
+To register by hand instead, `npx agent-cost-analyzer mcp config --client
+<id>` prints that client's command, JSON or TOML (and Cursor's install
+link) and writes nothing. For Claude Code it is:
 
 ```bash
 claude mcp add agent-cost-analyzer -- npx -y --prefer-offline agent-cost-analyzer mcp

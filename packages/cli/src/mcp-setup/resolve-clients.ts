@@ -29,14 +29,14 @@ function targetOf(deps: SetupDeps, id: McpClientId) {
 
 async function detectedEntries(
   scope: McpScope,
+  mode: "install" | "uninstall",
   deps: SetupDeps,
 ): Promise<Resolution> {
   // A prompt-free run must name its clients: guessing would write configs.
   if (!deps.io.interactive)
     return {
       kind: "usage-error",
-      message:
-        "mcp install without a terminal needs --client <id>[,<id>…] or --client all",
+      message: `mcp ${mode} without a terminal needs --client <id>[,<id>…] or --client all`,
     };
   const entries: ClientEntry[] = [];
   for (const target of deps.targets)
@@ -58,11 +58,12 @@ function allEntries(scope: McpScope, deps: SetupDeps): Resolution {
 export async function resolveClients(
   selection: ClientSelection,
   scope: McpScope,
+  mode: "install" | "uninstall",
   deps: SetupDeps,
 ): Promise<Resolution> {
   switch (selection.kind) {
     case "detected":
-      return detectedEntries(scope, deps);
+      return detectedEntries(scope, mode, deps);
     case "all":
       return allEntries(scope, deps);
     case "ids": {
