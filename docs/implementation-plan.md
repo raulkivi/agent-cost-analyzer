@@ -9,6 +9,7 @@ extension sharing the same code (vision §5). Phase 11 pins the standalone
 app's pi provider against a real captured session, postponed from Phase 9.6.
 Phase 12 adds branded, interactive MCP Apps views for both products.
 Phase 17 makes the UI denser in every host, then gives the standalone app a ledger theme.
+Phase 18 makes registering the standalone app's MCP server with MCP clients one command.
 The [1.0.0 release](#100-release) section lists what both products need for 1.0.0.
 
 **Overall status (2026-11-14):**
@@ -1760,6 +1761,38 @@ look.
 **Status (2026-11-14)**: Increment 1 (P0-P7) done: the Dashboard on the e2e
 fixture is 1,467px tall at 1440x900 (was 2,444px), checked by
 `packages/web/e2e/specs/density.spec.ts`. Increment 2: L1-L6 done 2026-11-14 (tokens and fonts, color-mode switch, ledger rules, light and dark Playwright projects, docs and media, review: 7 findings fixed, 7 recorded in the plan's §10). Exit criterion: all met except the owner's eyes-on review. After the merge, step 10.22 resumes at task 1.10 (retakes in the new look).
+
+## Phase 18 — MCP client setup for the standalone app
+
+Full design: [plans/mcp-client-setup.md](plans/mcp-client-setup.md).
+
+**Goal**: a standalone app user registers the MCP server with their MCP
+clients in one command, instead of translating the User Guide's `claude mcp
+add` line into each client's config by hand.
+
+**Deliverables** (tasks MC0-MC18 in the plan):
+
+- Increment 1 (MC0-MC9), terminal: `agent-cost-analyzer mcp config`,
+  `mcp install`, `mcp uninstall` and `mcp status` for Claude Code, Claude
+  Desktop, Cursor, VS Code, Codex and Gemini CLI; a one-line start-up hint.
+- Increment 2 (MC10-MC13), web: a read-only `GET /api/mcp/setup` and a
+  "Connect an agent" panel with copy buttons and client install links.
+- Increment 3 (MC14-MC18), distribution: the official MCP Registry, a Claude
+  Desktop `.mcpb` bundle and a Claude Code plugin marketplace.
+- No npm install script (plan §4, option F).
+
+**Exit criterion**: the plan's §7: from the packed tarball on Linux, macOS
+and Windows, install, status and uninstall work for every client in a
+temporary home; uninstall restores a pre-existing config byte for byte;
+serving still writes nothing outside the settings folder; the owner's
+real-client check passes.
+
+**Dependencies**: the npm package (1.0 criterion C8, done). D1 amends
+vision.md §6 and the threat model (task MC9).
+
+**Status (2026-11-18)**: plan approved in an owner interview (D1-D12, all
+recommended options). Increment 1 ships in its own app minor release. Next:
+MC0, the spike that confirms the unverified client facts.
 
 ## 1.0.0 release
 
