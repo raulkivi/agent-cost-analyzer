@@ -1,6 +1,6 @@
 # Developer documentation
 
-**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 For people building or changing Agent Cost Analyzer and the AI Credits
 Analyzer extension. Users: start at the [root README](../README.md).
@@ -157,6 +157,10 @@ An npm workspace:
 - [npm package plan](plans/npm-package.md) — 1.0 criterion C8 (approved
   2026-11-14): the standalone app on npm as `agent-cost-analyzer`, trusted
   publishing, and the owner's placeholder publish (NP0).
+- [MCP client setup plan](plans/mcp-client-setup.md) — Phase 18
+  (approved 2026-11-18): `agent-cost-analyzer mcp install` for six MCP
+  clients, a "Connect an agent" web panel, the MCP Registry, a `.mcpb`
+  bundle and a Claude Code plugin.
 - [Monthly allowance in the standalone app](plans/monthly-allowance-standalone.md) —
   1.0 criterion C9, step 10.21's MA13 (approved 2026-11-14).
 - [Subagent tool-audit plan](plans/subagent-tool-audit.md) — 1.0 criterion

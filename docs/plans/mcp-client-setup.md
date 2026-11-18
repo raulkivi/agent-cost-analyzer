@@ -1,0 +1,362 @@
+# MCP client setup for the standalone app (Phase 18)
+
+**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+
+Status: **Approved 2026-11-18** (owner interview, D1-D12 in §8). Next: MC0.
+
+Phase 18 in [implementation-plan.md](../implementation-plan.md#phase-18--mcp-client-setup-for-the-standalone-app).
+Task IDs are `MC0`-`MC18` (§10).
+
+## 1. Why
+
+The npm package already serves the MCP server (`npx agent-cost-analyzer
+mcp`, [npm-package.md](npm-package.md)). Registering it with an MCP client
+is still manual:
+
+- The User Guide gives one `claude mcp add …` line
+  ([UserGuide.md](../UserGuide.md#querying-the-audit-from-claude-code-mcp)).
+  Users of every other client translate it into that client's JSON shape
+  and file path themselves.
+- On Windows the user has to know to wrap it in `cmd /c` for clients that do
+  not resolve `.cmd` files.
+- Nothing in the app or its terminal output says the MCP server exists.
+
+The VS Code extension does not have this gap: it registers its own server
+through `vscode.lm.registerMcpServerDefinitionProvider`
+(`aiCreditsAnalyzer.mcp`).
+
+## 2. Goals and non-goals
+
+Goals:
+
+- One command registers the server with each client the user picks:
+  `npx agent-cost-analyzer mcp install`.
+- One command removes it again, and one shows where it is registered.
+- The app tells users the MCP server exists: in the terminal at start,
+  and in a "Connect an agent" panel in the web app.
+- Users can also find and install it through each client's own
+  channels: the official MCP Registry, a Claude Desktop bundle (`.mcpb`)
+  and a Claude Code plugin.
+
+Non-goals:
+
+- **No `postinstall` or other npm install script** (§4, option F). The
+  package keeps "no dependencies and no install scripts"
+  ([npm-package.md](npm-package.md) §2).
+- **The local server and web app write no client config.** No HTTP route
+  writes files. The web panel only shows commands and client install links
+  (§5.6, threat model).
+- No remote (HTTP) MCP transport. The server stays stdio only.
+- No MCP setup inside the VS Code extension. It already registers the
+  server.
+- No editing of JSONC or TOML config files in Increment 1 (Zed, Codex
+  files). Clients with their own `mcp add` CLI are driven through that CLI
+  instead (§5.3).
+
+## 3. What exists
+
+Read on `main` at `f7793274`.
+
+| Area | Today | Source |
+|---|---|---|
+| CLI commands | `agent-cost-analyzer [--port] [--no-open]`, `mcp [--project-billing-details] [--app-views-html <path>]`, `--help`, `--version`. `mcp` rejects any argument other than its two flags. | `packages/cli/src/args.ts`, `usage.ts` |
+| MCP entry | `cli.ts` → `serveStandaloneMcpStdio({ layout, … })`. stdout carries JSON-RPC only. | `packages/cli/src/cli.ts`, `packages/server/src/mcp/standalone-mcp-server.ts` |
+| Documented registration | `claude mcp add agent-cost-analyzer -- npx -y --prefer-offline agent-cost-analyzer mcp`, plus a `cmd /c` note for Windows and a note on pinning through a global install | `docs/UserGuide.md` §"Querying the audit from Claude Code (MCP)", `docs/standalone-app.md` |
+| Package | `agent-cost-analyzer` 1.0.0, `bin` only, zero dependencies, Node ≥ 22.18. The alias `agent-cost-analyser` points to it. | `packages/cli/package.json`, `packages/cli-alias` |
+| CI smoke | Runs from the packed tarball on Linux, macOS and Windows. It fails on any change in the fixture home outside the app's settings folder. | `packages/cli/smoke/`, `smoke-home.test.ts` |
+| Extension | Registers `aiCreditsAnalyzer.mcp` with VS Code. Not affected by this plan. | `packages/vscode-extension/src/vscode/vscode-mcp-server-definitions.ts` |
+| Threat model | The standalone MCP server row (§4) and the `agent-cost-analyzer` bin row. The bin row's guarantee: no write outside the settings folder. | `docs/threat-model.md` |
+
+### 3.1 Client facts (checked 2026-11-18)
+
+Checked against each client's docs on 2026-11-18. **Unconfirmed** marks a
+fact that MC0 checks on a real install before any code depends on it.
+
+| Client | How to register | Config file and shape | Source |
+|---|---|---|---|
+| Claude Code | `claude mcp add [--scope local\|project\|user] <name> -- <cmd> [args…]`; `claude mcp remove <name> [--scope]`; `claude mcp get <name>`; `claude mcp add-json <name> '<inner json>'` | `~/.claude.json` (local and user scopes); `.mcp.json` at the project root (project scope), `{"mcpServers":{…}}` | code.claude.com/docs/en/mcp |
+| Claude Desktop | Edit the file, then restart Claude Desktop | macOS `~/Library/Application Support/Claude/claude_desktop_config.json`; Windows `%APPDATA%\Claude\claude_desktop_config.json`; Linux `~/.config/Claude/claude_desktop_config.json` (as documented). Shape: `{"mcpServers":{name:{command,args,env}}}` | modelcontextprotocol.io/docs/develop/connect-local-servers |
+| Claude Desktop bundle | `.mcpb` (formerly DXT). `manifest.json` with `server.type: "node"`, `entry_point`, `mcp_config`. The bundle ships the server (calling npx from a bundle is unconfirmed). The current `manifest_version` is unconfirmed. | — | github.com/modelcontextprotocol/mcpb |
+| VS Code | `code --add-mcp '{"name","type":"stdio","command","args"}'` adds to the user profile. URL `vscode:mcp/install?<urlencoded json>` (Insiders: `vscode-insiders:`) opens a review page. | Its own `servers` format is now labeled deprecated in favor of Copilot's `mcpServers` in `.mcp.json` or `~/.copilot/mcp-config.json`. The per-OS path of the user `mcp.json` is unconfirmed. | code.visualstudio.com/docs/agents/reference/mcp-configuration |
+| Cursor | Edit the file. Deep link `cursor://anysphere.cursor-deeplink/mcp/install?name=…&config=<base64 of the inner JSON>` is **unconfirmed** in Cursor's docs. | `~/.cursor/mcp.json`, project `.cursor/mcp.json`, `{"mcpServers":{…}}` | cursor.com/docs/context/mcp |
+| Codex CLI | `codex mcp add <name> -- <cmd> [args…]` | `~/.codex/config.toml`, `[mcp_servers.<name>]` | OpenAI Codex docs |
+| Gemini CLI | `gemini mcp add [-s user\|project] <name> <cmd> [args…]` | `~/.gemini/settings.json`, `mcpServers` | geminicli.com/docs/tools/mcp-server |
+| MCP Registry | `mcpName: "io.github.<user>/<name>"` in `package.json`; `server.json` with `packages[{registryType:"npm", identifier, version, transport:{type:"stdio"}}]`; `mcp-publisher login github-oidc` from Actions (`id-token: write`). How to pass the `mcp` subcommand (`packageArguments`?) is unconfirmed. | — | modelcontextprotocol.io/registry/quickstart, /registry/github-actions |
+| Claude Code plugin | A plugin root with `.claude-plugin/plugin.json` and `.mcp.json`. A repository marketplace has `.claude-plugin/marketplace.json`. Users run `/plugin marketplace add raulkivi/agent-cost-analyzer`, then `/plugin install <name>@<marketplace>`. `claude plugin validate <dir>`. | — | code.claude.com/docs/en/plugins-reference |
+| npm scripts | npm 12 (2026) no longer runs dependency install scripts unless the project allows them. pnpm 10+ blocks them by default. | — | github.blog changelog 2026-06-09; pnpm.io/settings/build |
+
+## 4. Options considered
+
+| | Option | Verdict |
+|---|---|---|
+| A | `mcp install` / `uninstall` / `status`: detects clients and registers through each client's CLI or a JSON merge with a backup | **Recommended (Increment 1).** One command for every client, opt-in, reversible. |
+| B | `mcp config --client X`: prints the snippet or command and writes nothing | **Recommended (Increment 1).** Option A reuses the same pure code, and it is the safe fallback for any client A cannot write. |
+| C | A start-up hint line, plus a web "Connect an agent" panel with copy buttons and client install links | **Recommended (hint in Increment 1, panel in Increment 2).** The web panel never writes files. |
+| D | A Claude Desktop `.mcpb` bundle and a Claude Code plugin with a marketplace in this repository | **Recommended (Increment 3).** One-click install for the two Claude clients. |
+| E | Publish to the official MCP Registry | **Recommended (Increment 3).** Clients that read the registry can then find the server. |
+| F | An npm `postinstall` that registers the server | **Rejected.** npx and npm 12 do not run it reliably, pnpm blocks it, and `--ignore-scripts` skips it. It writes outside the package without being asked, which is the pattern supply-chain scanners flag. It also breaks the package's no-install-scripts promise. |
+
+## 5. Design
+
+### 5.1 Commands
+
+```text
+agent-cost-analyzer mcp                       # unchanged: run the server on stdio
+agent-cost-analyzer mcp config  --client <id> [--pin] [--project-billing-details]
+agent-cost-analyzer mcp install [--client <id>[,<id>…]|all] [--scope user|project]
+                                [--pin] [--project-billing-details] [--dry-run] [--yes]
+agent-cost-analyzer mcp uninstall [--client …] [--scope …] [--dry-run] [--yes]
+agent-cost-analyzer mcp status
+```
+
+- `mcp` with no positional argument keeps today's behavior, so existing
+  registrations (`… agent-cost-analyzer mcp`) do not change.
+- `config` prints to stdout and exits.
+- `install` with no `--client` lists the clients it detected and asks which
+  ones to register. When stdin is not a TTY it requires `--client` and does
+  not prompt.
+- Before changing anything, `install` prints each planned action ("add
+  `agent-cost-analyzer` to ~/.cursor/mcp.json"). It applies them only after
+  the user confirms or passes `--yes`. `--dry-run` prints the plan and
+  stops.
+- `status` reads each client's config and prints one line per client:
+  `registered (npx, latest)`, `registered (pinned 1.0.0)`, `not registered`
+  or `not detected`. It writes nothing.
+- Exit codes: 0 success; 1 an action failed, with the client named; 2 a
+  usage error.
+
+### 5.2 Launch specification (pure)
+
+`McpLaunchSpec` is built from the version, the platform and the flags.
+It holds no I/O.
+
+- Default: `npx -y --prefer-offline agent-cost-analyzer mcp`.
+- `--pin`: `npx -y --prefer-offline agent-cost-analyzer@<running version> mcp`.
+- `--project-billing-details` is appended after `mcp`.
+- On Windows the command becomes `cmd` with `["/c", "npx", …]` for clients
+  that do not resolve `.cmd` files (MC0 records which clients those are).
+- The server name is always `agent-cost-analyzer` (D5).
+
+### 5.3 Client adapters (open for extension)
+
+`McpClientTarget` is the interface each client implements. Each adapter
+gets its ports injected (DIP):
+
+- `id`, `label`
+- `detect(env)`: whether the client is installed (its CLI is on `PATH`, or
+  its config folder exists)
+- `plan(spec, scope)`: a list of `SetupAction`s
+- `readStatus(env)`
+
+Each `SetupAction` is one of two kinds:
+
+- `RunCommand {file, args}`: run through an injected `CommandRunner` with
+  `execFile`, never a shell.
+- `MergeJsonEntry {path, keyPath, name, entry}`: applied by an injected
+  `ConfigFileStore`.
+
+Increment 1 adapters:
+
+| id | Mechanism | Scopes |
+|---|---|---|
+| `claude-code` | `RunCommand claude mcp add --scope <s> agent-cost-analyzer -- <spec>`; remove with `claude mcp remove` | user (default), project, local |
+| `claude-desktop` | `MergeJsonEntry` into `claude_desktop_config.json` under `mcpServers` | user |
+| `cursor` | `MergeJsonEntry` into `~/.cursor/mcp.json` or `.cursor/mcp.json` under `mcpServers` | user, project |
+| `vscode` | `RunCommand code --add-mcp '<json>'` (for Insiders, `code-insiders`). Skipped with a message when `code --list-extensions` lists `raulkivi.ai-credits-analyzer` (D6). Removal: MC0 decides between a JSON edit and printed steps. | user |
+| `codex` | `RunCommand codex mcp add agent-cost-analyzer -- <spec>` | user |
+| `gemini` | `RunCommand gemini mcp add -s <s> agent-cost-analyzer <spec>` | user, project |
+
+A new client means a new adapter and its tests. The command code does not
+change.
+
+### 5.4 Writing a JSON config safely
+
+`ConfigFileStore.merge`:
+
+- **The file does not exist:** create it, along with its parent folder,
+  holding only this entry.
+- **The file is not valid JSON:** stop and change nothing. The message
+  names the file and gives the `mcp config` snippet to paste by hand.
+- **An entry with the same name and the same content exists:** do nothing
+  and report "already registered".
+- **An entry with the same name but different content exists:** stop,
+  unless the user confirms or passes `--yes`. The message shows both
+  versions.
+- **Before any change:** copy the file to
+  `<file>.agent-cost-analyzer.bak` (overwriting an earlier backup). Write
+  through a temporary file in the same folder, then rename it over the
+  original. Keep the file's mode.
+- **What is preserved:** every other key and server, in its original order.
+  Indentation is detected from the file. Comments are not supported (§2).
+- **Uninstall:** removes only the `agent-cost-analyzer` key. When that
+  leaves `mcpServers` empty, the empty object stays.
+
+### 5.5 Start-up hint
+
+`agent-cost-analyzer` (serve) prints one more line after the start line:
+`MCP: npx agent-cost-analyzer mcp install`. The hint is not printed when
+`--no-open` is set or stdout is not a TTY, so scripts that read the first
+line keep working. The setup prompt in `standalone-app.md` reads the first
+line.
+
+### 5.6 Web panel: "Connect an agent" (Increment 2)
+
+- **API:** `GET /api/mcp/setup` returns the launch spec and one entry per
+  client: the snippet, the command, and an install link where the client has
+  one (VS Code, plus Cursor if MC0 confirms its link). It is read-only,
+  computed from the version and the server's OS, and goes through the
+  existing Host guard.
+- **UI:** a header button opens a dialog with one tab per client: copy
+  buttons, the install link where one exists, and the `mcp install` command.
+  It is standalone app only, so the VS Code panel never shows it.
+- **No route writes a client config.** A loopback route that writes files
+  would be a target for DNS rebinding or a page in another tab. The
+  terminal command is the only writer.
+- **Before code:** a mock-up board, approved by the owner (MC9).
+
+### 5.7 Distribution channels (Increment 3)
+
+- **MCP Registry.**
+  - Add `"mcpName": "io.github.raulkivi/agent-cost-analyzer"` to
+    `packages/cli/package.json`.
+  - Add `packages/cli/server.json`, versioned with the package.
+    `release-check.mts` checks that the versions match.
+  - In `release-app.yml`, after the npm publish: `mcp-publisher login
+    github-oidc` and `publish`, with the publisher binary pinned and verified
+    by its checksum or cosign.
+  - How the `mcp` argument is passed: MC0.
+- **`.mcpb` bundle.**
+  - Built from the CLI's `dist/` (already a zero-dependency bundle) with a
+    `manifest.json`: `server.type: "node"`, entry `dist/cli.js`, args
+    `["mcp"]`, `compatibility.runtimes.node: ">=22.18"`.
+  - Packed with `@anthropic-ai/mcpb` as a pinned dev dependency.
+  - Attached to the `app-v*` GitHub Release. CI validates the manifest and
+    starts the bundled server, which must answer `tools/list`.
+- **Claude Code plugin.**
+  - The plugin lives in `plugins/agent-cost-analyzer/`: `plugin.json`, plus
+    a `.mcp.json` with the npx launch spec.
+  - `.claude-plugin/marketplace.json` at the repository root lists it.
+  - CI runs `claude plugin validate`, or a JSON-schema check if the CLI is
+    not available in CI (MC0).
+
+### 5.8 Module placement
+
+| Module | Package | Why there |
+|---|---|---|
+| `McpLaunchSpec`, client snippet builders (pure) | `packages/server/src/mcp/client-setup/` | Both the CLI (bundled through a relative import, as `stdio-args.ts` is) and `GET /api/mcp/setup` use them |
+| Adapters, `ConfigFileStore`, `CommandRunner`, client detection, `install`/`uninstall`/`status` commands | `packages/cli/src/mcp-setup/` | Only the terminal writes |
+| Panel | `packages/web/src/components/mcp-setup/` | Standalone app only |
+| Bundle and plugin build | `packages/cli/scripts/`, `plugins/`, `.claude-plugin/` | Release assets |
+
+### 5.9 Docs that change
+
+- **Scope rule** (D1): [vision.md](../vision.md) §6, [architecture.md](../architecture.md)
+  §2 and §4.1, and [threat-model.md](../threat-model.md): the bin row's "no
+  write outside the settings folder" gains the exception "except
+  `mcp install`/`uninstall`, at the paths it prints first".
+- **New threat-model row:** `mcp install` (§6).
+- **User Guide MCP section:** `mcp install` comes first, and the
+  hand-written commands become the fallback.
+- **Also:** `standalone-app.md`, the root README's quick start (one line),
+  and the `[Unreleased]` section of `CHANGELOG.md`.
+
+## 6. Threat model
+
+| Threat | Mitigation |
+|---|---|
+| Clobbering a user's config (other servers lost, invalid JSON written) | Merge only the named key. Refuse files that are not valid JSON. Backup, atomic rename, mode kept. Tests over fixtures with other servers and odd formatting. |
+| Command injection through the client CLIs | `execFile` with an argument array and no shell. Arguments come from `McpLaunchSpec` only; no user text reaches them except the enum `--client` and `--scope` values. On Windows, `cmd /c` appears in the written config only, never in the command run. |
+| Writing somewhere the user did not expect | The plan names every path and command before applying them. `--dry-run`; confirmation unless `--yes`. Paths come from documented per-OS locations and `os.homedir()`/`APPDATA`, never from config contents. |
+| Replacing an entry the user customized | An entry that differs is not replaced without confirmation; the message shows both. |
+| A web route used to write configs (DNS rebinding, cross-site) | No writing route exists. `GET /api/mcp/setup` is read-only and behind the Host guard. |
+| Registry or bundle impersonation | `io.github.raulkivi` namespace through GitHub OIDC. The `.mcpb` bundle is built in CI from the same commit as the npm publish and attached to the owner-tagged release. |
+| A pinned launch spec going stale | `status` shows "pinned <version>" next to the running version. |
+
+## 7. Exit criterion and checks
+
+Phase 18's exit criterion: on Linux, macOS and Windows, from the packed
+tarball, with a temporary home:
+
+1. `mcp install --client <id> --yes` writes what each client expects:
+   - JSON-file clients (`claude-desktop`, `cursor`): the entry matches the
+     §3.1 shape. Launching the written command and arguments with the MCP
+     SDK's stdio client lists the server's tools.
+   - CLI clients (`claude-code`, `vscode`, `codex`, `gemini`): a recording
+     stub on `PATH` receives exactly the documented argument array.
+2. `mcp uninstall` returns a pre-existing config file to its original bytes.
+   A file the install created ends with `mcpServers` empty.
+3. `status` reports each state correctly.
+4. The serve smoke's home snapshot is unchanged: serving still writes
+   nothing outside the settings folder.
+5. Increment 2: a Playwright spec opens the panel, copies each snippet and
+   checks the VS Code link.
+6. Increment 3: `server.json` validates against the registry schema, the
+   `.mcpb` bundle's server answers `tools/list`, and the plugin validates.
+7. On the owner's machine (MC8, automated, not a checklist):
+   `npm run test:real-clients:mcp-setup` runs `install` with real
+   `claude` and `code` against a temporary home or profile, then checks
+   `claude mcp get agent-cost-analyzer` and `code --list-mcp` (or its
+   equivalent), then uninstalls.
+
+## 8. Owner decisions
+
+Answered by the owner in an interview on 2026-11-18. Every answer is the
+recommended option.
+
+| # | Decision | Answer |
+|---|---|---|
+| D1 | May the terminal write client configs? | Yes, but only `mcp install` and `mcp uninstall`, after showing the plan, with the safeguards in §5.4. The web app and local server never write. vision.md §6 and the threat model are amended (MC9). |
+| D2 | Clients in Increment 1 | All six: Claude Code, Claude Desktop, Cursor, VS Code, Codex, Gemini CLI |
+| D3 | Default launch spec | Latest through npx (`npx -y --prefer-offline agent-cost-analyzer mcp`). `--pin` writes the running version. |
+| D4 | Default scope | User (every project) |
+| D5 | Server name | `agent-cost-analyzer` |
+| D6 | VS Code with the extension installed | Skip, with a message that the extension already provides the server |
+| D7 | Start-up hint | One line, only when stdout is a TTY and not with `--no-open` |
+| D8 | Increment 3 channels | All three: MCP Registry, `.mcpb` bundle, Claude Code plugin |
+| D9 | Plugin and marketplace location | This repository: `plugins/agent-cost-analyzer/` and `.claude-plugin/marketplace.json` |
+| D10 | A failed registry publish during a release | Warn without failing the run: a separate job after the npm publish, re-run later |
+| D11 | Order and releases | Increment 1 ships in its own app minor release. Increments 2 and 3 follow in either order, each releasable on its own. |
+| D12 | Plan approval | Approved; start with MC0 |
+
+## 9. Risks
+
+- **Clients change their formats.** VS Code has already relabeled `servers`
+  as deprecated. Mitigation: one adapter per client, MC0's checks, the
+  real-client check (MC8), and `mcp config` as the fallback.
+- **Cursor's deep link is undocumented.** Use it only if MC0 confirms it.
+  Otherwise the panel shows Cursor's file snippet.
+- **Claude Desktop has no official Linux build.** The adapter writes the
+  documented Linux path, and `detect` finds the folder only when it exists.
+- **The registry is still in preview.** Increment 3 only. A failed registry
+  publish warns without failing the release run (D10).
+
+## 10. Tasks
+
+TDD in every code task (architecture.md §11.4). No local model in this repo.
+"Owner" marks steps that need the owner.
+
+| ID | Task | Inc. | Complexity | Model | Depends on |
+|---|---|---|---|---|---|
+| MC0 | Spike: on the owner's machine confirm the §3.1 unconfirmed facts (Cursor deep link, VS Code user `mcp.json` path and removal, which clients need `cmd /c`, registry `packageArguments`, `.mcpb` manifest version, `claude plugin validate` in CI). Record the results in §3.1. | 1 | medium | Sonnet | Plan approved |
+| MC1 | `McpLaunchSpec` and per-client snippet builders (pure), with table-driven tests per OS and flag | 1 | low | Sonnet | MC0 |
+| MC2 | `ConfigFileStore`: merge and remove, backup, atomic write, invalid-JSON refusal, indentation kept; tests over temporary folders | 1 | medium | Opus | — |
+| MC3 | `McpClientTarget` interface and the `claude-code`, `claude-desktop`, `cursor` adapters with detection | 1 | medium | Sonnet | MC1, MC2 |
+| MC4 | `vscode`, `codex` and `gemini` adapters; skip VS Code when the extension is present (D6) | 1 | medium | Sonnet | MC3 |
+| MC5 | CLI: argument parsing for `config`, `install`, `uninstall` and `status`; plan printing, prompt and `--dry-run`/`--yes`; exit codes; `usage.ts` | 1 | medium | Sonnet | MC3 |
+| MC6 | Start-up hint line (D7) | 1 | low | Haiku | — |
+| MC7 | Tarball smoke on three OSes: install, status and uninstall per client in a temporary home; JSON clients launched with the SDK stdio client; stub CLIs record argv; serve home snapshot unchanged | 1 | high | Opus | MC4, MC5 |
+| MC8 | `npm run test:real-clients:mcp-setup` on the owner's machine with real `claude` and `code` | 1 | medium | Sonnet + owner run | MC7 |
+| MC9 | Docs: User Guide, standalone-app.md, README, CHANGELOG; vision, architecture and threat-model amendments (D1); review of Increment 1 | 1 | medium | Opus | MC7 |
+| MC10 | Mock-up board for the "Connect an agent" panel; owner approves | 2 | low | Sonnet + owner | MC9 |
+| MC11 | `GET /api/mcp/setup` (read-only) with route and Host-guard tests | 2 | low | Sonnet | MC1 |
+| MC12 | The panel and its header button, with component tests | 2 | medium | Sonnet | MC10, MC11 |
+| MC13 | Playwright spec: panel, copy buttons, install links, light and dark mode, axe | 2 | low | Sonnet | MC12 |
+| MC14 | `mcpName`, `server.json`, the version check in `release-check.mts`, and the registry publish job in `release-app.yml` (OIDC, pinned publisher; a failure warns without failing the run, D10) | 3 | medium | Sonnet | MC0 |
+| MC15 | `.mcpb` build script, manifest, CI validation and `tools/list` check, release asset | 3 | medium | Sonnet | MC0 |
+| MC16 | Claude Code plugin and repository marketplace, with CI validation | 3 | low | Haiku | MC0 |
+| MC17 | Increment 3 docs (User Guide install options) and a threat-model row for the release assets | 3 | low | Sonnet | MC14-MC16 |
+| MC18 | Owner: the first release with registry, bundle and plugin; check that each one installs | 3 | low | Owner | MC17 |
+
+Order: MC0 → MC1/MC2 (in parallel) → MC3 → MC4/MC5/MC6 → MC7 → MC8 →
+MC9 closes Increment 1, which ships in its own app minor release (D11).
+Increments 2 and 3 are independent of each other, and each can be released on its own.
