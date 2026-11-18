@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // The mcp-setup smoke's temporary home (mcp-client-setup.md §7, MC7): every
-// client "detected" by its folder or by a stub CLI on PATH, three JSON
+// client "detected" by its folder or by a stub CLI on PATH, four JSON
 // configs seeded with another server, and the environment that keeps the
 // installed bin, npm and the stubs inside it. Linux only (D13).
 import { chmodSync, mkdirSync, writeFileSync } from "node:fs";
@@ -11,8 +11,8 @@ import type { McpClientId } from "../../server/src/mcp/client-setup/client-setup
 import { stubConfigFile, type StubTool } from "./client-stubs.mts";
 import { isolatedEnv } from "./processes.mts";
 
-/** Folders that make the clients without a stub CLI detected (Claude Desktop, Cursor, VS Code), and Codex and Gemini as well. */
-export const DETECTED_FOLDERS = [".config/Claude", ".cursor", ".config/Code/User", ".codex", ".gemini"] as const;
+/** Folders that make the clients without a stub CLI detected (Claude Desktop, Cursor, VS Code, VS Code Insiders), and Codex and Gemini as well. */
+export const DETECTED_FOLDERS = [".config/Claude", ".cursor", ".config/Code/User", ".config/Code - Insiders/User", ".codex", ".gemini"] as const;
 
 export const STUB_TOOLS: readonly StubTool[] = ["claude", "codex", "gemini"];
 
@@ -20,7 +20,7 @@ export const STUB_TOOLS: readonly StubTool[] = ["claude", "codex", "gemini"];
 export const EXTENSION_FOLDER = ".vscode/extensions/raulkivi.ai-credits-analyzer-1.0.0";
 
 export interface SeededConfig {
-  client: Extract<McpClientId, "claude-desktop" | "cursor" | "vscode">;
+  client: Extract<McpClientId, "claude-desktop" | "cursor" | "vscode" | "vscode-insiders">;
   /** Relative to the home, "/" separators. */
   file: string;
   keyPath: readonly string[];
@@ -55,6 +55,15 @@ export const SEEDED_CONFIGS: readonly SeededConfig[] = [
   {
     client: "vscode",
     file: ".config/Code/User/mcp.json",
+    keyPath: ["servers"],
+    text: seeded({
+      inputs: [{ type: "promptString", id: "token", description: "API token", password: true }],
+      servers: { github: { type: "http", url: "https://api.githubcopilot.com/mcp/" } },
+    }),
+  },
+  {
+    client: "vscode-insiders",
+    file: ".config/Code - Insiders/User/mcp.json",
     keyPath: ["servers"],
     text: seeded({
       inputs: [{ type: "promptString", id: "token", description: "API token", password: true }],

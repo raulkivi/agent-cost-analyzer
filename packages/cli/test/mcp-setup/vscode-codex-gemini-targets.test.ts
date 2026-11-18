@@ -190,6 +190,93 @@ describe("vscode", () => {
   });
 });
 
+describe("vscode-insiders", () => {
+  const userDir = () => join(home, ".config", "Code - Insiders", "User");
+  const file = () => join(userDir(), "mcp.json");
+  const extDir = () => join(home, ".vscode-insiders", "extensions");
+
+  it("is detected by code-insiders or the Code - Insiders/User folder", async () => {
+    const t = target("vscode-insiders");
+    expect(await t.detect(env())).toBe(false);
+    expect(await t.detect(env({ commands: ["code"] }))).toBe(false);
+    expect(await t.detect(env({ commands: ["code-insiders"] }))).toBe(true);
+    await fsp.mkdir(userDir(), { recursive: true });
+    expect(await t.detect(env())).toBe(true);
+  });
+
+  it("is not detected by the stable VS Code folder", async () => {
+    await fsp.mkdir(join(home, ".config", "Code", "User"), { recursive: true });
+    expect(await target("vscode-insiders").detect(env())).toBe(false);
+    expect(await target("vscode").detect(env())).toBe(true);
+  });
+
+  it("plans a merge under servers in its own mcp.json", async () => {
+    await fsp.mkdir(userDir(), { recursive: true });
+    const plan = await target("vscode-insiders").planInstall(
+      setupFor("vscode-insiders"),
+      env(),
+    );
+    expect(plan).toEqual({
+      status: { kind: "not-registered" },
+      actions: [
+        {
+          kind: "merge-json",
+          path: file(),
+          keyPath: ["servers"],
+          name: NAME,
+          entry: { type: "stdio", ...LATEST },
+          replace: false,
+        },
+      ],
+      needsConfirmation: false,
+    });
+  });
+
+  it("reads status from its own file, not the stable one", async () => {
+    await writeJson(join(home, ".config", "Code", "User", "mcp.json"), {
+      servers: { [NAME]: { type: "stdio", ...LATEST } },
+    });
+    await writeJson(file(), {
+      servers: { [NAME]: { type: "stdio", ...PINNED } },
+    });
+    const status = await target("vscode-insiders").status(
+      "user",
+      env(),
+      setupFor("vscode-insiders"),
+    );
+    expect(status).toEqual({
+      kind: "registered",
+      launch: { pinned: "0.9.0" },
+      matches: false,
+    });
+  });
+
+  it("defers to the extension in the Insiders extensions folder only", async () => {
+    await fsp.mkdir(join(extDir(), "raulkivi.ai-credits-analyzer-0.14.0"), {
+      recursive: true,
+    });
+    const t = target("vscode-insiders");
+    expect(await t.planInstall(setupFor("vscode-insiders"), env())).toEqual({
+      status: { kind: "provided-by-extension" },
+      actions: [],
+      needsConfirmation: false,
+    });
+    const stable = await target("vscode").planInstall(
+      setupFor("vscode"),
+      env(),
+    );
+    expect(stable.status).not.toEqual({ kind: "provided-by-extension" });
+  });
+
+  it("plans remove-json under servers on uninstall", async () => {
+    await writeJson(file(), { servers: { [NAME]: LATEST, other: {} } });
+    const plan = await target("vscode-insiders").planUninstall("user", env());
+    expect(plan.actions).toEqual([
+      { kind: "remove-json", path: file(), keyPath: ["servers"], name: NAME },
+    ]);
+  });
+});
+
 describe("codex", () => {
   const dir = () => join(home, ".codex");
   const file = () => join(dir(), "config.toml");

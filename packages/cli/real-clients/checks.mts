@@ -23,6 +23,7 @@ export function guardedFiles(home: string): string[] {
     ".config/Claude/claude_desktop_config.json",
     ".cursor/mcp.json",
     ".config/Code/User/mcp.json",
+    ".config/Code - Insiders/User/mcp.json",
     ".codex/config.toml",
     ".gemini/settings.json",
   ].map((relative) => path.posix.join(home, relative));
@@ -84,7 +85,8 @@ export function shimCallProblems(tool: string, lines: readonly string[], tempHom
 
 /** What `mcp status` prints in a client's row (its label, spaces, the state), or undefined. */
 export function statusRow(output: string, label: string): string | undefined {
-  const prefix = `${label} `;
+  // Labels are padded with two spaces or more, so "VS Code" never matches "VS Code Insiders".
+  const prefix = `${label}  `;
   const line = output.split("\n").find((candidate) => candidate.startsWith(prefix));
   return line?.slice(prefix.length).trim();
 }

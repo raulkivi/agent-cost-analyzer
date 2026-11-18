@@ -9,6 +9,7 @@ export type McpClientId =
   | "claude-desktop"
   | "cursor"
   | "vscode"
+  | "vscode-insiders"
   | "codex"
   | "gemini";
 
@@ -17,6 +18,7 @@ export const MCP_CLIENT_IDS: readonly McpClientId[] = [
   "claude-desktop",
   "cursor",
   "vscode",
+  "vscode-insiders",
   "codex",
   "gemini",
 ];
@@ -28,6 +30,7 @@ const SCOPES: Record<McpClientId, readonly McpScope[]> = {
   "claude-desktop": ["user"],
   cursor: ["user", "project"],
   vscode: ["user"],
+  "vscode-insiders": ["user"],
   codex: ["user"],
   gemini: ["user", "project"],
 };
@@ -70,6 +73,16 @@ type Builder = (launch: McpLaunchSpec, scope: McpScope) => Omit<ClientSetup, "cl
 const argv = (l: McpLaunchSpec) => [l.command, ...l.args];
 const plainEntry = (l: McpLaunchSpec) => ({ command: l.command, args: l.args });
 
+// Stable and Insiders differ only in the CLI that `mcp config` prints.
+const vscodeFamily = (cli: string, l: McpLaunchSpec) => ({
+  command: [
+    cli,
+    "--add-mcp",
+    JSON.stringify({ name: NAME, type: "stdio", ...plainEntry(l) }),
+  ],
+  json: { keyPath: ["servers"], name: NAME, entry: { type: "stdio", ...plainEntry(l) } },
+});
+
 const BUILDERS: Record<McpClientId, Builder> = {
   "claude-code": (l, scope) => ({
     command: ["claude", "mcp", "add", "--scope", scope, NAME, "--", ...argv(l)],
@@ -92,14 +105,8 @@ const BUILDERS: Record<McpClientId, Builder> = {
       `cursor://anysphere.cursor-deeplink/mcp/install?name=${NAME}&config=` +
       encodeURIComponent(Buffer.from(JSON.stringify(plainEntry(l))).toString("base64")),
   }),
-  vscode: (l) => ({
-    command: [
-      "code",
-      "--add-mcp",
-      JSON.stringify({ name: NAME, type: "stdio", ...plainEntry(l) }),
-    ],
-    json: { keyPath: ["servers"], name: NAME, entry: { type: "stdio", ...plainEntry(l) } },
-  }),
+  vscode: (l) => vscodeFamily("code", l),
+  "vscode-insiders": (l) => vscodeFamily("code-insiders", l),
   codex: (l) => ({
     command: ["codex", "mcp", "add", NAME, "--", ...argv(l)],
     toml: mcpServerToml(NAME, l),

@@ -33,6 +33,7 @@ describe("guardedFiles", () => {
       "/home/me/.config/Claude/claude_desktop_config.json",
       "/home/me/.cursor/mcp.json",
       "/home/me/.config/Code/User/mcp.json",
+      "/home/me/.config/Code - Insiders/User/mcp.json",
       "/home/me/.codex/config.toml",
       "/home/me/.gemini/settings.json",
     ]);
@@ -154,6 +155,11 @@ describe("statusRow", () => {
   it("returns the state in a client's row", () => {
     expect(statusRow(output, "Claude Code")).toBe("registered (latest)");
     expect(statusRow(output, "Claude Desktop")).toBe("not detected");
+  });
+  it("does not mistake VS Code Insiders' row for VS Code's", () => {
+    const rows = "VS Code Insiders  registered (latest)\nCursor            not detected\n";
+    expect(statusRow(rows, "VS Code")).toBeUndefined();
+    expect(statusRow(rows, "VS Code Insiders")).toBe("registered (latest)");
   });
   it("returns undefined for a client that has no row", () => {
     expect(statusRow(output, "Cursor")).toBeUndefined();

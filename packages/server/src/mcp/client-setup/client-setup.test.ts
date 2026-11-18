@@ -30,6 +30,7 @@ describe("client ids and scopes", () => {
       "claude-desktop",
       "cursor",
       "vscode",
+      "vscode-insiders",
       "codex",
       "gemini",
     ]);
@@ -41,6 +42,7 @@ describe("client ids and scopes", () => {
     ["gemini", ["user", "project"]],
     ["claude-desktop", ["user"]],
     ["vscode", ["user"]],
+    ["vscode-insiders", ["user"]],
     ["codex", ["user"]],
   ])("%s supports %j", (client, scopes) => {
     expect(supportedScopes(client)).toEqual(scopes);
@@ -136,6 +138,19 @@ describe("vscode", () => {
       name: NAME,
       entry: { type: "stdio", command: "npx", args: plain },
     });
+    expect(s.installLink).toBeUndefined();
+  });
+});
+
+describe("vscode-insiders", () => {
+  it("prints code-insiders --add-mcp and keeps the vscode entry shape", () => {
+    const s = clientSetup("vscode-insiders", opts());
+    expect(s.command).toEqual([
+      "code-insiders",
+      "--add-mcp",
+      JSON.stringify({ name: NAME, type: "stdio", command: "npx", args: plain }),
+    ]);
+    expect(s.json).toEqual(clientSetup("vscode", opts()).json);
     expect(s.installLink).toBeUndefined();
   });
 });

@@ -12,6 +12,7 @@ export const CLIENT_LABELS: Readonly<Record<McpClientId, string>> = {
   "claude-desktop": "Claude Desktop",
   cursor: "Cursor",
   vscode: "VS Code",
+  "vscode-insiders": "VS Code Insiders",
   codex: "Codex CLI",
   gemini: "Gemini CLI",
 };

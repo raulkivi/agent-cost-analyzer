@@ -687,14 +687,16 @@ npx agent-cost-analyzer mcp install
 ```
 
 `mcp install` finds the MCP clients on this machine (Claude Code, Claude
-Desktop, Cursor, VS Code, Codex CLI and Gemini CLI) and prints a plan: each
+Desktop, Cursor, VS Code, VS Code Insiders, Codex CLI and Gemini CLI) and
+prints a plan: each
 client, its status, every command it will run and every file it will
 change. It applies the plan only after you answer `y` to `Apply these
 changes? [y/N]`. The server is registered as `agent-cost-analyzer` and
 launched with `npx -y --prefer-offline agent-cost-analyzer mcp`.
 
 - `--client <id>` picks the clients: `claude-code`, `claude-desktop`,
-  `cursor`, `vscode`, `codex`, `gemini`, a comma list, or `all`. Without it,
+  `cursor`, `vscode`, `vscode-insiders`, `codex`, `gemini`, a comma list, or
+  `all`. Without it,
   `install` plans for every client it detects. A run without a terminal (a
   script) must name `--client`. A named client that is not installed gets
   the text to register it by hand, and nothing is written for it.
@@ -712,16 +714,17 @@ How each client is registered:
 
 - Claude Code, Codex CLI and Gemini CLI: through the client's own `mcp add`
   command, run directly, never through a shell.
-- Claude Desktop, Cursor and VS Code: the entry is merged into the client's
-  JSON file (`claude_desktop_config.json`, `~/.cursor/mcp.json`, VS Code's
-  user `mcp.json`). Other servers and settings stay as they were, in their
+- Claude Desktop, Cursor, VS Code and VS Code Insiders: the entry is merged into the client's
+  JSON file (`claude_desktop_config.json`, `~/.cursor/mcp.json`, the user
+  `mcp.json` of VS Code or VS Code Insiders). Other servers and settings stay as they were, in their
   order. The file is first copied to `<file>.agent-cost-analyzer.bak`
   (replacing an earlier backup), and the new file replaces the old one in a
   single rename. A file that is not plain JSON, such as one with comments, is
   left alone: the plan shows the entry to paste yourself and the command
   exits with 1. Restart Claude Desktop afterwards.
-- VS Code is skipped when the AI Credits Analyzer extension is installed,
-  since the extension registers its own server.
+- VS Code and VS Code Insiders are each skipped when the AI Credits
+  Analyzer extension is installed in them, since the extension registers its
+  own server.
 - An entry with a different launch (another version, or a command of your
   own) is replaced only after you confirm, or with `--yes`.
 
