@@ -111,6 +111,19 @@ export function jsonInstallProblems(facts: JsonInstallFacts): string[] {
   ];
 }
 
+/** A replacing plan warns and shows the client's own entry and ours in full (MC21, review R5). */
+export function replacePlanProblems(stdout: string, label: string, old: unknown, wanted: unknown): string[] {
+  const block = stdout.split("\n\n").find((part) => part.startsWith(`${label} (user scope):`));
+  if (block === undefined) return [`${label}: no plan block`];
+  const lines = block.split("\n");
+  const warned = lines.some((line) => line.startsWith("  This replaces your existing entry"));
+  const missing = [`    old: ${JSON.stringify(old)}`, `    new: ${JSON.stringify(wanted)}`].filter((line) => !lines.includes(line));
+  return [
+    ...(warned ? [] : [`${label}: the plan does not say it replaces the existing entry`]),
+    ...missing.map((line) => `${label}: the plan does not show ${JSON.stringify(line.trim())}`),
+  ];
+}
+
 /** Every home change outside `allowed` (relative paths, "/" separators). */
 export function homeChangeProblems(changes: readonly TreeChange[], allowed: readonly string[]): string[] {
   return changes.filter((change) => !allowed.includes(change.path)).map((change) => `${change.kind} outside the client config files: ${change.path}`);

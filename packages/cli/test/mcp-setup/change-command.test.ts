@@ -101,13 +101,24 @@ describe("install: plan and prompt", () => {
     expect(h.runs).toHaveLength(1);
   });
 
-  it("flags a replacing plan and shows how it differs", async () => {
+  // MC9 review R5: the old and the new entry in full, not just their kinds.
+  it("flags a replacing plan and shows the old and the new entry", async () => {
+    const old = { command: "npx", args: ["agent-cost-analyzer", "mcp"] };
+    const pinned = {
+      command: "npx",
+      args: ["-y", "--prefer-offline", "agent-cost-analyzer@1.2.3", "mcp"],
+    };
     const h = harness([
       fakeTarget("cursor", {
         install: {
-          status: { kind: "registered", launch: "latest", matches: false },
+          status: {
+            kind: "registered",
+            launch: "latest",
+            matches: false,
+            existing: old,
+          },
           needsConfirmation: true,
-          actions: [{ ...merge, replace: true }],
+          actions: [{ ...merge, entry: pinned, replace: true }],
         },
       }),
     ]);
@@ -120,16 +131,41 @@ describe("install: plan and prompt", () => {
       h.deps,
     );
     expect(text(h.out)).toContain(
-      "replace agent-cost-analyzer in /h/.cursor/mcp.json (differs: latest → pinned 1.2.3)",
+      "  - replace agent-cost-analyzer in /h/.cursor/mcp.json\n" +
+        "  This replaces your existing entry; the file is backed up to " +
+        "/h/.cursor/mcp.json.agent-cost-analyzer.bak first.\n" +
+        `    old: ${JSON.stringify(old)}\n` +
+        `    new: ${JSON.stringify(pinned)}\n`,
     );
-    expect(text(h.out)).toContain("replaces your existing entry");
+  });
+
+  it("prints a failed step's recovery text under the client's failure line", async () => {
+    const h = harness(
+      [
+        fakeTarget("claude-code", {
+          label: "Claude Code",
+          ...planning({ ...add, onFailure: "Gone.\nRestore with:\n  x 'y'" }),
+        }),
+      ],
+      { run: () => ({ ok: false, message: "exit code 1: boom" }) },
+    );
+    expect(await changeCommand(install({ yes: true }), h.deps)).toBe(1);
+    expect(text(h.err)).toBe(
+      "Claude Code: failed: exit code 1: boom\n" +
+        "  Gone.\n  Restore with:\n    x 'y'\n",
+    );
   });
 
   it("says already registered and asks nothing", async () => {
     const h = harness([
       fakeTarget("claude-code", {
         install: {
-          status: { kind: "registered", launch: "latest", matches: true },
+          status: {
+            kind: "registered",
+            launch: "latest",
+            matches: true,
+            existing: {},
+          },
         },
       }),
     ]);
@@ -217,7 +253,12 @@ describe("install: codex with a differing table", () => {
     const h = harness([
       fakeTarget("codex", {
         install: {
-          status: { kind: "registered", launch: "custom", matches: false },
+          status: {
+            kind: "registered",
+            launch: "custom",
+            matches: false,
+            existing: {},
+          },
         },
       }),
     ]);
@@ -394,7 +435,12 @@ describe("uninstall", () => {
     const h = harness([
       fakeTarget("cursor", {
         uninstall: {
-          status: { kind: "registered", launch: "latest", matches: true },
+          status: {
+            kind: "registered",
+            launch: "latest",
+            matches: true,
+            existing: {},
+          },
           actions: [remove],
         },
       }),

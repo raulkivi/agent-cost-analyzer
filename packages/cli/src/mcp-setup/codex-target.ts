@@ -21,16 +21,25 @@ async function readStatus(
   env: ClientEnv,
   expected: { command: string; args: readonly string[] },
 ): Promise<RegistrationStatus> {
-  const text = await env.readText(codexConfigPath(env));
+  let text: string | undefined;
+  try {
+    text = await env.readText(codexConfigPath(env));
+  } catch (error) {
+    return { kind: "unreadable", message: (error as Error).message };
+  }
   const table = text === undefined ? undefined : findCodexServerTable(text);
   if (!table) return { kind: "not-registered" };
+  const existing = { ...table };
   // Without both fields the launch is unknown; "custom" would be a claim.
   if (table.command === undefined || table.args === undefined)
-    return { kind: "registered-unverified" };
+    return Object.keys(existing).length > 0
+      ? { kind: "registered-unverified", existing }
+      : { kind: "registered-unverified" };
   return {
     kind: "registered",
     launch: classifyLaunch(table),
     matches: sameLaunch(table, expected),
+    existing,
   };
 }
 

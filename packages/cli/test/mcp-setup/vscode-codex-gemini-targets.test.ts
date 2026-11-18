@@ -129,6 +129,7 @@ describe("vscode", () => {
       kind: "registered",
       launch: "latest",
       matches: true,
+      existing: { type: "stdio", ...LATEST },
     });
   });
 
@@ -338,6 +339,7 @@ describe("codex", () => {
       kind: "registered",
       launch: "latest",
       matches: true,
+      existing: LATEST,
     });
   });
 
@@ -365,6 +367,7 @@ describe("codex", () => {
       kind: "registered",
       launch: { pinned: "0.9.0" },
       matches: false,
+      existing: PINNED,
     });
   });
 
@@ -378,7 +381,10 @@ describe("codex", () => {
       env(),
       setupFor("codex"),
     );
-    expect(status).toEqual({ kind: "registered-unverified" });
+    expect(status).toEqual({
+      kind: "registered-unverified",
+      existing: { command: "npx" },
+    });
   });
 
   it("reports registered-unverified when args span lines", async () => {
@@ -391,7 +397,28 @@ describe("codex", () => {
       env(),
       setupFor("codex"),
     );
-    expect(status).toEqual({ kind: "registered-unverified" });
+    expect(status).toEqual({
+      kind: "registered-unverified",
+      existing: { command: "npx" },
+    });
+  });
+
+  // MC9 review R6: a status read must finish, whatever the path holds.
+  it("reports unreadable when config.toml cannot be read safely", async () => {
+    const status = await target("codex").status(
+      "user",
+      env({
+        commands: ["codex"],
+        readText: async (p) => {
+          throw new Error(`${p} is not a regular file`);
+        },
+      }),
+      setupFor("codex"),
+    );
+    expect(status).toEqual({
+      kind: "unreadable",
+      message: `${file()} is not a regular file`,
+    });
   });
 
   it("plans nothing when registered, even with a different pin", async () => {
@@ -454,12 +481,14 @@ describe("gemini", () => {
       kind: "registered",
       launch: "latest",
       matches: true,
+      existing: LATEST,
     });
     expect(await t.status("project", e, setupFor("gemini", "project"))).toEqual(
       {
         kind: "registered",
         launch: { pinned: "0.9.0" },
         matches: false,
+        existing: PINNED,
       },
     );
   });
@@ -474,7 +503,15 @@ describe("gemini", () => {
     expect(plan.needsConfirmation).toBe(true);
     expect(plan.actions).toEqual([
       { kind: "run", file: "gemini", args: setup.remove!.slice(1) },
-      { kind: "run", file: "gemini", args: setup.command!.slice(1) },
+      {
+        kind: "run",
+        file: "gemini",
+        args: setup.command!.slice(1),
+        onFailure:
+          `${NAME} is no longer registered in Gemini CLI: its old entry was removed, then the add failed.\n` +
+          `To restore the old entry, put it back under "mcpServers" in ${userFile()}:\n` +
+          `  "${NAME}": ${JSON.stringify(PINNED)}`,
+      },
     ]);
   });
 

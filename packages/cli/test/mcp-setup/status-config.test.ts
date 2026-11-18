@@ -23,6 +23,7 @@ describe("status", () => {
         kind: "registered",
         launch: { pinned: "1.0.0" },
         matches: false,
+        existing: {},
       }),
       withStatus("cursor", { kind: "not-detected" }),
     ]);
@@ -39,11 +40,11 @@ describe("status", () => {
 
   it.each([
     [
-      { kind: "registered", launch: "latest", matches: true },
+      { kind: "registered", launch: "latest", matches: true, existing: {} },
       "registered (latest)",
     ],
     [
-      { kind: "registered", launch: "custom", matches: false },
+      { kind: "registered", launch: "custom", matches: false, existing: {} },
       "registered (differs)",
     ],
     [{ kind: "not-registered" }, "not registered"],

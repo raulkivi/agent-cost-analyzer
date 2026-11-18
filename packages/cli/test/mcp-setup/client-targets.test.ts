@@ -146,7 +146,12 @@ describe("claude-code", () => {
       env({ commands: ["claude"] }),
     );
     expect(plan).toEqual({
-      status: { kind: "registered", launch: "latest", matches: true },
+      status: {
+        kind: "registered",
+        launch: "latest",
+        matches: true,
+        existing: withType(LATEST),
+      },
       actions: [],
       needsConfirmation: false,
     });
@@ -165,11 +170,20 @@ describe("claude-code", () => {
       kind: "registered",
       launch: { pinned: "0.9.0" },
       matches: false,
+      existing: withType(PINNED),
     });
     expect(plan.needsConfirmation).toBe(true);
     expect(plan.actions).toEqual([
       { kind: "run", file: "claude", args: setup.remove!.slice(1) },
-      { kind: "run", file: "claude", args: setup.command!.slice(1) },
+      {
+        kind: "run",
+        file: "claude",
+        args: setup.command!.slice(1),
+        onFailure:
+          `${NAME} is no longer registered in Claude Code: its old entry was removed, then the add failed.\n` +
+          "To restore the old entry, run:\n" +
+          `  claude mcp add-json --scope user ${NAME} '${JSON.stringify(withType(PINNED))}'`,
+      },
     ]);
   });
 
@@ -190,6 +204,7 @@ describe("claude-code", () => {
       kind: "registered",
       launch: { pinned: "1.0.0" },
       matches: true,
+      existing: withType(WRAPPED),
     });
   });
 
@@ -210,6 +225,7 @@ describe("claude-code", () => {
       kind: "registered",
       launch: "latest",
       matches: true,
+      existing: withType(LATEST),
     });
   });
 
@@ -226,6 +242,7 @@ describe("claude-code", () => {
       kind: "registered",
       launch: { pinned: "0.9.0" },
       matches: false,
+      existing: withType(PINNED),
     });
   });
 
@@ -242,6 +259,7 @@ describe("claude-code", () => {
       kind: "registered",
       launch: "custom",
       matches: false,
+      existing: { command: "node", args: ["/x/server.js"] },
     });
   });
 
@@ -356,7 +374,12 @@ describe("claude-desktop", () => {
       env(),
     );
     expect(plan).toEqual({
-      status: { kind: "registered", launch: "latest", matches: true },
+      status: {
+        kind: "registered",
+        launch: "latest",
+        matches: true,
+        existing: LATEST,
+      },
       actions: [],
       needsConfirmation: false,
     });
@@ -476,6 +499,7 @@ describe("cursor", () => {
       kind: "registered",
       launch: { pinned: "0.9.0" },
       matches: false,
+      existing: PINNED,
     });
     expect(plan.needsConfirmation).toBe(true);
     expect(plan.actions).toEqual([
@@ -483,6 +507,7 @@ describe("cursor", () => {
         kind: "merge-json",
         path: projectFile(),
         replace: true,
+        projectRoot: cwd,
       }),
     ]);
   });
@@ -495,6 +520,7 @@ describe("cursor", () => {
       kind: "registered",
       launch: "latest",
       matches: true,
+      existing: LATEST,
     });
   });
 
@@ -516,6 +542,7 @@ describe("cursor", () => {
         path: projectFile(),
         keyPath: ["mcpServers"],
         name: NAME,
+        projectRoot: cwd,
       },
     ]);
   });

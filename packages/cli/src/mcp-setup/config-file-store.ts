@@ -9,6 +9,7 @@ import {
   resolveWriteTarget,
 } from "./atomic-write.js";
 import { errorCode, type ConfigFs } from "./config-fs.js";
+import { configFileRefusal } from "./config-limits.js";
 import { ensureContainer, findContainer } from "./json-key-path.js";
 import {
   detectJsonTextFormat,
@@ -18,6 +19,7 @@ import {
   type JsonTextFormat,
 } from "./json-text-format.js";
 import { getOwn, jsonEqual, setOwn, type JsonValue } from "./json-value.js";
+import { findProjectLink } from "./project-links.js";
 
 export type { ConfigFs } from "./config-fs.js";
 export type { JsonValue } from "./json-value.js";
@@ -32,11 +34,19 @@ export interface JsonEntryRef {
   /** e.g. ["mcpServers"] (Claude Desktop, Cursor) or ["servers"] (VS Code). */
   keyPath: readonly string[];
   name: string;
+  /**
+   * Set for project scope: the file, and each folder between it and this
+   * root, must not be a link. User scope follows links on purpose, for
+   * dotfile managers.
+   */
+  projectRoot?: string;
 }
 
 type Refusal =
   | { kind: "invalid-json"; message: string }
-  | { kind: "invalid-shape"; message: string };
+  | { kind: "invalid-shape"; message: string }
+  /** A link inside a project, not a regular file, or too large. */
+  | { kind: "unsafe-file"; message: string };
 
 export type ReadResult =
   | { kind: "missing-file" }
@@ -89,17 +99,33 @@ export function createConfigFileStore(
   const randomSuffix =
     deps.randomSuffix ?? (() => randomBytes(8).toString("hex"));
 
-  async function load(path: string): Promise<Loaded> {
-    const target = await resolveWriteTarget(fs, path);
+  async function projectLinkRefusal(
+    ref: JsonEntryRef,
+  ): Promise<Refusal | undefined> {
+    if (ref.projectRoot === undefined) return undefined;
+    const link = await findProjectLink(fs, ref.path, ref.projectRoot);
+    return link
+      ? unsafe(
+          `${link.path} is a link to ${link.target}; a project's config that is a link is refused`,
+        )
+      : undefined;
+  }
+
+  async function load(ref: JsonEntryRef): Promise<Loaded> {
+    const linked = await projectLinkRefusal(ref);
+    if (linked) return linked;
+    const target = await resolveWriteTarget(fs, ref.path);
     let bytes: Uint8Array;
     try {
+      const refusal = configFileRefusal(ref.path, await fs.stat(target));
+      if (refusal) return unsafe(refusal);
       bytes = await fs.readFile(target);
     } catch (error) {
       if (errorCode(error) === "ENOENT")
         return { kind: "missing-file", target };
       throw error;
     }
-    return parse(path, target, bytes);
+    return parse(ref.path, target, bytes);
   }
 
   // Backs up the file as it is on disk, then swaps in the new text.
@@ -127,7 +153,7 @@ export function createConfigFileStore(
 
   return {
     async read(ref) {
-      const loaded = await load(ref.path);
+      const loaded = await load(ref);
       if (loaded.kind !== "loaded") return withoutTarget(loaded);
       const lookup = findContainer(loaded.root, ref.keyPath);
       if (lookup.kind === "invalid-shape")
@@ -142,7 +168,7 @@ export function createConfigFileStore(
     },
 
     async merge({ entry, replace, ...ref }) {
-      const loaded = await load(ref.path);
+      const loaded = await load(ref);
       if (loaded.kind === "missing-file") {
         await createFileExclusively(
           fs,
@@ -169,7 +195,7 @@ export function createConfigFileStore(
     },
 
     async remove(ref) {
-      const loaded = await load(ref.path);
+      const loaded = await load(ref);
       if (loaded.kind !== "loaded") return withoutTarget(loaded);
       const lookup = findContainer(loaded.root, ref.keyPath);
       if (lookup.kind === "invalid-shape")
@@ -215,6 +241,8 @@ function newDocument(ref: JsonEntryRef, entry: JsonValue): JsonValue {
   if (lookup.kind === "found") setOwn(lookup.container, ref.name, entry);
   return root;
 }
+
+const unsafe = (message: string): Refusal => ({ kind: "unsafe-file", message });
 
 function shapeRefusal(path: string, message: string): Refusal {
   return { kind: "invalid-shape", message: `${path}: ${message}` };

@@ -5,6 +5,7 @@ import {
   isChange,
   type ChangeMode,
   type PlannedClient,
+  type Replacing,
 } from "./plan-client.js";
 
 const indent = (text: string, by = "    ") =>
@@ -31,6 +32,20 @@ function statusText(planned: PlannedClient, mode: ChangeMode["mode"]) {
   return installStatusWords(status);
 }
 
+// Both entries in full, so the user can see what goes and keep a copy:
+// Claude Code and Gemini replace through their own CLI and keep no backup.
+function replaceLines(label: string, replacing?: Replacing): string[] {
+  if (!replacing) return ["  This replaces your existing entry."];
+  const safety = replacing.backupPath
+    ? `; the file is backed up to ${replacing.backupPath} first.`
+    : `. ${label} keeps no backup; if the add fails, how to restore it is printed.`;
+  return [
+    `  This replaces your existing entry${safety}`,
+    `    old: ${JSON.stringify(replacing.existing)}`,
+    `    new: ${JSON.stringify(replacing.wanted)}`,
+  ];
+}
+
 /** One block per client: label, scope, status, then each action in words. */
 export function formatPlanned(
   planned: PlannedClient,
@@ -40,9 +55,9 @@ export function formatPlanned(
     `${planned.label} (${planned.scope} scope): ${statusText(planned, mode)}`,
   ];
   for (const action of planned.actions)
-    lines.push(`  - ${describeAction(action, planned.differs)}`);
+    lines.push(`  - ${describeAction(action)}`);
   if (planned.needsConfirmation)
-    lines.push("  This replaces your existing entry.");
+    lines.push(...replaceLines(planned.label, planned.replacing));
   if (planned.snippet)
     lines.push("  Register it by hand instead:", indent(planned.snippet));
   return lines.join("\n");

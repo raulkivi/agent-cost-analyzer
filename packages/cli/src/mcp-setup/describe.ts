@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { ClientSetup } from "../../../server/src/mcp/client-setup/client-setup.js";
-import { classifyLaunch, type LaunchKind } from "./classify-launch.js";
+import type { LaunchKind } from "./classify-launch.js";
 import type { RegistrationStatus, SetupAction } from "./mcp-client-target.js";
 import { shellLine } from "./shell-quote.js";
 
@@ -46,23 +45,13 @@ export function installStatusWords(status: RegistrationStatus): string {
   return statusWords(status);
 }
 
-/** "latest → pinned 1.0.0": what a replacing install changes. */
-export function differsText(
-  status: RegistrationStatus,
-  setup: ClientSetup,
-): string | undefined {
-  if (status.kind !== "registered") return undefined;
-  const wanted = launchWords(classifyLaunch(setup.launch));
-  return `${launchWords(status.launch)} → ${wanted}`;
-}
-
-export function describeAction(action: SetupAction, differs?: string): string {
+export function describeAction(action: SetupAction): string {
   switch (action.kind) {
     case "run":
       return `run: ${shellLine([action.file, ...action.args])}`;
     case "merge-json":
       return action.replace
-        ? `replace agent-cost-analyzer in ${action.path}${differs ? ` (differs: ${differs})` : ""}`
+        ? `replace agent-cost-analyzer in ${action.path}`
         : `add agent-cost-analyzer to ${action.path}`;
     case "remove-json":
       return `remove agent-cost-analyzer from ${action.path}`;

@@ -768,3 +768,147 @@ describe("ConfigFileStore: hostile keys stay data", () => {
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
   });
 });
+
+// MC9 review R6: a project config committed as a link (or inside a linked
+// folder) would send our write anywhere the link points.
+describe.skipIf(isWindows)("ConfigFileStore: links inside a project", () => {
+  const project = () => join(dir, "proj");
+  const inProject = (...parts: string[]): JsonEntryRef => ({
+    path: join(project(), ...parts),
+    keyPath: ["mcpServers"],
+    name: "agent-cost-analyzer",
+    projectRoot: project(),
+  });
+
+  beforeEach(async () => {
+    await fsp.mkdir(project());
+    await fsp.mkdir(join(dir, "elsewhere"));
+  });
+
+  it("refuses to read, merge or remove through a linked file and names its target", async () => {
+    const real = await seed(join("elsewhere", "mcp.json"), "{}");
+    await fsp.mkdir(join(project(), ".cursor"));
+    const linked = inProject(".cursor", "mcp.json");
+    await fsp.symlink(real, linked.path);
+    const store = createConfigFileStore();
+    const refusal = {
+      kind: "unsafe-file",
+      message: `${linked.path} is a link to ${real}; a project's config that is a link is refused`,
+    };
+
+    expect(await store.read(linked)).toEqual(refusal);
+    expect(
+      await store.merge({ ...linked, entry: ENTRY, replace: true }),
+    ).toEqual(refusal);
+    expect(await store.remove(linked)).toEqual(refusal);
+    expect(await text(real)).toBe("{}");
+  });
+
+  it("refuses a linked folder between the project and the file, creating nothing", async () => {
+    const elsewhere = join(dir, "elsewhere");
+    await fsp.symlink(elsewhere, join(project(), ".cursor"));
+    const store = createConfigFileStore();
+
+    expect(
+      await store.merge({
+        ...inProject(".cursor", "mcp.json"),
+        entry: ENTRY,
+        replace: false,
+      }),
+    ).toMatchObject({
+      kind: "unsafe-file",
+      message: expect.stringContaining(
+        `${join(project(), ".cursor")} is a link to ${elsewhere}`,
+      ),
+    });
+    expect(await fsp.readdir(elsewhere)).toEqual([]);
+  });
+
+  it("refuses a dangling link and leaves its target uncreated", async () => {
+    const linked = inProject(".mcp.json");
+    const missing = join(dir, "elsewhere", "new.json");
+    await fsp.symlink(missing, linked.path);
+
+    expect(
+      await createConfigFileStore().merge({
+        ...linked,
+        entry: ENTRY,
+        replace: false,
+      }),
+    ).toMatchObject({ kind: "unsafe-file" });
+    await expect(fsp.access(missing)).rejects.toThrow();
+  });
+
+  it("does not check the project folder itself, which may be a link", async () => {
+    const real = join(dir, "real-proj");
+    await fsp.mkdir(real);
+    await fsp.rm(project(), { recursive: true });
+    await fsp.symlink(real, project());
+
+    expect(
+      await createConfigFileStore().merge({
+        ...inProject(".mcp.json"),
+        entry: ENTRY,
+        replace: false,
+      }),
+    ).toEqual({ kind: "created-file" });
+  });
+});
+
+// MC9 review R6: `/dev/zero` behind a config path hung the status read.
+describe("ConfigFileStore: only regular files of a sane size are read", () => {
+  it.skipIf(isWindows)(
+    "refuses a path that is not a regular file",
+    async () => {
+      const path = join(dir, "mcp.json");
+      await fsp.symlink("/dev/zero", path);
+      const store = createConfigFileStore();
+      const refusal = {
+        kind: "unsafe-file",
+        message: `${path} is not a regular file`,
+      };
+
+      expect(await store.read(ref("mcp.json"))).toEqual(refusal);
+      expect(
+        await store.merge({ ...ref("mcp.json"), entry: ENTRY, replace: true }),
+      ).toEqual(refusal);
+    },
+  );
+
+  it("refuses a folder at the config path", async () => {
+    await fsp.mkdir(join(dir, "mcp.json"));
+    expect(await createConfigFileStore().read(ref("mcp.json"))).toMatchObject({
+      kind: "unsafe-file",
+    });
+  });
+
+  it("refuses a file over 10 MB without reading it", async () => {
+    const path = await seed("mcp.json", "");
+    await fsp.truncate(path, 10 * 1024 * 1024 + 1);
+    const reads: string[] = [];
+    const store = createConfigFileStore({
+      fs: {
+        ...fsp,
+        readFile: async (file: string) => {
+          reads.push(file);
+          return fsp.readFile(file);
+        },
+      },
+    });
+
+    expect(await store.read(ref("mcp.json"))).toEqual({
+      kind: "unsafe-file",
+      message: `${path} is larger than 10 MB, too large for a config file`,
+    });
+    expect(reads).toEqual([]);
+  });
+
+  it("reads a file of exactly 10 MB", async () => {
+    const path = await seed("mcp.json", "{}");
+    await fsp.truncate(path, 10 * 1024 * 1024);
+    // The NUL padding makes it invalid JSON: proof it was read and parsed.
+    expect(await createConfigFileStore().read(ref("mcp.json"))).toMatchObject({
+      kind: "invalid-json",
+    });
+  });
+});
