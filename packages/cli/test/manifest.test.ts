@@ -50,6 +50,10 @@ describe("packages/cli manifest", () => {
     expect(text).not.toContain("\r");
   });
 
+  it("names its MCP Registry server, which the registry checks against the published package", () => {
+    expect(manifest.mcpName).toBe("io.github.raulkivi/agent-cost-analyzer");
+  });
+
   it("has the app's version (the root package.json), so the npm version is the app version", () => {
     expect(manifest.version).toBe(root.version);
   });
