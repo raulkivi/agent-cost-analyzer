@@ -25,16 +25,19 @@ async function applyAll(
 ): Promise<number> {
   let exit = EXIT_OK;
   for (const client of planned.filter((p) => p.actions.some(isChange))) {
+    // Held until the client's own result line, so they read as its details.
+    const details: string[] = [];
     const result = await applyActions(client.actions, {
       store: deps.store,
       runner: deps.runner,
-      say: (line) => deps.io.out(`  ${line}\n`),
+      say: (line) => details.push(`  ${line}\n`),
     });
     if (result.ok) deps.io.out(`${client.label}: done\n`);
     else {
       exit = EXIT_FAILED;
       deps.io.err(`${client.label}: failed: ${result.message}\n`);
     }
+    for (const line of details) deps.io.out(line);
   }
   return exit;
 }

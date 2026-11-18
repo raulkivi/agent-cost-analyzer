@@ -35,6 +35,7 @@
     "build": "npm run build --workspaces --if-present && npm run build:cli",
     "build:cli": "node packages/cli/scripts/build.mts",
     "smoke:npm-package": "tsx scripts/npm-package-smoke.mts",
+    "smoke:mcp-setup": "tsx scripts/mcp-setup-smoke.mts",
     "test": "npm run test --workspaces --if-present && npm run test:cli && npm run test:cli-alias",
     "test:cli": "vitest run --root packages/cli",
     "typecheck": "npm run typecheck --workspaces --if-present && tsc --noEmit -p packages/cli/tsconfig.json && tsc --noEmit -p packages/cli-alias/tsconfig.json",
