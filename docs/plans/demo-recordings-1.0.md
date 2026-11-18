@@ -1,8 +1,8 @@
 # Demo recordings for the 1.0 features
 
-**Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **in progress**: DR1–DR6 and DR9–DR12 done 2026-11-17 (PRs #394,
+Status: **done** 2026-11-18 (14 of 14 tasks): DR13 swept all 18 free scenes on the 1.0.0 build and the owner approved them (D64); DR8 embedded the GIFs; DR14 closed the plan. Earlier: DR1–DR6 and DR9–DR12 done 2026-11-17 (PRs #394,
 #396–#399, #404–#406, #408, #415, and DR6's live takes); DR7 done: the owner approved the nine drafts and the M1, M4
 and M8 takes; M1, M4 and M8 were retaken after the two fixes (D57, D58; PRs #419, #420) and approved
 (D60). Approved (owner interview 2026-11-16: D29–D43, all
@@ -414,3 +414,4 @@ apt. The last column names the tasks (§6) each answer feeds.
 | D61 | The cost rollup reads AI Credits "Unknown" for Claude Code rows while the session view reads n/a | Accepted (owner, 2026-11-17): **after 1.0**, then an M1 retake | after 1.0 |
 | D62 | The version bump (V30) | Accepted (owner, 2026-11-17): **open it now**; DR13 and DR8 land on the 1.0 build | V30 |
 | D63 | The Phase 14 and 15 docs reviews | Accepted (owner, 2026-11-17): **after 1.0**; not 1.0 criteria | — |
+| D64 | The DR13 sweep: 18 free GIFs from the 1.0.0 build (E1 trimmed to 25 s, W3 to 17.3 s for the 8 MB limit) | Owner, 2026-11-18: **approved**. `docs/images/demo/` holds 68 MB with the paid takes, above D42's 60 MB; the unembedded F1–F3 stay (the owner did not ask to drop them) | DR13, DR8 |
