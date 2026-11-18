@@ -31,9 +31,10 @@ export default tseslint.config(
           allowDefaultProject: [
             "*.js",
             "scripts/*.mjs",
-            // The npm-package and mcp-setup smokes' entries; their steps type-check in packages/cli.
+            // The npm-package, mcp-setup and mcpb smokes' entries; their steps type-check in packages/cli.
             "scripts/npm-package-smoke.mts",
             "scripts/mcp-setup-smoke.mts",
+            "scripts/mcpb-smoke.mts",
             "scripts/third-party-notices.mts",
             "packages/*/vitest.config.ts",
             "packages/*/vite.config.ts",

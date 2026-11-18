@@ -171,6 +171,27 @@ test("the release attaches the tarball and verifies the tag", () => {
   assert.match(run, /--verify-tag/);
 });
 
+test("the Claude Desktop bundle is built from the packed tarball, checksummed with it and smoked", () => {
+  const pack = indexOfRun(build, /npm pack --workspace=packages\/cli /);
+  const mcpb = indexOfRun(build, /npm run mcpb:build -- --tarball "\.\/npm-release\/\$TARBALL"/);
+  const sum = indexOfRun(build, /sha256sum/);
+  const smoke = indexOfRun(build, /smoke:mcpb -- --tarball/);
+  assert.ok(mcpb > pack, "built from the packed file, after the pack");
+  assert.ok(sum > mcpb, "checksummed after it is built");
+  assert.ok(smoke > sum && smoke < uploadIndex(build), "smoked after the checksum, before the upload");
+  assert.match(runs(build)[sum], /\$MCPB/);
+  assert.match(runs(build)[smoke], /--bundle "\.\/npm-release\/\$MCPB"/);
+  assert.ok(build.outputs.mcpb);
+  // The bundle is verified by the same re-check as the tarballs: SHA256SUMS lists it.
+  assert.ok(indexOfRun(build, /verify-sha256\.mjs/) > smoke);
+});
+
+test("the release attaches the bundle that was checksummed, from the downloaded artifact", () => {
+  assert.match(publish.env.MCPB, /^\.\/npm-release\/.*needs\.build\.outputs\.mcpb/);
+  assert.match(runs(publish)[indexOfRun(publish, /gh release create/)], /"\$TARBALL" "\$MCPB"/);
+  assert.ok(indexOfRun(publish, /verify-sha256\.mjs/) < indexOfRun(publish, /gh release create/));
+});
+
 test("a manual dispatch is a dry run: build only, publish never", () => {
   assert.ok("workflow_dispatch" in workflow.on);
   assert.deepEqual(workflow.on.push.tags, ["app-v*"]);

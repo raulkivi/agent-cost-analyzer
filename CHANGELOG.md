@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - The MCP server is listed in the official MCP Registry as `io.github.raulkivi/agent-cost-analyzer`.
+- Each app release attaches a Claude Desktop bundle (`agent-cost-analyzer-<version>.mcpb`) that installs the MCP server when opened.
 
 ## [1.1.0] - 2026-11-19
 

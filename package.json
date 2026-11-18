@@ -36,6 +36,8 @@
     "build:cli": "node packages/cli/scripts/build.mts",
     "smoke:npm-package": "tsx scripts/npm-package-smoke.mts",
     "smoke:mcp-setup": "tsx scripts/mcp-setup-smoke.mts",
+    "mcpb:build": "node packages/cli/scripts/build-mcpb.mts",
+    "smoke:mcpb": "tsx scripts/mcpb-smoke.mts",
     "test": "npm run test --workspaces --if-present && npm run test:cli && npm run test:cli-alias",
     "test:cli": "vitest run --root packages/cli",
     "typecheck": "npm run typecheck --workspaces --if-present && tsc --noEmit -p packages/cli/tsconfig.json && tsc --noEmit -p packages/cli-alias/tsconfig.json",
@@ -60,6 +62,7 @@
     "test:cli-alias": "vitest run --root packages/cli-alias"
   },
   "devDependencies": {
+    "@anthropic-ai/mcpb": "2.1.2",
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.20.5",
     "esbuild": "^0.28.2",
