@@ -78,12 +78,15 @@ async function writeJson(path: string, value: unknown): Promise<void> {
 const withType = (e: object) => ({ type: "stdio", ...e, env: {} });
 
 describe("createClientTargets", () => {
-  it("lists the three Increment 1 clients with labels", () => {
+  it("lists every client in MCP_CLIENT_IDS order with labels", () => {
     const targets = createClientTargets({ store: createConfigFileStore() });
     expect(targets.map((t) => t.id)).toEqual([
       "claude-code",
       "claude-desktop",
       "cursor",
+      "vscode",
+      "codex",
+      "gemini",
     ]);
     expect(targets.every((t) => t.label.length > 0)).toBe(true);
   });

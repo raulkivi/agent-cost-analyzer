@@ -94,4 +94,19 @@ describe.skipIf(process.platform === "win32")("createClientEnv", () => {
     expect(await env.exists(dir)).toBe(true);
     expect(await env.exists(join(dir, "nope"))).toBe(false);
   });
+
+  it("lists a folder and treats a missing one as empty", async () => {
+    await fsp.writeFile(join(dir, "a"), "x");
+    await fsp.mkdir(join(dir, "b"));
+    const env = createClientEnv({ env: {} });
+    expect((await env.readDir(dir)).sort()).toEqual(["a", "b"]);
+    expect(await env.readDir(join(dir, "nope"))).toEqual([]);
+  });
+
+  it("reads a text file and returns undefined for a missing one", async () => {
+    await fsp.writeFile(join(dir, "f.toml"), "x = 1\n");
+    const env = createClientEnv({ env: {} });
+    expect(await env.readText(join(dir, "f.toml"))).toBe("x = 1\n");
+    expect(await env.readText(join(dir, "nope"))).toBeUndefined();
+  });
 });

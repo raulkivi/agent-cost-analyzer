@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { access, constants, stat } from "node:fs/promises";
+import { access, constants, readdir, readFile, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { pathFlavor } from "./client-paths.js";
 
@@ -12,6 +12,10 @@ export interface ClientEnv {
   env: Readonly<Record<string, string | undefined>>;
   onPath(cmd: string): Promise<boolean>;
   exists(path: string): Promise<boolean>;
+  /** Entry names of a folder; a missing or unreadable folder is empty. */
+  readDir(path: string): Promise<string[]>;
+  /** File text, or undefined when the file is missing or unreadable. */
+  readText(path: string): Promise<string | undefined>;
 }
 
 const DEFAULT_PATHEXT = ".COM;.EXE;.BAT;.CMD";
@@ -67,5 +71,7 @@ export function createClientEnv(
         () => true,
         () => false,
       ),
+    readDir: (path) => readdir(path).catch(() => []),
+    readText: (path) => readFile(path, "utf8").catch(() => undefined),
   };
 }

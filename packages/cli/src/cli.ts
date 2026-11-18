@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { readAppVersion } from "../../server/src/composition/app-version.js";
 import { npmPackageLayout } from "../../server/src/composition/package-layout.js";
 import { serveStandaloneMcpStdio } from "../../server/src/mcp/standalone-mcp-server.js";
+import { createSetup } from "./mcp-setup/setup-wiring.js";
 import { run } from "./run.js";
 import { createServe } from "./serve-wiring.js";
 
@@ -17,10 +18,13 @@ const stderr = (text: string): void => void process.stderr.write(text);
 async function main(): Promise<number> {
   const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const layout = npmPackageLayout(packageRoot);
+  const version = (): string => readAppVersion(layout.packageJsonPath);
   return run(process.argv.slice(2), {
     stdout,
     stderr,
-    version: () => readAppVersion(layout.packageJsonPath),
+    version,
+    // Built on use: the server and the app paths never read the home folder.
+    setup: (command) => createSetup({ version: version(), stdout, stderr })(command),
     serve: createServe({
       layout,
       stdout,

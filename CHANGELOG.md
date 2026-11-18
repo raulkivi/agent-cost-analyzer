@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `agent-cost-analyzer mcp install`, `uninstall`, `status` and `config` register the MCP server with Claude Code, Claude Desktop, Cursor, VS Code, Codex and Gemini CLI. `install` and `uninstall` show each step first and ask before applying (`--dry-run` stops after the plan, `--yes` skips the question); `status` reads without writing; `config` prints the command, JSON or TOML to paste yourself.
 - The app prints how to register its MCP server (`npx agent-cost-analyzer mcp install`) when it starts in a terminal.
 
 ## [1.0.0] - 2026-11-17
