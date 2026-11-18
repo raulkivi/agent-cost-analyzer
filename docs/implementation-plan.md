@@ -1781,8 +1781,8 @@ add` line into each client's config by hand.
   Desktop `.mcpb` bundle and a Claude Code plugin marketplace.
 - No npm install script (plan §4, option F).
 
-**Exit criterion**: the plan's §7: from the packed tarball on Linux, macOS
-and Windows, install, status and uninstall work for every client in a
+**Exit criterion**: the plan's §7: from the packed tarball on Linux (macOS
+and Windows cannot be tested, owner 2026-11-18), install, status and uninstall work for every client in a
 temporary home; uninstall restores a pre-existing config byte for byte;
 serving still writes nothing outside the settings folder; the owner's
 real-client check passes.
@@ -1792,7 +1792,8 @@ vision.md §6 and the threat model (task MC9).
 
 **Status (2026-11-18)**: plan approved in an owner interview (D1-D12, all
 recommended options). Increment 1 ships in its own app minor release. MC0
-(spike on the client facts), MC1, MC2, MC3 and MC19 done 2026-11-18. Next: MC4, MC5 and MC6.
+(spike on the client facts), MC1-MC4 and MC19 done 2026-11-18. Next: MC5 and MC6.
+Testing is Linux only (D13).
 
 ## 1.0.0 release
 
