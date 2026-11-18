@@ -4,7 +4,7 @@
 
 Status: **Approved 2026-11-18** (owner interview, D1-D12 in §8). MC0 done
 2026-11-18 (§3.2); MC1, MC2 and MC19 done 2026-11-18 (PRs #431, #432,
-#430). Next: MC3.
+#430). MC3 done 2026-11-18. Next: MC4, MC5 and MC6.
 
 Phase 18 in [implementation-plan.md](../implementation-plan.md#phase-18--mcp-client-setup-for-the-standalone-app).
 Task IDs are `MC0`-`MC18` (§10).
@@ -383,7 +383,7 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 | MC0 | Spike: on the owner's machine confirm the §3.1 unconfirmed facts (Cursor deep link, VS Code user `mcp.json` path and removal, which clients need `cmd /c`, registry `packageArguments`, `.mcpb` manifest version, `claude plugin validate` in CI). Record the results in §3.1. **Done 2026-11-18** (§3.2). | 1 | medium | Sonnet | Plan approved |
 | MC1 | `McpLaunchSpec` and per-client snippet builders (pure), with table-driven tests per OS and flag. **Done 2026-11-18** (PR #431: `launch-spec.ts`, `client-setup.ts`, `toml.ts`) | 1 | low | Sonnet | MC0 |
 | MC2 | `ConfigFileStore`: merge and remove, backup, atomic write, invalid-JSON refusal, indentation kept; tests over temporary folders. **Done 2026-11-18** (PR #432; residual risks in §9) | 1 | medium | Opus | — |
-| MC3 | `McpClientTarget` interface and the `claude-code`, `claude-desktop`, `cursor` adapters with detection | 1 | medium | Sonnet | MC1, MC2 |
+| MC3 | `McpClientTarget` interface and the `claude-code`, `claude-desktop`, `cursor` adapters with detection. **Done 2026-11-18** (PR #TBD) | 1 | medium | Sonnet | MC1, MC2 |
 | MC4 | `vscode`, `codex` and `gemini` adapters; skip VS Code when the extension is present (D6). Check whether `gemini mcp add` needs `--` before the launch command so its parser does not take `-y` and `--prefer-offline` (MC1 builds it without) | 1 | medium | Sonnet | MC3 |
 | MC5 | CLI: argument parsing for `config`, `install`, `uninstall` and `status`; plan printing, prompt and `--dry-run`/`--yes`; exit codes; `usage.ts` | 1 | medium | Sonnet | MC3 |
 | MC6 | Start-up hint line (D7) | 1 | low | Haiku | — |
