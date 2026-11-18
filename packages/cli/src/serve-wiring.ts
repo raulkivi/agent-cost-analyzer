@@ -12,6 +12,7 @@ export interface ServeWiring {
   layout: PackageLayout;
   stdout(text: string): void;
   stderr(text: string): void;
+  stdoutIsTty: boolean;
   onSignal(handler: () => void): () => void;
   // Composition options beyond the layout; tests isolate the log paths here.
   appOptions?: Omit<StandaloneAppOptions, "layout" | "allowedHostPorts">;
@@ -23,7 +24,7 @@ export interface ServeWiring {
  * origin, and the browser opener. Configuration warnings go to stderr.
  */
 export function createServe(wiring: ServeWiring): (options: ServeCommand) => Promise<number> {
-  const { layout, appOptions, stdout, stderr, onSignal } = wiring;
+  const { layout, appOptions, stdout, stderr, stdoutIsTty, onSignal } = wiring;
   return createServeCommand({
     listen: listenOnLoopback,
     isThisApp,
@@ -40,5 +41,6 @@ export function createServe(wiring: ServeWiring): (options: ServeCommand) => Pro
     onSignal,
     stdout,
     stderr,
+    stdoutIsTty,
   });
 }

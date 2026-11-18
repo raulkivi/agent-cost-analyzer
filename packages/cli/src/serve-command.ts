@@ -19,7 +19,12 @@ export interface ServeDeps extends PortProbes<ServerHandle> {
   onSignal(handler: () => void): () => void;
   stdout(text: string): void;
   stderr(text: string): void;
+  /** Only a terminal gets the MCP setup hint; scripts read the start line. */
+  stdoutIsTty: boolean;
 }
+
+/** Printed after the start line in a terminal; the start line stays first. */
+export const MCP_SETUP_HINT = "MCP: npx agent-cost-analyzer mcp install";
 
 /**
  * The default command (npm-package.md §4.4 steps 3-7). Listening comes
@@ -51,6 +56,7 @@ export function createServeCommand(deps: ServeDeps): (options: ServeCommand) => 
     server.mount(composed.listener);
     if (choice.fellBack) deps.stderr(`Port ${DEFAULT_PORT} is in use; using ${port} instead.\n`);
     deps.stdout(`Agent Cost Analyzer ${composed.version} on ${loopbackUrl(port).replace(/\/$/, "")} (Ctrl+C to stop)\n`);
+    if (deps.stdoutIsTty && open) deps.stdout(`${MCP_SETUP_HINT}\n`);
     await deps.open(port, open);
 
     await new Promise<void>((resolve) => {

@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: MIT
 import type { RequestListener } from "node:http";
 import { describe, expect, it } from "vitest";
-import { createServeCommand, type ServeDeps, type ServerHandle } from "../src/serve-command.js";
+import { createServeCommand, MCP_SETUP_HINT, type ServeDeps, type ServerHandle } from "../src/serve-command.js";
 
-function fakes(options: { busy?: number[]; running?: number[]; composeFails?: boolean } = {}) {
+function fakes(options: { busy?: number[]; running?: number[]; composeFails?: boolean; stdoutIsTty?: boolean } = {}) {
   const out: string[] = [];
   const err: string[] = [];
   const opened: { port: number; open: boolean }[] = [];
@@ -34,6 +34,7 @@ function fakes(options: { busy?: number[]; running?: number[]; composeFails?: bo
     },
     stdout: (text) => void out.push(text),
     stderr: (text) => void err.push(text),
+    stdoutIsTty: options.stdoutIsTty ?? false,
   };
   return { serve: createServeCommand(deps), out, err, opened, composed, events, handle, listener, fire: () => signal?.(), unregistered: () => unregistered, hasSignal: () => signal !== undefined };
 }
@@ -121,5 +122,53 @@ describe("serve command", () => {
     const f = fakes({ composeFails: true });
     await expect(f.serve({ kind: "serve", open: false })).rejects.toThrow("compose failed");
     expect(f.events).toEqual(["closed"]);
+  });
+  it("prints the MCP setup hint after the start line when stdout is a TTY and the browser opens", async () => {
+    const f = fakes({ stdoutIsTty: true });
+    const done = f.serve({ kind: "serve", open: true });
+    await tick();
+    expect(f.out).toEqual(["Agent Cost Analyzer 1.2.3 on http://127.0.0.1:5199 (Ctrl+C to stop)\n", `${MCP_SETUP_HINT}\n`]);
+    expect(MCP_SETUP_HINT).toBe("MCP: npx agent-cost-analyzer mcp install");
+    f.fire();
+    await done;
+  });
+
+  it("keeps the start line as the first line when the hint is printed", async () => {
+    const f = fakes({ stdoutIsTty: true });
+    const done = f.serve({ kind: "serve", open: true });
+    await tick();
+    expect(f.out[0]).toMatch(/^Agent Cost Analyzer 1\.2\.3 on http:\/\/127\.0\.0\.1:5199 \(Ctrl\+C to stop\)\n$/);
+    f.fire();
+    await done;
+  });
+
+  it("does not print the hint when stdout is not a TTY", async () => {
+    const f = fakes({ stdoutIsTty: false });
+    const done = f.serve({ kind: "serve", open: true });
+    await tick();
+    expect(f.out).toEqual(["Agent Cost Analyzer 1.2.3 on http://127.0.0.1:5199 (Ctrl+C to stop)\n"]);
+    f.fire();
+    await done;
+  });
+
+  it("does not print the hint with --no-open, even on a TTY", async () => {
+    const f = fakes({ stdoutIsTty: true });
+    const done = f.serve({ kind: "serve", open: false });
+    await tick();
+    expect(f.out).toEqual(["Agent Cost Analyzer 1.2.3 on http://127.0.0.1:5199 (Ctrl+C to stop)\n"]);
+    f.fire();
+    await done;
+  });
+
+  it("does not print the hint when it reuses a running instance", async () => {
+    const f = fakes({ busy: [5199], running: [5199], stdoutIsTty: true });
+    expect(await f.serve({ kind: "serve", open: true })).toBe(0);
+    expect(f.out).toEqual(["Agent Cost Analyzer is already running on http://127.0.0.1:5199 (opening it)\n"]);
+  });
+
+  it("does not print the hint when composing fails", async () => {
+    const f = fakes({ composeFails: true, stdoutIsTty: true });
+    await expect(f.serve({ kind: "serve", open: true })).rejects.toThrow("compose failed");
+    expect(f.out).toEqual([]);
   });
 });

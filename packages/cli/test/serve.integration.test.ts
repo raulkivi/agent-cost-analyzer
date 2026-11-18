@@ -48,6 +48,7 @@ describe("serve, with real sockets", () => {
       appOptions: isolatedLogProviders(settings),
       stdout: (text) => void out.push(text),
       stderr: (text) => void err.push(text),
+      stdoutIsTty: false,
       onSignal: (handler) => {
         signal = handler;
         return () => undefined;
