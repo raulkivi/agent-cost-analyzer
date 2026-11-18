@@ -120,6 +120,20 @@ describe("a replace shows the old and the new entry", () => {
     expect(run.out).not.toContain("differs: differs");
   });
 
+  it("prints both in full for VS Code Insiders, under servers", async () => {
+    const file = join(home, ".config", "Code - Insiders", "User", "mcp.json");
+    const own = { type: "stdio", ...OWN };
+    await writeJson(file, { servers: { [NAME]: own } });
+
+    const run = await install("vscode-insiders");
+
+    expect(run.out).toContain(
+      `This replaces your existing entry; the file is backed up to ${file}${BACKUP_SUFFIX} first.\n` +
+        `    old: ${JSON.stringify(own)}\n` +
+        `    new: ${JSON.stringify({ type: "stdio", ...NEW })}\n`,
+    );
+  });
+
   it("keeps the old entry in the backup when the replace is applied", async () => {
     const file = join(home, ".cursor", "mcp.json");
     await writeJson(file, { mcpServers: { [NAME]: OWN } });

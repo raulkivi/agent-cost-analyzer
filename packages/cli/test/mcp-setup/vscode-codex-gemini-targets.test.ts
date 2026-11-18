@@ -249,6 +249,7 @@ describe("vscode-insiders", () => {
       kind: "registered",
       launch: { pinned: "0.9.0" },
       matches: false,
+      existing: { type: "stdio", ...PINNED },
     });
   });
 
