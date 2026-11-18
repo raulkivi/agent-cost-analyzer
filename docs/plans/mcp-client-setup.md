@@ -3,7 +3,8 @@
 **Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **Approved 2026-11-18** (owner interview, D1-D12 in §8). MC0 done
-2026-11-18 (§3.2). Next: MC1 and MC2.
+2026-11-18 (§3.2); MC1, MC2 and MC19 done 2026-11-18 (PRs #431, #432,
+#430). Next: MC3.
 
 Phase 18 in [implementation-plan.md](../implementation-plan.md#phase-18--mcp-client-setup-for-the-standalone-app).
 Task IDs are `MC0`-`MC18` (§10).
@@ -361,6 +362,14 @@ recommended option.
   fallback.
 - **Claude Desktop has no official Linux build.** The adapter writes the
   documented Linux path, and `detect` finds the folder only when it exists.
+- **A client writes its config while `install` runs** (MC2). The store has
+  no lock: a change the client makes between the read and the rename is
+  lost. The backup holds the file as it was read. Windows may refuse the
+  rename while a client holds the file open; the store then fails and
+  leaves the original unchanged.
+- **Hand-formatted JSON is normalized** (MC2): a file the store rewrites
+  takes `JSON.stringify` style with its detected indent; `1.0` becomes `1`
+  and duplicate keys collapse to the last one.
 - **The registry is still in preview.** Increment 3 only. A failed registry
   publish warns without failing the release run (D10).
 
@@ -372,10 +381,10 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 | ID | Task | Inc. | Complexity | Model | Depends on |
 |---|---|---|---|---|---|
 | MC0 | Spike: on the owner's machine confirm the §3.1 unconfirmed facts (Cursor deep link, VS Code user `mcp.json` path and removal, which clients need `cmd /c`, registry `packageArguments`, `.mcpb` manifest version, `claude plugin validate` in CI). Record the results in §3.1. **Done 2026-11-18** (§3.2). | 1 | medium | Sonnet | Plan approved |
-| MC1 | `McpLaunchSpec` and per-client snippet builders (pure), with table-driven tests per OS and flag | 1 | low | Sonnet | MC0 |
-| MC2 | `ConfigFileStore`: merge and remove, backup, atomic write, invalid-JSON refusal, indentation kept; tests over temporary folders | 1 | medium | Opus | — |
+| MC1 | `McpLaunchSpec` and per-client snippet builders (pure), with table-driven tests per OS and flag. **Done 2026-11-18** (PR #431: `launch-spec.ts`, `client-setup.ts`, `toml.ts`) | 1 | low | Sonnet | MC0 |
+| MC2 | `ConfigFileStore`: merge and remove, backup, atomic write, invalid-JSON refusal, indentation kept; tests over temporary folders. **Done 2026-11-18** (PR #432; residual risks in §9) | 1 | medium | Opus | — |
 | MC3 | `McpClientTarget` interface and the `claude-code`, `claude-desktop`, `cursor` adapters with detection | 1 | medium | Sonnet | MC1, MC2 |
-| MC4 | `vscode`, `codex` and `gemini` adapters; skip VS Code when the extension is present (D6) | 1 | medium | Sonnet | MC3 |
+| MC4 | `vscode`, `codex` and `gemini` adapters; skip VS Code when the extension is present (D6). Check whether `gemini mcp add` needs `--` before the launch command so its parser does not take `-y` and `--prefer-offline` (MC1 builds it without) | 1 | medium | Sonnet | MC3 |
 | MC5 | CLI: argument parsing for `config`, `install`, `uninstall` and `status`; plan printing, prompt and `--dry-run`/`--yes`; exit codes; `usage.ts` | 1 | medium | Sonnet | MC3 |
 | MC6 | Start-up hint line (D7) | 1 | low | Haiku | — |
 | MC7 | Tarball smoke on three OSes: install, status and uninstall per client in a temporary home; JSON clients launched with the SDK stdio client; stub CLIs record argv; serve home snapshot unchanged | 1 | high | Opus | MC4, MC5 |
@@ -390,7 +399,7 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 | MC16 | Claude Code plugin and repository marketplace, with CI validation | 3 | low | Haiku | MC0 |
 | MC17 | Increment 3 docs (User Guide install options) and a threat-model row for the release assets | 3 | low | Sonnet | MC14-MC16 |
 | MC18 | Owner: the first release with registry, bundle and plugin; check that each one installs | 3 | low | Owner | MC17 |
-| MC19 | `"mcpName": "io.github.raulkivi/agent-cost-analyzer"` in `packages/cli/package.json`, with a manifest test, so Increment 1's release carries it (§3.2) | 1 | low | Haiku | — |
+| MC19 | `"mcpName": "io.github.raulkivi/agent-cost-analyzer"` in `packages/cli/package.json`, with a manifest test, so Increment 1's release carries it (§3.2). **Done 2026-11-18** (PR #430) | 1 | low | Haiku | — |
 
 Order: MC0 → MC1/MC2/MC19 (in parallel) → MC3 → MC4/MC5/MC6 → MC7 → MC8 →
 MC9 closes Increment 1, which ships in its own app minor release (D11).
