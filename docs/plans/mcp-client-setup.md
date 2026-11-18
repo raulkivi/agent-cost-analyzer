@@ -1,6 +1,6 @@
 # MCP client setup for the standalone app (Phase 18)
 
-**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-19 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **Approved 2026-11-18** (owner interview, D1-D12 in §8). MC0-MC9
 and MC19 done 2026-11-18 (MC8 signed off by the owner). Before Increment 1's
@@ -240,6 +240,17 @@ line.
   would be a target for DNS rebinding or a page in another tab. The
   terminal command is the only writer.
 - **Before code:** a mock-up board, approved by the owner (MC9).
+
+### 5.6.1 Mock-up boards (MC10)
+
+Boards for the header button and the dialog, light and dark, are in
+[mockups/mcp-client-setup/](mockups/mcp-client-setup/README.md), drawn
+2026-11-19 and awaiting owner approval before MC12. Open questions: button
+placement (after Retention or last), label or icon only at 1440 px, the
+button in Learn mode, a "Pin this version" switch (the plan leaves `--pin`
+out of the UI), vertical tabs or a wrapping row, arrow keys selecting at
+once, default tab, the Cursor-only install link, copy wording, and paths for
+other operating systems.
 
 ### 5.7 Distribution channels (Increment 3)
 
