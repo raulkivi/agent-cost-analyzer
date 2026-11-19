@@ -1,6 +1,6 @@
 # Agent Cost Analyzer: setup and data sources
 
-**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-19 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 How to install and run the standalone Agent Cost Analyzer app, where it
 finds each provider's logs, which Copilot Chat settings to turn on, and a
@@ -76,7 +76,7 @@ will change, asks before applying, and backs up each JSON file it edits.
 `mcp status` shows where it is registered, `mcp uninstall` removes it and
 `mcp config --client <id>` prints the text to register it by hand; the
 server itself is `npx -y --prefer-offline agent-cost-analyzer mcp` (see the
-[User Guide](UserGuide.md#querying-the-audit-from-claude-code-mcp)).
+[User Guide](UserGuide.md#connecting-an-ai-chat-mcp)).
 `install` and `uninstall` are the only commands that write outside the
 settings folder. In a terminal, the app prints `MCP: npx agent-cost-analyzer
 mcp install` as a second line, after its start line; with `--no-open` or

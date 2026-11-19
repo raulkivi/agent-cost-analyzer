@@ -1,6 +1,6 @@
 # AI Credits Analyzer: extension guide
 
-**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-19 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 AI Credits Analyzer is a VS Code extension that shows where your GitHub
 Copilot Chat tokens and AI Credits go. It reads the logs Copilot Chat
@@ -650,7 +650,7 @@ Four prompts start common reviews: `audit_session`, `review_costs`
 tools never report it as 0. A session whose latest turn started in the
 last 15 minutes is marked `active`, with a sentence saying its figures
 may still change: a running chat's log is not complete yet. The User Guide's
-[MCP section](UserGuide.md#querying-the-audit-from-claude-code-mcp) has
+[MCP section](UserGuide.md#mcp-tools-and-prompts) has
 more on the tools.
 
 ### Interactive views in Copilot Chat

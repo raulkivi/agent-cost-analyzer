@@ -107,11 +107,8 @@ on Linux (or under `XDG_CONFIG_HOME`),
 `%APPDATA%\agent-cost-analyzer` on Windows. It holds your chosen provider,
 the retention threshold, your projects file and issued statements.
 
-To connect its MCP server to Claude Code, Claude Desktop, Cursor, VS Code,
-Codex or Gemini CLI, run `npx agent-cost-analyzer mcp install`: it shows
-what it will change and asks first. It and `mcp uninstall` are the only
-commands that write outside that folder, and they back up each config file
-they edit.
+To ask an AI chat about your sessions, connect the app's MCP server: see
+[Ask your AI chat](#ask-your-ai-chat).
 
 ![The standalone app on load, with Learn and Analyze modes](docs/images/landing-page.png)
 
@@ -148,17 +145,27 @@ Claude Desktop shows a month's cost for every provider at once, and opens the vi
 
 ![Claude Desktop answering "What did my coding agents cost in October?" with a cost rollup for Claude Code, Copilot and pi, opened in the side pane, then one session and one turn](docs/images/demo/m1-cost-rollup.gif)
 
-- Extension: turn on the `aiCreditsAnalyzer.mcp.enabled` setting. See
-  [the MCP server for Copilot agent mode](docs/vscode-extension-guide.md#the-mcp-server-for-copilot-agent-mode).
-- Standalone app: `npx agent-cost-analyzer mcp install`, or by hand
-  `claude mcp add agent-cost-analyzer -- npx -y --prefer-offline agent-cost-analyzer mcp`.
-  `--prefer-offline` starts the cached copy at once when the npm registry is
-  unreachable. Other clients, Windows and an offline install: see
-  [Querying the audit from Claude Code (MCP)](docs/UserGuide.md#querying-the-audit-from-claude-code-mcp)
-  and [Interactive views in the chat](docs/UserGuide.md#interactive-views-in-the-chat).
-- Also: a Claude Code plugin, a Claude Desktop `.mcpb` bundle and the MCP
-  Registry listing. See
-  [Other ways to install the MCP server](docs/UserGuide.md#other-ways-to-install-the-mcp-server).
+To connect the standalone app's server:
+
+```sh
+npx agent-cost-analyzer mcp install
+```
+
+- It finds Claude Code, Claude Desktop, Cursor, VS Code, Codex and Gemini
+  CLI on your machine, shows each command and file it will change, and asks
+  first. It backs up each config file it edits; `mcp uninstall` removes the
+  entry again and `mcp status` shows where it is registered.
+- The app's **Connect an agent** button shows the same setup per client, to
+  copy and run yourself.
+- Other options: a Claude Code plugin, a Claude Desktop `.mcpb` bundle and
+  the MCP Registry listing.
+
+Every option, setup by hand, Windows and offline use:
+[Connecting an AI chat (MCP)](docs/UserGuide.md#connecting-an-ai-chat-mcp)
+in the User Guide.
+
+For the extension, turn on the `aiCreditsAnalyzer.mcp.enabled` setting. See
+[the MCP server for Copilot agent mode](docs/vscode-extension-guide.md#the-mcp-server-for-copilot-agent-mode).
 
 ## Privacy and your data
 
@@ -167,7 +174,8 @@ Claude Desktop shows a month's cost for every provider at once, and opens the vi
 - They only read: your tools' own session logs (Copilot Chat's session store
   and debug logs, `~/.claude/projects/`, `~/.pi/agent/sessions/`, and
   optionally, mitmproxy captures you export yourself). They never change those files or
-  your tools' settings.
+  your tools' settings. The one exception is `mcp install` and
+  `mcp uninstall`, which edit your MCP clients' config when you run them.
 - Exporting a session for AI advice copies metadata only (token usage, cache
   efficiency, tool usage, AI Credits). It never includes your chat text.
 
