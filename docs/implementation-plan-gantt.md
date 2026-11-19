@@ -97,6 +97,9 @@ gantt
     section UI density
     17 Dense ledger UI (100%, 14 of 14 tasks) :done, p17, 2026-11-14, 5d
 
+    section MCP client setup
+    18 MCP client setup (95%, 21 of 22 tasks) :active, p18, 2026-11-18, 2d
+
     section 1.0.0
     C1 Phase 10 closed (100%)                 :done, c1, 2026-11-14, 1d
     C2 Phase 11 pi generated fixtures (100%) :done, c2, 2026-11-14, 1d
@@ -140,7 +143,7 @@ gantt
 
 ## Open items
 
-- Phase 18 (MCP client setup for the standalone app, 86%, 19 of 22 tasks): plan approved 2026-11-18 in an owner interview (D1-D12). Increment 1: `mcp config`, `mcp install`, `mcp uninstall` and `mcp status` for Claude Code, Claude Desktop, Cursor, VS Code, Codex and Gemini CLI, in its own app minor release; Increment 2: a "Connect an agent" web panel; Increment 3: MCP Registry, `.mcpb` bundle and Claude Code plugin. No npm install script. MC0 spike, MC1 (launch spec and client snippets, PR #431), MC2 (safe JSON config store, PR #432), MC19 (`mcpName`, PR #430), MC3 (client targets, PR #434), MC4 (VS Code, Codex and Gemini, PR #436), MC5 (`mcp` setup commands, PR #437), MC6 (start-up hint, PR #435) and MC7 (Linux tarball smoke, PR #439) done 2026-11-18. MC8 (real-client check, PR #440, owner sign-off 2026-11-18) and MC9 (docs and Increment 1 review, PR #441) done. MC20 (VS Code Insiders, PR #443) and MC21 (review findings R5, R6, PR #444) done 2026-11-18: Increment 1 complete, released in app 1.1.0 (bump merged; the owner tags `app-v1.1.0`). Increment 2: MC10 boards approved 2026-11-19 (PR #446); MC11 (`GET /api/mcp/setup`, PR #451) and MC12 (Connect an agent panel, PR #452) done 2026-11-19. Increment 3: MC14 (MCP Registry publish, PR #448), MC15 (`.mcpb` bundle, PR #450) and MC16 (Claude Code plugin, PR #447) done 2026-11-19. Next: MC13 (panel Playwright spec), MC17 (Increment 3 docs), then the owner's MC18 release check. Testing is Linux only (owner 2026-11-18, D13). Plan: [mcp-client-setup.md](plans/mcp-client-setup.md).
+- Phase 18 (MCP client setup for the standalone app, 95%, 21 of 22 tasks): plan approved 2026-11-18 in an owner interview (D1-D12). Increment 1: `mcp config`, `mcp install`, `mcp uninstall` and `mcp status` for Claude Code, Claude Desktop, Cursor, VS Code, Codex and Gemini CLI, in its own app minor release; Increment 2: a "Connect an agent" web panel; Increment 3: MCP Registry, `.mcpb` bundle and Claude Code plugin. No npm install script. MC0 spike, MC1 (launch spec and client snippets, PR #431), MC2 (safe JSON config store, PR #432), MC19 (`mcpName`, PR #430), MC3 (client targets, PR #434), MC4 (VS Code, Codex and Gemini, PR #436), MC5 (`mcp` setup commands, PR #437), MC6 (start-up hint, PR #435) and MC7 (Linux tarball smoke, PR #439) done 2026-11-18. MC8 (real-client check, PR #440, owner sign-off 2026-11-18) and MC9 (docs and Increment 1 review, PR #441) done. MC20 (VS Code Insiders, PR #443) and MC21 (review findings R5, R6, PR #444) done 2026-11-18: Increment 1 complete, released in app 1.1.0 (bump merged; the owner tags `app-v1.1.0`). Increment 2: MC10 boards approved 2026-11-19 (PR #446); MC11 (`GET /api/mcp/setup`, PR #451) and MC12 (Connect an agent panel, PR #452) done 2026-11-19. Increment 3: MC14 (MCP Registry publish, PR #448), MC15 (`.mcpb` bundle, PR #450) and MC16 (Claude Code plugin, PR #447) done 2026-11-19. MC13 (panel Playwright spec, PR #455) and MC17 (Increment 3 docs, PR #454) done 2026-11-19. Next: the owner's MC18 release check (registry, bundle and plugin each install). Testing is Linux only (owner 2026-11-18, D13). Plan: [mcp-client-setup.md](plans/mcp-client-setup.md).
 - Phase 11 (pi provider against real pi sessions, 100%, closed by the owner 2026-11-17; C2): V13's manual capture is replaced by automated generation (owner 2026-11-14). `npm run fixtures:generate-pi` drives the owner's pi 1.5.2 with the local model through four scenarios (linear with a 310 s idle gap, compaction, `context_edit` recovery, fork; full run 7.5 minutes), redacts the sessions and their sidecar records and commits them to `packages/server/fixtures/pi-agent/generated/`; CI reads the committed files. V14 found and fixed raw `context_edit` and compaction entries in the turn inspector and marks omitted attempts; usage is unchanged. Known limitations, accepted by the owner 2026-11-17: `/fork` copies the parent's entries, so usage counts twice across both files (owner never forks); `/tree` branching cannot be scripted. Plan: [implementation-plan.md](implementation-plan.md) Phase 11, [providers/pi-provider.md](providers/pi-provider.md#generating-pi-fixtures).
 
 - Released 2026-11-16: app 0.16.1 (npm and GitHub, 00:43 UTC) with the first `agent-cost-analyser` alias version (0.16.0, npm 00:42 UTC; npm-package.md NP15, D3 amended by the owner 2026-11-15) and the npm docs worded for the published package. <!-- codespell:ignore analyser -->
@@ -395,6 +398,73 @@ gantt
     L4 Playwright dark and switch, medium, Sonnet (100%) :done, l4, after l2, 1d
     L5 Docs and media, medium, Sonnet (100%)           :done, l5, after l4, 1d
     L6 Review, medium, Opus (100%)                   :done, l6, after l5, 1d
+```
+
+## Phase 18 detail — MCP client setup
+
+Schedule view of the task table in [mcp-client-setup.md](plans/mcp-client-setup.md) §10. Status: 21 of 22 tasks done. Increment 1 (MC0-MC9, MC19-MC21) done 2026-11-18 and in app 1.1.0; Increment 2 (MC10-MC13) done 2026-11-19; Increment 3 (MC14-MC17) done 2026-11-19; MC18 is the owner's release check.
+
+```mermaid
+%%{init: {
+  "theme": "base",
+  "themeVariables": {
+    "darkMode": true,
+    "background": "#0d1117",
+    "textColor": "#e6edf3",
+    "primaryTextColor": "#e6edf3",
+    "lineColor": "#8b949e",
+    "sectionBkgColor": "#161b22",
+    "sectionBkgColor2": "#1c2129",
+    "altSectionBkgColor": "#0d1117",
+    "gridColor": "#30363d",
+    "excludeBkgColor": "#161b22",
+    "todayLineColor": "#f85149",
+    "taskBkgColor": "#1f6feb",
+    "taskBorderColor": "#58a6ff",
+    "taskTextColor": "#ffffff",
+    "taskTextLightColor": "#ffffff",
+    "taskTextDarkColor": "#ffffff",
+    "taskTextOutsideColor": "#e6edf3",
+    "doneTaskBkgColor": "#238636",
+    "doneTaskBorderColor": "#3fb950",
+    "activeTaskBkgColor": "#9e6a03",
+    "activeTaskBorderColor": "#d29922",
+    "critBkgColor": "#da3633",
+    "critBorderColor": "#f85149"
+  }
+}}%%
+gantt
+    title Phase 18 — MCP client setup
+    dateFormat YYYY-MM-DD
+    axisFormat %m-%d
+
+    section Increment 1 terminal setup
+    MC0 Client facts spike, medium, Sonnet (100%)       :done, mc0, 2026-11-18, 1d
+    MC1 Launch spec and snippets, low, Sonnet (100%)    :done, mc1, 2026-11-18, 1d
+    MC2 Config file store, medium, Opus (100%)          :done, mc2, 2026-11-18, 1d
+    MC19 mcpName, low, Haiku (100%)                     :done, mc19, 2026-11-18, 1d
+    MC3 Client targets, medium, Sonnet (100%)           :done, mc3, 2026-11-18, 1d
+    MC4 VS Code, Codex, Gemini, medium, Sonnet (100%)   :done, mc4, 2026-11-18, 1d
+    MC5 CLI commands, medium, Sonnet (100%)             :done, mc5, 2026-11-18, 1d
+    MC6 Start-up hint, low, Haiku (100%)                :done, mc6, 2026-11-18, 1d
+    MC7 Linux tarball smoke, high, Opus (100%)          :done, mc7, 2026-11-18, 1d
+    MC8 Real-client check, medium, owner (100%)         :done, mc8, 2026-11-18, 1d
+    MC9 Docs and review, medium, Opus (100%)            :done, mc9, 2026-11-18, 1d
+    MC20 VS Code Insiders, low, Sonnet (100%)           :done, mc20, 2026-11-18, 1d
+    MC21 Review findings R5 R6, medium, Opus (100%)     :done, mc21, 2026-11-18, 1d
+
+    section Increment 2 web panel
+    MC10 Mock-up boards, low, Sonnet (100%)             :done, mc10, 2026-11-19, 1d
+    MC11 GET /api/mcp/setup, low, Sonnet (100%)         :done, mc11, 2026-11-19, 1d
+    MC12 Connect an agent panel, medium, Sonnet (100%)  :done, mc12, 2026-11-19, 1d
+    MC13 Playwright spec, low, Sonnet (100%)            :done, mc13, 2026-11-19, 1d
+
+    section Increment 3 release channels
+    MC14 MCP Registry publish, medium, Sonnet (100%)    :done, mc14, 2026-11-19, 1d
+    MC15 Claude Desktop bundle, medium, Sonnet (100%)   :done, mc15, 2026-11-19, 1d
+    MC16 Claude Code plugin, low, Haiku (100%)          :done, mc16, 2026-11-19, 1d
+    MC17 Increment 3 docs, low, Sonnet (100%)          :done, mc17, 2026-11-19, 1d
+    MC18 Release install check, low, owner (0%)         :active, mc18, after mc17, 1d
 ```
 
 ## Phase 12 detail — MCP Apps

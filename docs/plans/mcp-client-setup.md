@@ -6,8 +6,8 @@ Status: **Approved 2026-11-18** (owner interview, D1-D12 in §8). MC0-MC9
 and MC19 done 2026-11-18 (MC8 signed off by the owner). MC20 (VS Code
 Insiders, D14) and MC21 (review findings R5 and R6, D15) done 2026-11-18
 (PRs #443, #444). Increment 1 is complete and ships in app 1.1.0. MC10 (boards) done 2026-11-19. MC11, MC12 (Increment 2 route and panel) and MC14-MC16
-(registry, `.mcpb` bundle, Claude Code plugin) done 2026-11-19. Next: MC13 and MC17,
-then the owner's MC18. Testing is Linux only (D13).
+(registry, `.mcpb` bundle, Claude Code plugin) done 2026-11-19. MC13 (panel Playwright
+spec) and MC17 (Increment 3 docs) done 2026-11-19. Next: the owner's MC18. Testing is Linux only (D13).
 
 Phase 18 in [implementation-plan.md](../implementation-plan.md#phase-18--mcp-client-setup-for-the-standalone-app).
 Task IDs are `MC0`-`MC21` (§10).
@@ -478,11 +478,11 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 | MC10 | Mock-up board for the "Connect an agent" panel; owner approves. **Done 2026-11-19** (PR #446; boards approved by the owner with the §5.6.1 answers) | 2 | low | Sonnet + owner | MC9 |
 | MC11 | `GET /api/mcp/setup` (read-only) with route and Host-guard tests. **Done 2026-11-19** (PR #451; contract in `@agent-cost-analyzer/domain`) | 2 | low | Sonnet | MC1 |
 | MC12 | The panel and its header button, with component tests. **Done 2026-11-19** (PR #452) | 2 | medium | Sonnet | MC10, MC11 |
-| MC13 | Playwright spec: panel, copy buttons, install links, light and dark mode, axe | 2 | low | Sonnet | MC12 |
+| MC13 | Playwright spec: panel, copy buttons, install links, light and dark mode, axe. **Done 2026-11-19** (PR #455: `packages/web/e2e/specs/mc13-connect-agent-panel.spec.ts`; opens the panel from the Dashboard because the Learn landing page has existing axe findings on its session cards) | 2 | low | Sonnet | MC12 |
 | MC14 | `mcpName`, `server.json`, the version check in `release-check.mts`, and the registry publish job in `release-app.yml` (OIDC, pinned publisher; a failure warns without failing the run, D10) **Done 2026-11-19** (PR #448) | 3 | medium | Sonnet | MC0 |
 | MC15 | `.mcpb` build script, manifest, CI validation and `tools/list` check, release asset. **Done 2026-11-19** (PR #450) | 3 | medium | Sonnet | MC0 |
 | MC16 | Claude Code plugin and repository marketplace, with CI validation. **Done 2026-11-19** (PR #447) | 3 | low | Haiku | MC0 |
-| MC17 | Increment 3 docs (User Guide install options) and a threat-model row for the release assets | 3 | low | Sonnet | MC14-MC16 |
+| MC17 | Increment 3 docs (User Guide install options) and a threat-model row for the release assets. **Done 2026-11-19** (PR #454: User Guide "Other ways to install the MCP server", README link, threat-model row for the plugin and marketplace; the registry and `.mcpb` rows came with MC14 and MC15). MC18 checks the `.mcpb` open gesture the guide describes | 3 | low | Sonnet | MC14-MC16 |
 | MC18 | Owner: the first release with registry, bundle and plugin; check that each one installs | 3 | low | Owner | MC17 |
 | MC19 | `"mcpName": "io.github.raulkivi/agent-cost-analyzer"` in `packages/cli/package.json`, with a manifest test, so Increment 1's release carries it (§3.2). **Done 2026-11-18** (PR #430) | 1 | low | Haiku | — |
 | MC20 | VS Code Insiders as its own client `vscode-insiders` (D14): detect `code-insiders` or its `Code - Insiders/User` folder, write `Code - Insiders/User/mcp.json` under `servers`, skip when `~/.vscode-insiders/extensions` holds the AI Credits Analyzer extension; MC7 smoke and MC8 check extended. **Done 2026-11-18** (PR #443) | 1 | low | Sonnet | MC9 |
