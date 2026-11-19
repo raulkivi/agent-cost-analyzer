@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { fetchMcpSetup } from "../../api-client/mcp-setup.js";
 import { useEscapeKey, useFocusTrap } from "../../lib/focus.js";
 import { readLastClient, writeLastClient } from "../../lib/mcp-setup/last-client.js";
-import type { McpSetupClientId } from "../../lib/mcp-setup/types.js";
+import type { McpSetupClientId } from "@agent-cost-analyzer/domain";
 import { useCancellableLoad } from "../../lib/use-cancellable-load.js";
 import { useMediaQuery } from "../../lib/use-media-query.js";
 import { ClientNav, tabId } from "./ClientNav.js";

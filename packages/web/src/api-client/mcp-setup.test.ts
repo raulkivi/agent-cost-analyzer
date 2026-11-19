@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiRequestError } from "./api-request-error.js";
+import { mcpSetupResponse } from "../test-support/mcp-setup-fixture.js";
 import { fetchMcpSetup } from "./mcp-setup.js";
 
 const answer = { version: "1.1.0", clients: [] };
@@ -28,9 +29,17 @@ describe("fetchMcpSetup", () => {
     expect(error).toMatchObject({ status: 403, detail: "Host not allowed." });
   });
 
-  it("rejects when the body is not a setup answer", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ nope: true }))));
+  it("parses the body with the domain schema", async () => {
+    const full = mcpSetupResponse();
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(full))));
 
-    await expect(fetchMcpSetup()).rejects.toThrow(/setup/i);
+    await expect(fetchMcpSetup()).resolves.toEqual(full);
+  });
+
+  it("rejects a body that drifts from the schema (an unknown client id, a bad manual)", async () => {
+    const drifted = { version: "1.1.0", clients: [{ id: "emacs", label: "Emacs", installCommand: "x", manual: { kind: "command" } }] };
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(drifted))));
+
+    await expect(fetchMcpSetup()).rejects.toThrow();
   });
 });

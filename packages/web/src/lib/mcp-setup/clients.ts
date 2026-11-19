@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import type { McpSetupClientId } from "./types.js";
+import type { McpSetupClientId } from "@agent-cost-analyzer/domain";
 
 // The order is the contract's, and the tab order in the dialog.
 export const CLIENT_IDS: readonly McpSetupClientId[] = [

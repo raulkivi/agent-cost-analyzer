@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { LoadState } from "../../lib/use-cancellable-load.js";
 import { CLIENT_LABELS, installCommandFor, notesFor } from "../../lib/mcp-setup/clients.js";
-import type { McpSetupClient, McpSetupClientId, McpSetupResponse } from "../../lib/mcp-setup/types.js";
+import type { McpSetupClient, McpSetupClientId, McpSetupResponse } from "@agent-cost-analyzer/domain";
 import { CodeBlock } from "./CodeBlock.js";
 import { PlugIcon } from "./icons.js";
 

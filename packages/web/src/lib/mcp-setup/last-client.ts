@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { ColorModeStorage } from "../color-mode.js";
 import { DEFAULT_CLIENT_ID, isClientId } from "./clients.js";
-import type { McpSetupClientId } from "./types.js";
+import type { McpSetupClientId } from "@agent-cost-analyzer/domain";
 
 export const LAST_CLIENT_STORAGE_KEY = "aca.mcpSetupClient";
 

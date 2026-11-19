@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { CLIENT_IDS, CLIENT_LABELS, installCommandFor } from "../lib/mcp-setup/clients.js";
-import type { McpSetupClient, McpSetupResponse } from "../lib/mcp-setup/types.js";
+import type { McpSetupClient, McpSetupResponse } from "@agent-cost-analyzer/domain";
 
 const JSON_SNIPPET = `{
   "mcpServers": {

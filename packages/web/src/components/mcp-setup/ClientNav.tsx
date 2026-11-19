@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { useRef, type KeyboardEvent } from "react";
 import { CLIENT_IDS, CLIENT_LABELS, isClientId } from "../../lib/mcp-setup/clients.js";
-import type { McpSetupClientId } from "../../lib/mcp-setup/types.js";
+import type { McpSetupClientId } from "@agent-cost-analyzer/domain";
 
 interface ClientNavProps {
   selected: McpSetupClientId;
