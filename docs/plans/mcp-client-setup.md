@@ -80,7 +80,7 @@ depends on it.
 |---|---|---|---|
 | Claude Code | `claude mcp add [--scope local\|project\|user] <name> -- <cmd> [args…]`; `claude mcp remove <name> [--scope]`; `claude mcp get <name>` (starts the server to check it); `claude mcp add-json <name> '<inner json>'`. No login needed. A name that exists exits 1 with "already exists"; removing a missing name exits 1. | `~/.claude.json` (local and user scopes; user scope is the top-level `mcpServers`); `.mcp.json` at the project root (project scope). Entry: `{"type":"stdio","command","args","env":{}}` | code.claude.com/docs/en/mcp; MC0 |
 | Claude Desktop | Edit the file, then restart Claude Desktop | macOS `~/Library/Application Support/Claude/claude_desktop_config.json`; Windows `%APPDATA%\Claude\claude_desktop_config.json`; Linux `~/.config/Claude/claude_desktop_config.json` (as documented). Shape: `{"mcpServers":{name:{command,args,env}}}`. The file also holds Claude Desktop's own settings (`preferences` and others). | modelcontextprotocol.io/docs/develop/connect-local-servers; MC0 |
-| Claude Desktop bundle | `.mcpb` (formerly DXT). `manifest.json` with `manifest_version: "0.3"`, `server.type: "node"`, `entry_point`, `mcp_config`; `mcp_config.args` may hold extra arguments after the entry point. The bundle ships the server. Packed with `@anthropic-ai/mcpb` 2.1.2. Whether it has a `validate` command is unconfirmed (MC15). | — | github.com/modelcontextprotocol/mcpb MANIFEST.md; MC0 |
+| Claude Desktop bundle | `.mcpb` (formerly DXT). `manifest.json` with `manifest_version: "0.3"`, `server.type: "node"`, `entry_point`, `mcp_config`; `mcp_config.args` may hold extra arguments after the entry point. The bundle ships the server. Packed with `@anthropic-ai/mcpb` 2.1.2. Its CLI has `validate`, `pack`, `unpack`, `info` and `sign` (MC15). | — | github.com/modelcontextprotocol/mcpb MANIFEST.md; MC0 |
 | VS Code | `code --add-mcp '{"name","type":"stdio","command","args"}'` adds to the user profile (not used by `mcp install`: §5.3). There is no command to remove a server. The `vscode:mcp/install?` URL is not in the official docs. | User `mcp.json`, top-level `servers`: Linux `~/.config/Code/User/mcp.json`, macOS `~/Library/Application Support/Code/User/mcp.json`, Windows `%APPDATA%\Code\User\mcp.json` (third-party sources; the docs name only the "MCP: Open User Configuration" command; unconfirmed, MC8). The `servers` format is labeled deprecated in favor of Copilot's `mcpServers` in `.mcp.json` or `~/.copilot/mcp-config.json`. | code.visualstudio.com/docs/agents/reference/mcp-configuration; MC0 |
 | Cursor | Edit the file. Install link `cursor://anysphere.cursor-deeplink/mcp/install?name=<name>&config=<config>`, where `config` is the base64 of the inner server JSON (`{"command","args"}`), percent-encoded. | `~/.cursor/mcp.json`, project `.cursor/mcp.json`, `{"mcpServers":{…}}` | cursor.com/docs/context/mcp, cursor.com/docs/mcp/install-links; MC0 |
 | Codex CLI | `codex mcp add <name> -- <cmd> [args…]`; `codex mcp list`. The docs show no `remove`. What `add` does with a name that exists is undocumented. | `~/.codex/config.toml`, `[mcp_servers.<name>]` | OpenAI Codex docs; MC0 |
@@ -283,14 +283,34 @@ approved by the owner 2026-11-19 with these answers:
   - The registry checks `mcpName` in the published npm version, so
     `mcpName` ships in Increment 1's release (MC19), before the first
     registry publish.
-- **`.mcpb` bundle.**
-  - Built from the CLI's `dist/` (already a zero-dependency bundle) with a
-    `manifest.json`: `manifest_version: "0.3"`, `server.type: "node"`, entry
-    `dist/cli.js`, `mcp_config.args: ["${__dirname}/dist/cli.js", "mcp"]`,
-    `compatibility.runtimes.node: ">=22.18"`.
-  - Packed with `@anthropic-ai/mcpb` 2.1.2, a pinned dev dependency.
-  - Attached to the `app-v*` GitHub Release. CI validates the manifest and
-    starts the bundled server, which must answer `tools/list`.
+- **`.mcpb` bundle.** Built by MC15; `npm run mcpb:build`
+  (`packages/cli/scripts/build-mcpb.mts`, pure planning in
+  `mcpb-plan.mts`).
+  - Staged from the npm tarball's own files (`bin/`, `dist/`, `package.json`,
+    `LICENSE`, `THIRD-PARTY-NOTICES.md` and the `README.md` npm adds) plus a
+    generated `manifest.json`, so the bundle is the npm package plus one
+    file. A test compares the two file lists.
+  - `manifest.json`: `manifest_version: "0.3"` (current in MANIFEST.md at
+    MC15), `name` `agent-cost-analyzer`, `display_name`, `version` from the
+    package, `author`, `license`, `repository`, `homepage`,
+    `server.type: "node"`, `entry_point: "bin/agent-cost-analyzer.js"` (the
+    gated shim, so an old Node gets the clear message),
+    `mcp_config: { command: "node", args: ["${__dirname}/bin/agent-cost-analyzer.js", "mcp"] }`,
+    `compatibility.runtimes.node: ">=22.18"`, and `tools` (name and title of
+    each tool, from the tool-list snapshot, with `tools_generated: false`).
+    No `platforms` (all) and no `user_config`.
+  - Packed with `@anthropic-ai/mcpb` 2.1.2, an exact-version dev dependency
+    that is not shipped. Its CLI has `validate`; the build runs it on the
+    manifest.
+  - CI (`npm-package` job, Linux legs only, D13) builds the bundle from a
+    pack of the build, unpacks it with `mcpb unpack`, starts the server with
+    the manifest's own command and requires `tools/list` to match the
+    snapshot. `npm run smoke:mcpb` runs the same locally. Nothing is
+    uploaded in CI.
+  - `release-app.yml` builds it in the build job from the tarball it packed,
+    lists its SHA-256 in `SHA256SUMS` next to the tarballs, smokes it, and
+    the publish job attaches it to the GitHub Release
+    (`agent-cost-analyzer-<version>.mcpb`).
 - **Claude Code plugin.**
   - The plugin lives in `plugins/agent-cost-analyzer/`: `plugin.json`, plus
     a `.mcp.json` with the npx launch spec.
@@ -412,6 +432,17 @@ recommended option.
   and duplicate keys collapse to the last one.
 - **The registry is still in preview.** Increment 3 only. A failed registry
   publish warns without failing the release run (D10).
+- **Claude Desktop's Node runtime is unverified** (MC15). MANIFEST.md and
+  the README say only that "Node.js ships with Claude" for macOS and
+  Windows: no version, and no statement of whether
+  `compatibility.runtimes.node` is enforced or which Node runs a bundle that
+  says `command: "node"`. The server needs Node 22.18 (`node:sqlite`).
+  Mitigation: the entry is the gated bin, so a Node that is too old prints
+  the gate's clear message to Desktop's server log instead of a stack trace.
+  Check on the owner's Desktop by opening the built `.mcpb` (Linux has no
+  official Desktop build, so this needs macOS or Windows); if its Node is
+  too old, the fallback is `mcp install` (Claude Desktop adapter), which
+  uses the user's own Node through `npx`.
 
 ## 10. Tasks
 

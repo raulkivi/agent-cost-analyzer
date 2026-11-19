@@ -77,3 +77,6 @@ mitm/
 
 # Demo recording masters (task 1.3)
 /demo-masters/
+# The Claude Desktop bundle (npm run mcpb:build, MC15)
+*.mcpb
+mcpb-release/

@@ -190,6 +190,17 @@ jobs:
           mkdir -p "$RUNNER_TEMP/mcp-setup-pack"
           npm pack --workspace=packages/cli --pack-destination "$RUNNER_TEMP/mcp-setup-pack"
           npm run smoke:mcp-setup -- --tarball "$RUNNER_TEMP"/mcp-setup-pack/agent-cost-analyzer-*.tgz
+      # The Claude Desktop bundle (mcp-client-setup.md §5.7, MC15): built from
+      # a pack of the build above (the build script runs `mcpb validate` on
+      # the manifest), unpacked, and its server started with the manifest's
+      # own command; `tools/list` must match the tool-list snapshot. Nothing
+      # is uploaded. Linux only (D13).
+      - if: runner.os == 'Linux'
+        run: |
+          mkdir -p "$RUNNER_TEMP/mcpb-pack"
+          npm pack --workspace=packages/cli --pack-destination "$RUNNER_TEMP/mcpb-pack"
+          npm run mcpb:build -- --tarball "$(echo "$RUNNER_TEMP"/mcpb-pack/agent-cost-analyzer-*.tgz)" --out "$RUNNER_TEMP/mcpb-pack"
+          npm run smoke:mcpb -- --tarball "$(echo "$RUNNER_TEMP"/mcpb-pack/agent-cost-analyzer-*.tgz)" --bundle "$(echo "$RUNNER_TEMP"/mcpb-pack/agent-cost-analyzer-*.mcpb)"
       # The smokes' logs, the server's and MCP server's stderr, the MCP stdout
       # lines, npm's debug logs and Playwright's failure screenshots.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
