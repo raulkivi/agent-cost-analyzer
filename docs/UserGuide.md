@@ -866,6 +866,51 @@ still change: a running chat's log is not complete yet. The server reads local l
 nothing. Everything a tool returns goes into the agent's context, so free
 text is redacted and truncated first.
 
+### Other ways to install the MCP server
+
+Three options besides `mcp install`. All three start the same server as
+`npx -y --prefer-offline agent-cost-analyzer mcp` and need Node.js 22.18 or
+later.
+
+#### Claude Code plugin
+
+In Claude Code, add this repository as a marketplace and install the plugin:
+
+```text
+/plugin marketplace add raulkivi/agent-cost-analyzer
+/plugin install agent-cost-analyzer@agent-cost-analyzer
+```
+
+Restart the session or run `/reload-plugins`. The plugin only registers the
+server; each start runs the latest npm release through `npx`. It follows the
+repository's default branch, not a release tag.
+
+#### Claude Desktop bundle
+
+Each app release attaches `agent-cost-analyzer-<version>.mcpb` to its
+[GitHub Release](https://github.com/raulkivi/agent-cost-analyzer/releases).
+
+- Download it and open it with Claude Desktop (double-click it, or drag it
+  into Settings > Extensions), then confirm the install.
+- The bundle holds the same files as the npm package, so it needs no
+  network and no `npx`. It starts `node bin/agent-cost-analyzer.js mcp` on
+  Claude Desktop's own Node.js.
+- The bundle is unsigned. Download it only from the repository's Releases
+  page.
+- If that Node.js is older than 22.18, the server fails to start with a
+  version message in Claude Desktop's server log. Use `mcp install` instead:
+  it runs the server on your own Node.js.
+- Update by installing the next release's bundle.
+
+#### MCP Registry
+
+The server is listed in the official MCP Registry as
+`io.github.raulkivi/agent-cost-analyzer`. A client or directory that reads
+the registry installs the npm package `agent-cost-analyzer` and starts it
+with `mcp` over stdio. The listing is published after each app release; a
+registry outage never blocks the release, so a new version can appear there
+later than on npm.
+
 ### Interactive views in the chat
 
 In a chat host that supports MCP Apps, sixteen of the tools above show an
