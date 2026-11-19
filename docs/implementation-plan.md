@@ -1797,7 +1797,7 @@ owner). MC20 (VS Code Insiders) and MC21 (review findings R5, R6)
 done 2026-11-18: Increment 1 complete, in app 1.1.0. Increment 2: MC10
 (boards) approved 2026-11-19; MC11 and MC12 (route and panel) and MC14-MC16
 (registry, `.mcpb` bundle, Claude Code plugin) done 2026-11-19. MC13 (panel
-Playwright spec) done 2026-11-19. Next: MC17, then the owner's MC18. Testing is Linux only (D13).
+Playwright spec) and MC17 (Increment 3 docs) done 2026-11-19. Next: the owner's MC18. Testing is Linux only (D13).
 
 ## 1.0.0 release
 
