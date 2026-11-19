@@ -307,6 +307,26 @@ jobs:
           tar xzf "$archive" mcp-publisher
           rm -f "$archive" "$archive.sigstore.json"
 
+      # npm takes minutes to serve a new version, and the registry rejects
+      # a version npm does not serve yet (release run 44638276742).
+      - name: Wait until npm serves this version
+        working-directory: packages/cli
+        run: |
+          set -euo pipefail
+          package=$(jq -r '.packages[0].identifier' server.json)
+          version=$(jq -r '.packages[0].version' server.json)
+          url="https://registry.npmjs.org/$package/$version"
+          for attempt in $(seq 1 40); do
+            if curl --fail --silent --show-error --output /dev/null "$url"; then
+              echo "npm serves $package@$version"
+              exit 0
+            fi
+            echo "npm does not serve $package@$version yet (attempt $attempt of 40); waiting 30 s"
+            sleep 30
+          done
+          echo "::error::npm still does not serve $package@$version after 20 minutes"
+          exit 1
+
       - name: Authenticate to the MCP Registry
         run: "$RUNNER_TEMP/mcp-publisher login github-oidc"
 
