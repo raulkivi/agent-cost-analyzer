@@ -1,0 +1,20 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.raulkivi/agent-cost-analyzer",
+  "description": "Local, read-only analysis of agentic coding costs, caching and sessions from your own logs.",
+  "repository": {
+    "url": "https://github.com/raulkivi/agent-cost-analyzer",
+    "source": "github",
+    "subfolder": "packages/cli"
+  },
+  "version": "1.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "agent-cost-analyzer",
+      "version": "1.1.0",
+      "transport": { "type": "stdio" },
+      "packageArguments": [{ "type": "positional", "value": "mcp" }]
+    }
+  ]
+}

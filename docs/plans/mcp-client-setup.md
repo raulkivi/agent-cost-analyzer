@@ -262,16 +262,24 @@ approved by the owner 2026-11-19 with these answers:
 ### 5.7 Distribution channels (Increment 3)
 
 - **MCP Registry.**
-  - Add `"mcpName": "io.github.raulkivi/agent-cost-analyzer"` to
-    `packages/cli/package.json`.
-  - Add `packages/cli/server.json`, versioned with the package.
-    `release-check.mts` checks that the versions match.
-  - In `release-app.yml`, after the npm publish: `mcp-publisher login
-    github-oidc` and `publish`, with the publisher binary pinned and verified
-    by its checksum or cosign.
+  - `packages/cli/package.json` carries `"mcpName":
+    "io.github.raulkivi/agent-cost-analyzer"`.
+  - `packages/cli/server.json` (not in the tarball) is versioned with the
+    package: its top-level `version` and `packages[0].version` equal the
+    package version (`packages/cli/test/server-json.test.ts`), and
+    `release-app.yml`'s tag check passes it to `release-check.mts` with
+    `--also`, so the tag must name its version too.
   - `server.json` passes the subcommand as
-    `packageArguments: [{"type":"positional","value":"mcp"}]`, against the
-    2025-12-11 schema.
+    `packageArguments: [{"type":"positional","value":"mcp"}]`, over `stdio`,
+    against the 2025-12-11 schema. `mcp-publisher validate` accepts it.
+  - The `mcp-registry` job in `release-app.yml` runs after `publish`, on an
+    `app-v*` tag push only, with `contents: read` and `id-token: write`. It
+    downloads `mcp-publisher` v1.8.9, checks the archive against a pinned
+    SHA-256 and its Sigstore bundle (cosign, the registry's own identity
+    check), then runs `login github-oidc` and `publish` from `packages/cli`.
+    `continue-on-error: true` makes a failure a warning (D10); re-run the
+    job later. The `io.github.raulkivi` namespace needs no owner setup: OIDC
+    proves the repository's owner.
   - The registry checks `mcpName` in the published npm version, so
     `mcpName` ships in Increment 1's release (MC19), before the first
     registry publish.
