@@ -4,7 +4,8 @@ name: Release Agent Cost Analyzer
 # (vscode-extension.md §7.2, npm-package.md §4.10): the `agent-cost-analyzer`
 # npm package, then its look-alike alias `agent-cost-analyser` (npm-package.md # codespell:ignore analyser
 # D3; published only while its own version is absent from npm), then a GitHub
-# Release with the main tarball attached. The
+# Release with the main tarball and the Claude Desktop bundle (`.mcpb`, built
+# from that tarball's files) attached. The
 # build job tests and packs once; the publish job, in the `release`
 # environment, publishes exactly that tarball (SHA-256 checked) through npm
 # trusted publishing (OIDC), which also attaches the provenance attestation.
@@ -41,6 +42,7 @@ jobs:
       tarball: ${{ steps.pack.outputs.tarball }}
       alias-tarball: ${{ steps.pack-alias.outputs.tarball }}
       alias-version: ${{ steps.pack-alias.outputs.version }}
+      mcpb: ${{ steps.mcpb.outputs.mcpb }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -115,13 +117,33 @@ jobs:
           npm pack --workspace=packages/cli-alias --pack-destination npm-release --json > "$RUNNER_TEMP/pack-alias.json"
           node -e 'const fs = require("fs"); const p = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + "/pack-alias.json", "utf8"))[0]; process.stdout.write("tarball=" + p.filename + "\nversion=" + p.version + "\n")' >> "$GITHUB_OUTPUT"
 
+      # The Claude Desktop bundle (mcp-client-setup.md §5.7, MC15): the main
+      # tarball's files plus a manifest.json, so it holds exactly what npm
+      # ships. Built from the file packed above, never from a fresh build.
+      - id: mcpb
+        env:
+          TARBALL: ${{ steps.pack.outputs.tarball }}
+          VERSION: ${{ steps.check.outputs.version }}
+        run: |
+          npm run mcpb:build -- --tarball "./npm-release/$TARBALL" --out npm-release
+          echo "mcpb=agent-cost-analyzer-$VERSION.mcpb" >> "$GITHUB_OUTPUT"
+
       - name: SHA-256
         working-directory: npm-release
         env:
           TARBALL: ${{ steps.pack.outputs.tarball }}
           ALIAS_TARBALL: ${{ steps.pack-alias.outputs.tarball }}
-        run: sha256sum "$TARBALL" "$ALIAS_TARBALL" | tee SHA256SUMS
+          MCPB: ${{ steps.mcpb.outputs.mcpb }}
+        run: sha256sum "$TARBALL" "$ALIAS_TARBALL" "$MCPB" | tee SHA256SUMS
 
+      # Unpack the bundle, start its server with the manifest's own command and
+      # require tools/list to match the snapshot. Before the npm smoke, so no
+      # step that runs npm sits between that smoke and the upload.
+      - name: Smoke test the Claude Desktop bundle
+        env:
+          TARBALL: ${{ steps.pack.outputs.tarball }}
+          MCPB: ${{ steps.mcpb.outputs.mcpb }}
+        run: npm run smoke:mcpb -- --tarball "./npm-release/$TARBALL" --bundle "./npm-release/$MCPB"
       # Install, start and drive the packed tarball in a browser (NP7); the
       # Chromium from the web suite above is the one it uses.
       - name: Smoke test the tarball
@@ -186,6 +208,7 @@ jobs:
       TARBALL: ./npm-release/${{ needs.build.outputs.tarball }}
       ALIAS_TARBALL: ./npm-release/${{ needs.build.outputs.alias-tarball }}
       ALIAS_VERSION: ${{ needs.build.outputs.alias-version }}
+      MCPB: ./npm-release/${{ needs.build.outputs.mcpb }}
     steps:
       # Only for the scripts/ checks and the repository `gh` needs.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -237,7 +260,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
           VERSION: ${{ needs.build.outputs.version }}
-        run: gh release create "$TAG" "$TARBALL" --title "Agent Cost Analyzer $VERSION" --notes-file npm-release/release-notes.md --verify-tag
+        run: gh release create "$TAG" "$TARBALL" "$MCPB" --title "Agent Cost Analyzer $VERSION" --notes-file npm-release/release-notes.md --verify-tag
 
   # Lists the just-published package in the official MCP Registry
   # (mcp-client-setup.md §5.7). The registry checks `mcpName` in the npm
