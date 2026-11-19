@@ -5,7 +5,7 @@
 Status: **Approved 2026-11-18** (owner interview, D1-D12 in §8). MC0-MC9
 and MC19 done 2026-11-18 (MC8 signed off by the owner). MC20 (VS Code
 Insiders, D14) and MC21 (review findings R5 and R6, D15) done 2026-11-18
-(PRs #443, #444). Increment 1 is complete and ships in app 1.1.0. Testing is Linux only (D13).
+(PRs #443, #444). Increment 1 is complete and ships in app 1.1.0. MC10 (boards) done 2026-11-19. Next: MC11 and MC12. Testing is Linux only (D13).
 
 Phase 18 in [implementation-plan.md](../implementation-plan.md#phase-18--mcp-client-setup-for-the-standalone-app).
 Task IDs are `MC0`-`MC21` (§10).
@@ -241,19 +241,45 @@ line.
   terminal command is the only writer.
 - **Before code:** a mock-up board, approved by the owner (MC9).
 
+### 5.6.1 Mock-up boards (MC10)
+
+Boards for the header button and the dialog, light and dark, are in
+[mockups/mcp-client-setup/](mockups/mcp-client-setup/README.md). Boards
+approved by the owner 2026-11-19 with these answers:
+
+- The button sits after Retention, shows in Learn and Analyze mode, and is
+  icon plus text at 1440 px, icon only (with accessible name) below 768 px.
+- No "Pin this version" switch; pinning stays the terminal `--pin` flag (D3).
+- Vertical tabs, a select at 360 px; arrow keys select at once.
+- Default tab: Claude Code the first time, then the last tab viewed,
+  remembered per browser in `localStorage` like the color mode (access in
+  try/catch; works without it).
+- Install link for Cursor only (VS Code's URL is undocumented, §9).
+- Copy wording as drawn; by-hand paths are those of the server's OS only.
+- Code blocks never wrap mid-token: they scroll sideways inside the block,
+  and the dialog never scrolls sideways.
+
 ### 5.7 Distribution channels (Increment 3)
 
 - **MCP Registry.**
-  - Add `"mcpName": "io.github.raulkivi/agent-cost-analyzer"` to
-    `packages/cli/package.json`.
-  - Add `packages/cli/server.json`, versioned with the package.
-    `release-check.mts` checks that the versions match.
-  - In `release-app.yml`, after the npm publish: `mcp-publisher login
-    github-oidc` and `publish`, with the publisher binary pinned and verified
-    by its checksum or cosign.
+  - `packages/cli/package.json` carries `"mcpName":
+    "io.github.raulkivi/agent-cost-analyzer"`.
+  - `packages/cli/server.json` (not in the tarball) is versioned with the
+    package: its top-level `version` and `packages[0].version` equal the
+    package version (`packages/cli/test/server-json.test.ts`), and
+    `release-app.yml`'s tag check passes it to `release-check.mts` with
+    `--also`, so the tag must name its version too.
   - `server.json` passes the subcommand as
-    `packageArguments: [{"type":"positional","value":"mcp"}]`, against the
-    2025-12-11 schema.
+    `packageArguments: [{"type":"positional","value":"mcp"}]`, over `stdio`,
+    against the 2025-12-11 schema. `mcp-publisher validate` accepts it.
+  - The `mcp-registry` job in `release-app.yml` runs after `publish`, on an
+    `app-v*` tag push only, with `contents: read` and `id-token: write`. It
+    downloads `mcp-publisher` v1.8.9, checks the archive against a pinned
+    SHA-256 and its Sigstore bundle (cosign, the registry's own identity
+    check), then runs `login github-oidc` and `publish` from `packages/cli`.
+    `continue-on-error: true` makes a failure a warning (D10); re-run the
+    job later. The `io.github.raulkivi` namespace needs no owner setup: OIDC
+    proves the repository's owner.
   - The registry checks `mcpName` in the published npm version, so
     `mcpName` ships in Increment 1's release (MC19), before the first
     registry publish.
@@ -404,7 +430,7 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 | MC7 | Tarball smoke on Linux (D13): install, status and uninstall per client in a temporary home; JSON clients launched with the SDK stdio client; stub CLIs record argv; serve home snapshot unchanged. **Done 2026-11-18** (PR #439: `npm run smoke:mcp-setup`, on the `npm-package` job's Linux legs; it found that `install` printed a client's backup and notes under the previous client's "done" line, fixed in `change-command.ts`) | 1 | high | Opus | MC4, MC5 |
 | MC8 | `npm run test:real-clients:mcp-setup` on the owner's machine with real `claude` and `code`. **Done 2026-11-18** (PR #440). The owner signed off its output 2026-11-18: Claude Code user, local and `--pin` connected; project scope pending Claude Code's folder approval, as expected; VS Code's file layout matched with `code-insiders`; Gemini, Codex and Claude Desktop skipped (not installed, or a GUI). | 1 | medium | Sonnet + owner run | MC7 |
 | MC9 | Docs: User Guide, standalone-app.md, README, CHANGELOG; vision, architecture and threat-model amendments (D1); review of Increment 1. **Done 2026-11-18** (PR #441). Review in §11. | 1 | medium | Opus | MC7 |
-| MC10 | Mock-up board for the "Connect an agent" panel; owner approves | 2 | low | Sonnet + owner | MC9 |
+| MC10 | Mock-up board for the "Connect an agent" panel; owner approves. **Done 2026-11-19** (PR #446; boards approved by the owner with the §5.6.1 answers) | 2 | low | Sonnet + owner | MC9 |
 | MC11 | `GET /api/mcp/setup` (read-only) with route and Host-guard tests | 2 | low | Sonnet | MC1 |
 | MC12 | The panel and its header button, with component tests | 2 | medium | Sonnet | MC10, MC11 |
 | MC13 | Playwright spec: panel, copy buttons, install links, light and dark mode, axe | 2 | low | Sonnet | MC12 |

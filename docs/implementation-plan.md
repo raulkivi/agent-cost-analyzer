@@ -1794,7 +1794,8 @@ vision.md §6 and the threat model (task MC9).
 recommended options). Increment 1 ships in its own app minor release. MC0
 (spike on the client facts), MC1-MC9 and MC19 done 2026-11-18 (MC8 signed off by the
 owner). MC20 (VS Code Insiders) and MC21 (review findings R5, R6)
-done 2026-11-18: Increment 1 complete, in app 1.1.0. Testing is Linux only (D13).
+done 2026-11-18: Increment 1 complete, in app 1.1.0. Increment 2: MC10
+(boards) approved 2026-11-19; next MC11 and MC12. Testing is Linux only (D13).
 
 ## 1.0.0 release
 

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- The MCP server is listed in the official MCP Registry as `io.github.raulkivi/agent-cost-analyzer`.
 - A Claude Code plugin in this repository registers the MCP server: `/plugin marketplace add raulkivi/agent-cost-analyzer`, then `/plugin install agent-cost-analyzer@agent-cost-analyzer`.
 
 ## [1.1.0] - 2026-11-19

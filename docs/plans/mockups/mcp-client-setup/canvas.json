@@ -1,0 +1,66 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-19T09:00:00Z"
+  },
+  "title": "Connect an agent mock-ups (MC10)",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Header.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1488,
+      "h": 936,
+      "title": "1 · Header at 1440 px, light and dark: closed, hover, focus, Learn mode, two alternatives"
+    },
+    "Dialog.dc.html": {
+      "x": 0,
+      "y": 1056,
+      "w": 1488,
+      "h": 1460,
+      "title": "2 · Dialog, light and dark: Claude Code (default) and Cursor tabs"
+    },
+    "DialogMore.dc.html": {
+      "x": 0,
+      "y": 2636,
+      "w": 1488,
+      "h": 3754,
+      "title": "2b · Dialog, light and dark: Claude Desktop, VS Code, VS Code Insiders, Codex CLI, Gemini CLI"
+    },
+    "States.dc.html": {
+      "x": 0,
+      "y": 6510,
+      "w": 1488,
+      "h": 2388,
+      "title": "3 · States, light and dark: copied, loading, API error"
+    },
+    "Narrow.dc.html": {
+      "x": 0,
+      "y": 9018,
+      "w": 1888,
+      "h": 2102,
+      "title": "4 · Narrow, light and dark: 768 and 360 px headers, dialogs"
+    },
+    "A11y.dc.html": {
+      "x": 0,
+      "y": 11240,
+      "w": 1488,
+      "h": 3366,
+      "title": "5 · Accessibility: focus, keys, roles, announcements, contrast"
+    }
+  },
+  "order": [
+    "Header.dc.html",
+    "Dialog.dc.html",
+    "DialogMore.dc.html",
+    "States.dc.html",
+    "Narrow.dc.html",
+    "A11y.dc.html"
+  ],
+  "notes": {},
+  "designSystems": []
+}
