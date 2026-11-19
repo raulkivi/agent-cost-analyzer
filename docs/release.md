@@ -26,6 +26,8 @@ publish.
   Marketplace pre-release channel and marks the GitHub Release as a
   pre-release; an even minor (1.2, 1.4) is stable. `release-check.mts`
   decides this from the tag, so pick the version for the channel you want.
+  Kept after 1.0 (owner, 2026-11-19): use an odd minor to try a risky
+  change with pre-release users first.
 - **App:** no channel rule; every release becomes npm's `latest`.
 - **Alias `agent-cost-analyser`:** has its own version and depends on <!-- codespell:ignore analyser -->
   `agent-cost-analyzer` `>=0.16.0 <2`. The workflow republishes it only
@@ -96,9 +98,10 @@ npm ci && npm run build
 - **Real-data check (owner).** `npm run test:real-data` runs the
   real-log suites (subagent credits, savings, pi, replay, cost by project,
   allowance, tool audit, Claude Code subagents) against the owner's logs.
-  1.0.0 required it; run it for any release that changes a log reader,
-  pricing, savings, the allowance or the audit. Don't paste its figures
-  into public PRs or docs.
+  Required for any release that changes a log reader, pricing, savings,
+  the allowance or the audit; not needed for one that changes only setup,
+  UI or docs (owner, 2026-11-19). The bump PR's description states which
+  applies. Don't paste its figures into public PRs or docs.
 - **Real-Copilot suite (owner, extension only).** The workflow refuses a
   tag whose commit has no passing run recorded under
   `refs/notes/release-ui`
@@ -185,9 +188,11 @@ both products, push both tags; the workflows run separately.
 
 - **Flaky job:** rerun the failed job from the workflow run.
 - **Before publish** (build job red): fix on `main` through a PR. If the
-  fix changes what ships, it needs a new release commit. Delete the
-  unpublished tag (`git push origin :refs/tags/app-vX.Y.Z`; owner only)
-  and tag the new release commit.
+  fix changes what ships, it needs a new release commit. The owner
+  deletes the tag (`git push origin :refs/tags/app-vX.Y.Z`; the
+  `Release tags` ruleset lets only the admin role delete) and tags the new
+  release commit with the same version (owner, 2026-11-19). This is allowed
+  only while no registry has accepted that version.
 - **After npm or the Marketplace accepted the version:** that version
   number is spent. Release the fix as the next patch version.
 - **MCP Registry job warned:** rerun the `mcp-registry` job from the

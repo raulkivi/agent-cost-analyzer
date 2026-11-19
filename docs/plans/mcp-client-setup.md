@@ -7,7 +7,10 @@ and MC19 done 2026-11-18 (MC8 signed off by the owner). MC20 (VS Code
 Insiders, D14) and MC21 (review findings R5 and R6, D15) done 2026-11-18
 (PRs #443, #444). Increment 1 is complete and ships in app 1.1.0. MC10 (boards) done 2026-11-19. MC11, MC12 (Increment 2 route and panel) and MC14-MC16
 (registry, `.mcpb` bundle, Claude Code plugin) done 2026-11-19. MC13 (panel Playwright
-spec) and MC17 (Increment 3 docs) done 2026-11-19. Next: the owner's MC18. Testing is Linux only (D13).
+spec) and MC17 (Increment 3 docs) done 2026-11-19. Release split (owner,
+2026-11-19): `app-v1.1.0` goes on the bump commit `39ccdac8` (Increment 1
+only); Increments 2 and 3 ship in app 1.2.0, and MC18 checks that release.
+Next: the owner's MC18. Testing is Linux only (D13).
 
 Phase 18 in [implementation-plan.md](../implementation-plan.md#phase-18--mcp-client-setup-for-the-standalone-app).
 Task IDs are `MC0`-`MC21` (§10).
