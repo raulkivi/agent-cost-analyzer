@@ -1,6 +1,6 @@
 # Agent Cost Analyzer
 
-**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-19 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 [![Works with GitHub Copilot Chat](https://img.shields.io/badge/works_with-GitHub_Copilot_Chat-informational)](docs/UserGuide.md#choosing-a-log-provider)
 [![Works with Claude Code](https://img.shields.io/badge/works_with-Claude_Code-informational)](docs/UserGuide.md#choosing-a-log-provider)
@@ -156,6 +156,9 @@ Claude Desktop shows a month's cost for every provider at once, and opens the vi
   unreachable. Other clients, Windows and an offline install: see
   [Querying the audit from Claude Code (MCP)](docs/UserGuide.md#querying-the-audit-from-claude-code-mcp)
   and [Interactive views in the chat](docs/UserGuide.md#interactive-views-in-the-chat).
+- Also: a Claude Code plugin, a Claude Desktop `.mcpb` bundle and the MCP
+  Registry listing. See
+  [Other ways to install the MCP server](docs/UserGuide.md#other-ways-to-install-the-mcp-server).
 
 ## Privacy and your data
 
