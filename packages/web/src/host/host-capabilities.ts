@@ -18,6 +18,10 @@ export interface HostCapabilities {
   // and MCP views keep their host theme, so the colour-mode switch and
   // attribute are off there (dense-ledger-ui.md D1).
   colorMode?: boolean;
+  // True where the app can show the "Connect an agent" panel (standalone
+  // only): it explains the terminal command that registers the MCP server,
+  // which means nothing inside the VS Code panel (mcp-client-setup.md §5.6).
+  connectAgent?: boolean;
 }
 
 interface ClipboardWriter {
@@ -29,7 +33,7 @@ interface ClipboardWriter {
 export function standaloneHostCapabilities(
   clipboard: () => ClipboardWriter = () => navigator.clipboard,
 ): HostCapabilities {
-  return { copyToClipboard: (text) => clipboard().writeText(text), colorMode: true };
+  return { copyToClipboard: (text) => clipboard().writeText(text), colorMode: true, connectAgent: true };
 }
 
 // Every capability as a host command over the transport (the VS Code
