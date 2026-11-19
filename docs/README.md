@@ -1,6 +1,6 @@
 # Developer documentation
 
-**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-19 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 For people building or changing Agent Cost Analyzer and the AI Credits
 Analyzer extension. Users: start at the [root README](../README.md).
@@ -39,8 +39,10 @@ An npm workspace:
 
 ## Documentation index
 
-- [Session handover](session-handover.md): where the work stands, how to
-  release, open decisions and next candidates.
+- [Release guide](release.md): how to release the app, the extension or
+  both: version rules, checks, tags and what each workflow publishes.
+- [Session handover](session-handover.md): where the work stands, open
+  decisions and next candidates.
 - [Standalone app: setup and data sources](standalone-app.md): install,
   run, provider log locations, Copilot Chat settings and a tour of the app.
 - [User Guide](UserGuide.md) — illustrated walkthrough of the

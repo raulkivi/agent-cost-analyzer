@@ -1,6 +1,6 @@
 # Session handover
 
-**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-19 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Where the work stands at the end of the 2026-11-10 to 2026-11-12 sessions, for whoever picks it up next. Status of record stays in [implementation-plan-gantt.md](implementation-plan-gantt.md) and the plans under [plans/](plans/).
 
@@ -15,15 +15,9 @@ Where the work stands at the end of the 2026-11-10 to 2026-11-12 sessions, for w
 - The root README is user-oriented; the developer documentation index is [README.md](README.md) in this folder.
 - **Extension 0.10.0 and app 0.13.0 released 2026-11-12** (tags `ext-v0.10.0`, `app-v0.13.0` on `1d372f0`): the MCP SDK 2 and ext-apps 2.x migration ([plans/mcp-sdk-2-migration.md](plans/mcp-sdk-2-migration.md)) and the keyboard-focus fix in the MCP App views. Real-Copilot gate 33 of 33.
 
-## Releasing the extension
+## Releasing
 
-1. A version-bump PR (even minor for a stable release), merged. For the app it bumps the root `package.json` and `packages/cli/package.json` to the same version (`release-check.mts` and a unit test refuse a mismatch).
-2. On the merged commit, with a clean tree: `npm run build`.
-3. The real-Copilot suite on the owner's machine (signed-in test profile, see [plans/vscode-ui-automation.md](plans/vscode-ui-automation.md) §7): 33 required tests, about 26 minutes, capped at 3 by `COPILOT_E2E_MAX_AI_CREDITS`. It must end with `PASS`.
-4. `npm run release:evidence --workspace=packages/vscode-extension`, then `git push origin refs/notes/release-ui`.
-5. Tag the same commit `ext-v<version>` (and `app-v<version>` for the app), push the tags, and approve the `release` environment.
-
-Before tagging, check that `engines.vscode` still matches the current stable VS Code (D9). A new VS Code version can break the real-Copilot suite (risk R5): VS Code 1.146 changed the default chat harness, which the suite now pins. After a VS Code bump, confirm the chat model with a run that sends no chat before a paid run.
+See the [release guide](release.md).
 
 ## Open decisions for the owner
 
