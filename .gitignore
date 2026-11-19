@@ -59,6 +59,8 @@ ds-bundle/
 
 # Local dev/sandbox artifacts (not project files)
 .mcp.json
+# The Claude Code plugin's MCP config is a shipped file (MC16)
+!plugins/agent-cost-analyzer/.mcp.json
 .ripgreprc
 .bash_profile
 .bashrc

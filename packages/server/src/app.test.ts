@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import request from "supertest";
 import {
   configStatusSchema,
+  mcpSetupResponseSchema,
   logProviderStatusSchema,
   sessionSchema,
   turnInspectorDetailSchema,
@@ -189,6 +190,41 @@ describe("Host header guard (DNS rebinding, architecture.md §11.2)", () => {
     const response = await request(createApp()).get("/api/health").set("Host", "evil.example.com:3001");
 
     expect(response.status).toBe(403);
+  });
+});
+
+describe("GET /api/mcp/setup (Phase 18 MC11)", () => {
+  const host = { platform: "linux" as const, home: "/home/alice", env: {} };
+  const app = () => createApp({ appVersion: "1.2.3", mcpSetupHost: host, allowedHostPorts: [3001] });
+
+  it("returns the schema-valid setup, uncached, with no home path or user name", async () => {
+    const response = await request(app()).get("/api/mcp/setup").set("Host", "127.0.0.1:3001");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["cache-control"]).toBe("no-store");
+    const body = mcpSetupResponseSchema.parse(response.body);
+    expect(body.version).toBe("1.2.3");
+    expect(body.clients).toHaveLength(7);
+    expect(response.text).not.toContain("alice");
+  });
+
+  it("reads the real machine when no host is injected", async () => {
+    const response = await request(createApp({ appVersion: "1.2.3" })).get("/api/mcp/setup");
+
+    expect(response.status).toBe(200);
+    expect(response.text).not.toContain(homedir());
+  });
+
+  it("rejects another Host with 403", async () => {
+    const response = await request(app()).get("/api/mcp/setup").set("Host", "evil.example.com");
+
+    expect(response.status).toBe(403);
+  });
+
+  it("answers 404 to a POST: the route only reads", async () => {
+    const response = await request(app()).post("/api/mcp/setup").set("Host", "127.0.0.1:3001").send({});
+
+    expect(response.status).toBe(404);
   });
 });
 
