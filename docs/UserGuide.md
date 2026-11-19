@@ -5,7 +5,8 @@
 A walkthrough of the Agent Cost Analyzer's two modes — **Learn** (guided,
 bundled example sessions) and **Analyze** (your own real sessions from VS
 Code Copilot Chat, Claude Code or pi, and, optionally, mitmproxy captures) — with
-screenshots of every major feature. For install steps, see the
+screenshots of every major feature, and how to
+[connect an AI chat](#connecting-an-ai-chat-mcp) to its MCP server. For install steps, see the
 [README](../README.md) and [standalone app setup](standalone-app.md); for the app's design/architecture, see
 [architecture.md](architecture.md).
 
@@ -29,6 +30,184 @@ including turning on debug logging for full per-turn numbers.
 ![A terminal runs npx agent-cost-analyzer: the app starts on 127.0.0.1:5199 and opens in the browser, Analyze mode lists sample sessions, and a second run opens the running app instead of starting another](images/demo/n1-npx-quick-start.gif)
 
 ![The app on load: header, Learn/Analyze mode switch, session list, and the config warning banner](images/landing-page.png)
+
+## Connecting an AI chat (MCP)
+
+The app is also a local, read-only MCP server, so you can ask an AI chat
+about your own sessions: "what drove my spend this week?", "which commands
+failed most, and why?", "did my agents do anything risky?". Connect it
+once per client; no clone is needed. What it can answer:
+[MCP tools and prompts](#mcp-tools-and-prompts) and
+[Interactive views in the chat](#interactive-views-in-the-chat).
+
+### Install with `mcp install`
+
+```bash
+npx agent-cost-analyzer mcp install
+```
+
+`mcp install` finds the MCP clients on this machine (Claude Code, Claude
+Desktop, Cursor, VS Code, VS Code Insiders, Codex CLI and Gemini CLI) and
+prints a plan: each
+client, its status, every command it will run and every file it will
+change. It applies the plan only after you answer `y` to `Apply these
+changes? [y/N]`. The server is registered as `agent-cost-analyzer` and
+launched with `npx -y --prefer-offline agent-cost-analyzer mcp`.
+
+- `--client <id>` picks the clients: `claude-code`, `claude-desktop`,
+  `cursor`, `vscode`, `vscode-insiders`, `codex`, `gemini`, a comma list, or
+  `all`. Without it,
+  `install` plans for every client it detects. A run without a terminal (a
+  script) must name `--client`. A named client that is not installed gets
+  the text to register it by hand, and nothing is written for it.
+- `--scope user` (the default: every project), `project` (Claude Code,
+  Cursor and Gemini CLI, in the current folder) or `local` (Claude Code
+  only).
+- `--dry-run` prints the plan and stops. `--yes` applies without asking; a
+  run without a terminal needs it.
+- `--pin` registers the version you are running
+  (`agent-cost-analyzer@<version>`) instead of the latest release.
+- `--project-billing-details` adds that flag after `mcp`, to share client
+  names and billing codes.
+
+How each client is registered:
+
+- Claude Code, Codex CLI and Gemini CLI: through the client's own `mcp add`
+  command, run directly, never through a shell.
+- Claude Desktop, Cursor, VS Code and VS Code Insiders: the entry is merged into the client's
+  JSON file (`claude_desktop_config.json`, `~/.cursor/mcp.json`, the user
+  `mcp.json` of VS Code or VS Code Insiders). Other servers and settings stay as they were, in their
+  order. The file is first copied to `<file>.agent-cost-analyzer.bak`
+  (replacing an earlier backup), and the new file replaces the old one in a
+  single rename. A file that is not plain JSON, such as one with comments, is
+  left alone: the plan shows the entry to paste yourself and the command
+  exits with 1. Restart Claude Desktop afterwards.
+- VS Code and VS Code Insiders are each skipped when the AI Credits
+  Analyzer extension is installed in them, since the extension registers its
+  own server.
+- An entry with a different launch (another version, or a command of your
+  own) is replaced only after you confirm, or with `--yes`. The plan prints
+  your old entry and the new one in full, as one line of JSON each. Claude
+  Code and Gemini CLI replace through their own `remove` then `add` and keep
+  no backup: if the `add` fails, the command exits with 1, says the server
+  is no longer registered in that client, and prints how to restore your
+  old entry (for Claude Code, a `claude mcp add-json` command).
+- For `--scope project`, a config file or folder in the project that is a
+  link (`.mcp.json`, `.cursor`, `.gemini` and the files in them) is refused:
+  a cloned repository could point it anywhere. The plan names the link's
+  target, changes nothing for that client and exits with 1.
+
+### The Connect an agent dialog
+
+The standalone app's header has a **Connect an agent** button (icon only in a
+narrow window). It opens a dialog with one tab per client: the
+`npx agent-cost-analyzer mcp install --client <id>` command, the client's own
+command or JSON to set it up by hand, and, for Cursor, an install link. Each
+has a **Copy** button. The dialog only shows text and changes nothing; the
+terminal command is what writes. The VS Code extension has no such button,
+since it provides the server itself.
+
+### Check or remove the registration
+
+`npx agent-cost-analyzer mcp status` prints one line per client, such as
+`registered (latest)`, `registered (pinned 1.0.0)`, `not registered`, `not
+detected` or `provided by the AI Credits Analyzer extension`. It writes
+nothing.
+
+`npx agent-cost-analyzer mcp uninstall` takes the same `--client`,
+`--scope`, `--dry-run` and `--yes`. It removes only the
+`agent-cost-analyzer` entry, again with a backup of each JSON file. Codex
+has no remove command, so for Codex it prints the
+`[mcp_servers.agent-cost-analyzer]` table to delete from
+`~/.codex/config.toml` and changes nothing.
+
+The exit code is 0 on success, 1 when a step failed or a config file could
+not be read (the message names the client) and 2 for a usage error.
+`install` and `uninstall` are the only commands that write outside the
+app's settings folder; the app and the MCP server never change a client's
+configuration. Setup is tested on Linux. macOS and Windows use each
+client's documented paths but are untested.
+
+### Register by hand
+
+`npx agent-cost-analyzer mcp config --client <id>` prints that client's command, JSON or TOML (and Cursor's install
+link) and writes nothing. For Claude Code it is:
+
+```bash
+claude mcp add agent-cost-analyzer -- npx -y --prefer-offline agent-cost-analyzer mcp
+```
+
+- `-y` skips npx's install prompt. `--prefer-offline` runs the cached copy at
+  once when the npm registry is unreachable; without it, npx waits about a
+  minute of retries first.
+- The package serves the interactive cost views to hosts that can show them
+  (see [Interactive views in the chat](#interactive-views-in-the-chat)).
+  Add `--project-billing-details` after `mcp` to share client names and
+  billing codes.
+- On Windows, a client that does not resolve `.cmd` files needs
+  `cmd /c npx -y --prefer-offline agent-cost-analyzer mcp`: set `cmd` as the
+  command and the rest as its arguments.
+- To run fully offline, or to pin a version, install it once with
+  `npm install -g agent-cost-analyzer` (or `agent-cost-analyzer@<version>`)
+  and register `agent-cost-analyzer mcp` as the command. `npx
+  agent-cost-analyzer@latest` and `agent-cost-analyzer --version` show which
+  version runs.
+
+From a clone (contributors, or before 0.16.0), run `npm install` and
+`npm run build` in the repository, then register the script:
+
+```bash
+claude mcp add agent-cost-analyzer -- /absolute/path/to/agent-cost-analyzer/scripts/mcp-server.sh
+```
+
+The build makes the script serve the views
+(`packages/mcp-apps/dist/views.html`); without it the server returns text
+results only.
+
+### Other ways to install the MCP server
+
+Three options besides `mcp install`. All three start the same server as
+`npx -y --prefer-offline agent-cost-analyzer mcp` and need Node.js 22.18 or
+later.
+
+#### Claude Code plugin
+
+In Claude Code, add this repository as a marketplace and install the plugin:
+
+```text
+/plugin marketplace add raulkivi/agent-cost-analyzer
+/plugin install agent-cost-analyzer@agent-cost-analyzer
+```
+
+Restart the session or run `/reload-plugins`. The plugin only registers the
+server; each start runs the latest npm release through `npx`. It follows the
+repository's default branch, not a release tag.
+
+#### Claude Desktop bundle
+
+Each app release attaches `agent-cost-analyzer-<version>.mcpb` to its
+[GitHub Release](https://github.com/raulkivi/agent-cost-analyzer/releases).
+
+- Download it and open it with Claude Desktop (double-click it, or drag it
+  into Settings > Extensions), then confirm the install.
+- The bundle holds the same files as the npm package, so it needs no
+  network and no `npx`. It starts `node bin/agent-cost-analyzer.js mcp` on
+  Claude Desktop's own Node.js.
+- The bundle is unsigned. Download it only from the repository's Releases
+  page.
+- If that Node.js is older than 22.18, the server fails to start with a
+  version message in Claude Desktop's server log. Use `mcp install` instead:
+  it runs the server on your own Node.js.
+- Update by installing the next release's bundle.
+
+#### MCP Registry
+
+The server is listed in the official MCP Registry as
+`io.github.raulkivi/agent-cost-analyzer`. A client or directory that reads
+the registry installs the npm package `agent-cost-analyzer` and starts it
+with `mcp` over stdio. The listing is published after each app release; a
+registry outage never blocks the release, so a new version can appear there
+later than on npm.
 
 ## The shared layout
 
@@ -604,7 +783,7 @@ replayed yet." Otherwise you may see:
 
 A replay is computed when you ask for it and never stored. The same
 replays are available to an agent through the MCP tools
-[`replay_session` and `compare_models_for_session`](#querying-the-audit-from-claude-code-mcp).
+[`replay_session` and `compare_models_for_session`](#mcp-tools-and-prompts).
 
 ### Searching sessions and empty states
 
@@ -674,130 +853,11 @@ known outcomes, including the calls of subagent runs. A call whose status
 the log doesn't state shows as **Unknown**, with the reason spelled out,
 rather than counting as zero failures.
 
-### Querying the audit from Claude Code (MCP)
+### MCP tools and prompts
 
-The analyzer is also available as a local, read-only MCP server, so you
-can ask an agent about your own sessions: "what drove my spend this
-week?", "which commands failed most, and why?", "did my agents do
-anything risky?". Register the npm package with your MCP
-clients; no clone is needed:
-
-```bash
-npx agent-cost-analyzer mcp install
-```
-
-`mcp install` finds the MCP clients on this machine (Claude Code, Claude
-Desktop, Cursor, VS Code, VS Code Insiders, Codex CLI and Gemini CLI) and
-prints a plan: each
-client, its status, every command it will run and every file it will
-change. It applies the plan only after you answer `y` to `Apply these
-changes? [y/N]`. The server is registered as `agent-cost-analyzer` and
-launched with `npx -y --prefer-offline agent-cost-analyzer mcp`.
-
-- `--client <id>` picks the clients: `claude-code`, `claude-desktop`,
-  `cursor`, `vscode`, `vscode-insiders`, `codex`, `gemini`, a comma list, or
-  `all`. Without it,
-  `install` plans for every client it detects. A run without a terminal (a
-  script) must name `--client`. A named client that is not installed gets
-  the text to register it by hand, and nothing is written for it.
-- `--scope user` (the default: every project), `project` (Claude Code,
-  Cursor and Gemini CLI, in the current folder) or `local` (Claude Code
-  only).
-- `--dry-run` prints the plan and stops. `--yes` applies without asking; a
-  run without a terminal needs it.
-- `--pin` registers the version you are running
-  (`agent-cost-analyzer@<version>`) instead of the latest release.
-- `--project-billing-details` adds that flag after `mcp`, to share client
-  names and billing codes.
-
-The standalone app's header has a **Connect an agent** button (icon only in a
-narrow window). It opens a dialog with one tab per client: the
-`npx agent-cost-analyzer mcp install --client <id>` command, the client's own
-command or JSON to set it up by hand, and, for Cursor, an install link. Each
-has a **Copy** button. The dialog only shows text and changes nothing; the
-terminal command is what writes. The VS Code extension has no such button,
-since it provides the server itself.
-
-How each client is registered:
-
-- Claude Code, Codex CLI and Gemini CLI: through the client's own `mcp add`
-  command, run directly, never through a shell.
-- Claude Desktop, Cursor, VS Code and VS Code Insiders: the entry is merged into the client's
-  JSON file (`claude_desktop_config.json`, `~/.cursor/mcp.json`, the user
-  `mcp.json` of VS Code or VS Code Insiders). Other servers and settings stay as they were, in their
-  order. The file is first copied to `<file>.agent-cost-analyzer.bak`
-  (replacing an earlier backup), and the new file replaces the old one in a
-  single rename. A file that is not plain JSON, such as one with comments, is
-  left alone: the plan shows the entry to paste yourself and the command
-  exits with 1. Restart Claude Desktop afterwards.
-- VS Code and VS Code Insiders are each skipped when the AI Credits
-  Analyzer extension is installed in them, since the extension registers its
-  own server.
-- An entry with a different launch (another version, or a command of your
-  own) is replaced only after you confirm, or with `--yes`. The plan prints
-  your old entry and the new one in full, as one line of JSON each. Claude
-  Code and Gemini CLI replace through their own `remove` then `add` and keep
-  no backup: if the `add` fails, the command exits with 1, says the server
-  is no longer registered in that client, and prints how to restore your
-  old entry (for Claude Code, a `claude mcp add-json` command).
-- For `--scope project`, a config file or folder in the project that is a
-  link (`.mcp.json`, `.cursor`, `.gemini` and the files in them) is refused:
-  a cloned repository could point it anywhere. The plan names the link's
-  target, changes nothing for that client and exits with 1.
-
-`npx agent-cost-analyzer mcp status` prints one line per client, such as
-`registered (latest)`, `registered (pinned 1.0.0)`, `not registered`, `not
-detected` or `provided by the AI Credits Analyzer extension`. It writes
-nothing.
-
-`npx agent-cost-analyzer mcp uninstall` takes the same `--client`,
-`--scope`, `--dry-run` and `--yes`. It removes only the
-`agent-cost-analyzer` entry, again with a backup of each JSON file. Codex
-has no remove command, so for Codex it prints the
-`[mcp_servers.agent-cost-analyzer]` table to delete from
-`~/.codex/config.toml` and changes nothing.
-
-The exit code is 0 on success, 1 when a step failed or a config file could
-not be read (the message names the client) and 2 for a usage error.
-`install` and `uninstall` are the only commands that write outside the
-app's settings folder; the app and the MCP server never change a client's
-configuration. Setup is tested on Linux. macOS and Windows use each
-client's documented paths but are untested.
-
-To register by hand instead, `npx agent-cost-analyzer mcp config --client
-<id>` prints that client's command, JSON or TOML (and Cursor's install
-link) and writes nothing. For Claude Code it is:
-
-```bash
-claude mcp add agent-cost-analyzer -- npx -y --prefer-offline agent-cost-analyzer mcp
-```
-
-- `-y` skips npx's install prompt. `--prefer-offline` runs the cached copy at
-  once when the npm registry is unreachable; without it, npx waits about a
-  minute of retries first.
-- The package serves the interactive cost views to hosts that can show them
-  (see [Interactive views in the chat](#interactive-views-in-the-chat)).
-  Add `--project-billing-details` after `mcp` to share client names and
-  billing codes.
-- On Windows, a client that does not resolve `.cmd` files needs
-  `cmd /c npx -y --prefer-offline agent-cost-analyzer mcp`: set `cmd` as the
-  command and the rest as its arguments.
-- To run fully offline, or to pin a version, install it once with
-  `npm install -g agent-cost-analyzer` (or `agent-cost-analyzer@<version>`)
-  and register `agent-cost-analyzer mcp` as the command. `npx
-  agent-cost-analyzer@latest` and `agent-cost-analyzer --version` show which
-  version runs.
-
-From a clone (contributors, or before 0.16.0), run `npm install` and
-`npm run build` in the repository, then register the script:
-
-```bash
-claude mcp add agent-cost-analyzer -- /absolute/path/to/agent-cost-analyzer/scripts/mcp-server.sh
-```
-
-The build makes the script serve the views
-(`packages/mcp-apps/dist/views.html`); without it the server returns text
-results only.
+Once the MCP server is connected (see
+[Connecting an AI chat (MCP)](#connecting-an-ai-chat-mcp)), an agent can
+call these tools:
 
 | Tool | What it returns |
 |---|---|
@@ -865,51 +925,6 @@ is never treated as zero. A session whose latest turn started in the last
 still change: a running chat's log is not complete yet. The server reads local logs only and writes
 nothing. Everything a tool returns goes into the agent's context, so free
 text is redacted and truncated first.
-
-### Other ways to install the MCP server
-
-Three options besides `mcp install`. All three start the same server as
-`npx -y --prefer-offline agent-cost-analyzer mcp` and need Node.js 22.18 or
-later.
-
-#### Claude Code plugin
-
-In Claude Code, add this repository as a marketplace and install the plugin:
-
-```text
-/plugin marketplace add raulkivi/agent-cost-analyzer
-/plugin install agent-cost-analyzer@agent-cost-analyzer
-```
-
-Restart the session or run `/reload-plugins`. The plugin only registers the
-server; each start runs the latest npm release through `npx`. It follows the
-repository's default branch, not a release tag.
-
-#### Claude Desktop bundle
-
-Each app release attaches `agent-cost-analyzer-<version>.mcpb` to its
-[GitHub Release](https://github.com/raulkivi/agent-cost-analyzer/releases).
-
-- Download it and open it with Claude Desktop (double-click it, or drag it
-  into Settings > Extensions), then confirm the install.
-- The bundle holds the same files as the npm package, so it needs no
-  network and no `npx`. It starts `node bin/agent-cost-analyzer.js mcp` on
-  Claude Desktop's own Node.js.
-- The bundle is unsigned. Download it only from the repository's Releases
-  page.
-- If that Node.js is older than 22.18, the server fails to start with a
-  version message in Claude Desktop's server log. Use `mcp install` instead:
-  it runs the server on your own Node.js.
-- Update by installing the next release's bundle.
-
-#### MCP Registry
-
-The server is listed in the official MCP Registry as
-`io.github.raulkivi/agent-cost-analyzer`. A client or directory that reads
-the registry installs the npm package `agent-cost-analyzer` and starts it
-with `mcp` over stdio. The listing is published after each app release; a
-registry outage never blocks the release, so a new version can appear there
-later than on npm.
 
 ### Interactive views in the chat
 
@@ -1185,7 +1200,7 @@ with its tools and sessions, then one session's cost, then Back.
 
 **Getting the views.** The npm package includes them. Register
 `npx -y --prefer-offline agent-cost-analyzer mcp` as the server's command, as
-in [Querying the audit from Claude Code](#querying-the-audit-from-claude-code-mcp).
+in [Register by hand](#register-by-hand).
 For Claude Desktop, add an entry to `claude_desktop_config.json` whose
 `command` is `npx` and whose arguments are `-y --prefer-offline
 agent-cost-analyzer mcp`, then restart it. To run from a clone instead, run
@@ -1275,7 +1290,7 @@ there is no projection or run rate. Because of the gaps above, treat it as a
 lower bound that can trail your GitHub billing page.
 
 **Ask your AI chat.** The MCP tool `get_monthly_allowance` gives the same
-answer ([MCP tools](#querying-the-audit-from-claude-code-mcp)). It is
+answer ([MCP tools](#mcp-tools-and-prompts)). It is
 read-only and cannot change the allowance.
 
 The gauge has a screen-reader label per state and both dialogs trap focus,

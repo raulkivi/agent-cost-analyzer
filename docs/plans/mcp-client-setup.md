@@ -19,7 +19,7 @@ mcp`, [npm-package.md](npm-package.md)). Registering it with an MCP client
 is still manual:
 
 - The User Guide gives one `claude mcp add …` line
-  ([UserGuide.md](../UserGuide.md#querying-the-audit-from-claude-code-mcp)).
+  ([UserGuide.md](../UserGuide.md#register-by-hand)).
   Users of every other client translate it into that client's JSON shape
   and file path themselves.
 - On Windows the user has to know to wrap it in `cmd /c` for clients that do
