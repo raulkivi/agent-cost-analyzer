@@ -78,6 +78,9 @@
     "basic-ftp": "^6.2.4",
     "@vscode/test-cli": {
       "mocha": "^12.0.3"
+    },
+    "external-editor": {
+      "tmp": "^0.2.7"
     }
   }
 }
