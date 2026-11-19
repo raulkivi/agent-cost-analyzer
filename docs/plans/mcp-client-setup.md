@@ -1,17 +1,18 @@
 # MCP client setup for the standalone app (Phase 18)
 
-**Last changed:** 2026-11-19 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-20 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **Approved 2026-11-18** (owner interview, D1-D12 in §8). MC0-MC9
 and MC19 done 2026-11-18 (MC8 signed off by the owner). MC20 (VS Code
 Insiders, D14) and MC21 (review findings R5 and R6, D15) done 2026-11-18
 (PRs #443, #444). Increment 1 is complete and ships in app 1.1.0. MC10 (boards) done 2026-11-19. MC11, MC12 (Increment 2 route and panel) and MC14-MC16
 (registry, `.mcpb` bundle, Claude Code plugin) done 2026-11-19. MC13 (panel Playwright
-spec) and MC17 (Increment 3 docs) done 2026-11-19. Release split (owner,
-2026-11-19): `app-v1.1.0` goes on the bump commit `39ccdac8` (Increment 1
-only); Increments 2 and 3 ship in app 1.2.0 (bump PR open 2026-11-19), and
-MC18 checks that release. Next: the owner tags `app-v1.1.0`, then
-`app-v1.2.0` on the bump's merge commit, then MC18. Testing is Linux only (D13).
+spec) and MC17 (Increment 3 docs) done 2026-11-19. Released
+2026-11-19 (owner's release split): app 1.1.0 with Increment 1 (tag
+`app-v1.1.0` on `39ccdac8`) and app 1.2.0 with Increments 2 and 3 (tag
+`app-v1.2.0` on `b9d51db5`, bump PR #460; listed in the MCP Registry,
+`.mcpb` attached to the GitHub Release). Next: the owner's MC18 on 1.2.0.
+Testing is Linux only (D13).
 
 Phase 18 in [implementation-plan.md](../implementation-plan.md#phase-18--mcp-client-setup-for-the-standalone-app).
 Task IDs are `MC0`-`MC21` (§10).
