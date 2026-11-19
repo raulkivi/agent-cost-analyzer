@@ -1,14 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-
-const BARE = /^[A-Za-z0-9@._:/=+,%-]+$/;
-
-/** For display only: nothing in the CLI ever passes this text to a shell. */
-export function shellQuote(arg: string): string {
-  if (BARE.test(arg)) return arg;
-  return `'${arg.replaceAll("'", `'\\''`)}'`;
-}
-
-export function shellLine(argv: readonly string[]): string {
-  return argv.map(shellQuote).join(" ");
-}
+// The rules live with the client-setup builders, which GET /api/mcp/setup
+// also uses to print the same commands.
+export {
+  shellLine,
+  shellQuote,
+} from "../../../server/src/mcp/client-setup/shell-quote.js";

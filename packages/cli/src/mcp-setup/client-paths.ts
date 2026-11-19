@@ -1,107 +1,41 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { posix, win32, type PlatformPath } from "node:path";
 import type { ClientEnv } from "./client-env.js";
+import {
+  cursorUserConfigPath,
+  geminiUserSettingsPath,
+  pathFlavor,
+} from "../../../server/src/mcp/client-setup/config-paths.js";
 
-/**
- * Path rules of the target platform, not the host's: a Windows config path
- * must come out with backslashes however the code is run (tests on Linux CI).
- */
-export function pathFlavor(platform: NodeJS.Platform): PlatformPath {
-  return platform === "win32" ? win32 : posix;
-}
-
-export function claudeDesktopConfigPath(env: ClientEnv): string {
-  const p = pathFlavor(env.platform);
-  const file = "claude_desktop_config.json";
-  if (env.platform === "darwin")
-    return p.join(env.home, "Library", "Application Support", "Claude", file);
-  if (env.platform === "win32")
-    return p.join(
-      env.env.APPDATA || p.join(env.home, "AppData", "Roaming"),
-      "Claude",
-      file,
-    );
-  return p.join(
-    env.env.XDG_CONFIG_HOME || p.join(env.home, ".config"),
-    "Claude",
-    file,
-  );
-}
+// The user-level rules live with the client-setup builders, which
+// GET /api/mcp/setup also uses to show the same paths. Only the project
+// scope, which needs the working folder, is the CLI's own.
+export {
+  claudeDesktopConfigPath,
+  codexConfigPath,
+  codexHome,
+  geminiHome,
+  pathFlavor,
+  vscodeConfigPath,
+  vscodeExtensionsDir,
+  vscodeInsidersConfigPath,
+  vscodeInsidersExtensionsDir,
+  vscodeInsidersUserDir,
+  vscodeUserDir,
+} from "../../../server/src/mcp/client-setup/config-paths.js";
 
 export function cursorConfigPath(
   scope: "user" | "project",
   env: ClientEnv,
 ): string {
-  const base = scope === "user" ? env.home : env.cwd;
-  return pathFlavor(env.platform).join(base, ".cursor", "mcp.json");
-}
-
-/** The per-user config root of an Electron app on the target platform. */
-function appDataDir(env: ClientEnv): string {
-  const p = pathFlavor(env.platform);
-  if (env.platform === "darwin")
-    return p.join(env.home, "Library", "Application Support");
-  if (env.platform === "win32")
-    return env.env.APPDATA || p.join(env.home, "AppData", "Roaming");
-  return env.env.XDG_CONFIG_HOME || p.join(env.home, ".config");
-}
-
-/** VS Code's user folder, which holds `mcp.json` and `settings.json`. */
-export function vscodeUserDir(env: ClientEnv): string {
-  return pathFlavor(env.platform).join(appDataDir(env), "Code", "User");
-}
-
-/** Insiders is a separate install with its own profile folder. */
-export function vscodeInsidersUserDir(env: ClientEnv): string {
-  return pathFlavor(env.platform).join(
-    appDataDir(env),
-    "Code - Insiders",
-    "User",
-  );
-}
-
-export function vscodeInsidersConfigPath(env: ClientEnv): string {
-  return pathFlavor(env.platform).join(vscodeInsidersUserDir(env), "mcp.json");
-}
-
-export function vscodeInsidersExtensionsDir(env: ClientEnv): string {
-  return pathFlavor(env.platform).join(
-    env.home,
-    ".vscode-insiders",
-    "extensions",
-  );
-}
-
-export function vscodeConfigPath(env: ClientEnv): string {
-  return pathFlavor(env.platform).join(vscodeUserDir(env), "mcp.json");
-}
-
-/** Where VS Code unpacks installed extensions, one folder per version. */
-export function vscodeExtensionsDir(env: ClientEnv): string {
-  return pathFlavor(env.platform).join(env.home, ".vscode", "extensions");
-}
-
-export function codexHome(env: ClientEnv): string {
-  return (
-    env.env.CODEX_HOME || pathFlavor(env.platform).join(env.home, ".codex")
-  );
-}
-
-export function codexConfigPath(env: ClientEnv): string {
-  return pathFlavor(env.platform).join(codexHome(env), "config.toml");
-}
-
-export function geminiHome(env: ClientEnv): string {
-  return pathFlavor(env.platform).join(env.home, ".gemini");
+  if (scope === "user") return cursorUserConfigPath(env);
+  return pathFlavor(env.platform).join(env.cwd, ".cursor", "mcp.json");
 }
 
 export function geminiSettingsPath(
   scope: "user" | "project",
   env: ClientEnv,
 ): string {
-  const p = pathFlavor(env.platform);
-  return scope === "user"
-    ? p.join(geminiHome(env), "settings.json")
-    : p.join(env.cwd, ".gemini", "settings.json");
+  if (scope === "user") return geminiUserSettingsPath(env);
+  return pathFlavor(env.platform).join(env.cwd, ".gemini", "settings.json");
 }

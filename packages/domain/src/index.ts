@@ -554,3 +554,13 @@ export {
 export { SAVINGS_ACTION_PARAMS, savingsActionText } from "./savings-actions.js";
 // The monthly allowance module lists its exports in its own index.
 export * from "./allowance/index.js";
+export {
+  mcpSetupClientIdSchema,
+  mcpSetupManualSchema,
+  mcpSetupClientSchema,
+  mcpSetupResponseSchema,
+  type McpSetupClientId,
+  type McpSetupManual,
+  type McpSetupClient,
+  type McpSetupResponse,
+} from "./mcp-setup.js";
