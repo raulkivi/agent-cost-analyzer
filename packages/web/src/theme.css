@@ -1360,3 +1360,59 @@ main[data-layout="narrow"] .nav--allowance .nav-field select { max-width: 210px;
 .allowance-field-error::before { content: "\2715  "; color: var(--color-status-error); }
 .allowance-hint-slot { min-height: 3em; font-size: 11px; }
 .allowance-hint { margin: 0; font-size: 11px; color: var(--color-text-muted); }
+
+/* — Connect an agent (standalone app, MC12; boards in
+     docs/plans/mockups/mcp-client-setup) — The header button and its dialog.
+     Roles only: no new color token. The "Copied" state uses the accent text
+     role, since this theme's success role is blue, not the boards' green. — */
+.mcp-connect { flex: none; margin-left: var(--space-2); }
+.mcp-connect-text { white-space: nowrap; }
+/* The button costs the header 145 px at 1440, so the brand and the Config tag
+   keep their line and the server status text is what gives way. */
+.nav--connect .nav-brand, .nav--connect .tag, .nav--connect .btn { white-space: nowrap; }
+.nav--connect .app-status--inline { min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav--connect .nav-brand-block { flex: none; }
+@media (max-width: 767px) {
+  /* Icon only below 768 px; the button keeps its accessible name and tooltip. */
+  .mcp-connect-text { display: none; }
+}
+.mcp-icon { flex: none; }
+.mcp-dialog { width: min(760px, 100%); max-height: calc(100vh - 2 * var(--space-4)); overflow-x: hidden; overflow-y: auto; gap: 10px; padding: 16px 18px; }
+.mcp-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.mcp-x { flex: none; min-width: 24px; min-height: 24px; padding: 0 6px; font-size: 18px; line-height: 1; color: var(--color-text-muted); }
+.mcp-dialog .dialog-title { font-size: 18px; letter-spacing: -0.015em; }
+.mcp-intro { margin: 0; max-width: 62ch; font-family: var(--font-prose); font-size: 14px; line-height: 1.45; }
+.mcp-body { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 0 var(--space-4); min-width: 0; }
+@media (max-width: 520px) {
+  .mcp-body { grid-template-columns: minmax(0, 1fr); gap: var(--space-3) 0; }
+}
+.mcp-tabs { display: flex; flex-direction: column; align-self: start; border-right: 1px solid var(--color-divider); }
+.mcp-tab {
+  text-align: left; padding: 3px 8px; font: inherit; font-size: 12px; line-height: 1.6;
+  color: var(--color-text); background: transparent; border: 0; border-left: 3px solid transparent; cursor: pointer;
+}
+.mcp-tab:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.mcp-tab[aria-selected="true"] { font-weight: 700; background: var(--color-accent-100); border-left-color: var(--color-accent); }
+.mcp-agent-select { display: flex; flex-direction: column; gap: 4px; }
+.mcp-agent-select select { width: 100%; }
+.mcp-panel { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.mcp-client-name { margin: 0; font-size: 13px; font-weight: 700; }
+.mcp-sub { margin: 6px 0 0; font-size: 12px; font-weight: 700; }
+.mcp-help { margin: 0; font-size: 11px; color: var(--color-text-muted); }
+.mcp-help code { font: inherit; overflow-wrap: anywhere; }
+.mcp-note { margin: 0; padding: 6px 8px; font-size: 12px; background: var(--color-surface); border: 1px solid var(--color-control-border, var(--color-divider)); }
+/* The code box: lines never wrap; the pre scrolls sideways inside the box, so
+   the dialog itself never does (min-width: 0 lets the grid cell shrink). */
+.mcp-code { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 6px; min-width: 0; padding: 4px; background: var(--color-surface); border: 1px solid var(--color-control-border, var(--color-divider)); }
+.mcp-code-text { margin: 0; padding: 3px 4px; min-width: 0; overflow-x: auto; white-space: pre; font-family: var(--font-mono); font-size: 12px; line-height: 1.5; }
+.mcp-copy { white-space: nowrap; }
+.mcp-copy--done { color: var(--color-accent-text); border-color: var(--color-accent-text); }
+.mcp-copy-hint { grid-column: 1 / -1; margin: 0; font-size: 11px; color: var(--color-text-muted); }
+.mcp-install-link { align-self: flex-start; }
+.mcp-skeleton { display: flex; flex-direction: column; gap: 6px; }
+.mcp-skeleton span { display: block; height: 10px; background: var(--color-divider); }
+.mcp-skeleton span:last-child { width: 70%; }
+.mcp-error { padding: 6px 8px; font-size: 12px; background: var(--color-surface); border: 1px solid var(--color-status-error); }
+.mcp-link { padding: 0; font: inherit; color: var(--color-accent-text); background: none; border: 0; text-decoration: underline; cursor: pointer; }
+.mcp-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: 2px; padding-top: 10px; border-top: 1px solid var(--color-divider); }
+.mcp-version { font-size: 11px; color: var(--color-text-muted); }

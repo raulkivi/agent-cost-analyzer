@@ -7,6 +7,9 @@ import { App } from "./App.js";
 import * as allowanceClient from "./api-client/monthly-allowance.js";
 import { AppHeader } from "./components/AppHeader.js";
 import { MonthlyAllowance } from "./components/allowance/MonthlyAllowance.js";
+import * as mcpSetupClient from "./api-client/mcp-setup.js";
+import { ConnectAgent } from "./components/mcp-setup/ConnectAgent.js";
+import { mcpSetupResponse } from "./test-support/mcp-setup-fixture.js";
 import { atLeastNearAnswer, knownAnswer, noSourceAnswer, notSetAnswer, overAnswer, unknownAnswer } from "./test-support/allowance-fixture.js";
 import { resetApiTransport } from "./api-client/current-transport.js";
 import { ReplayStatus } from "./components/replay/ReplayStatus.js";
@@ -36,6 +39,9 @@ vi.mock("./api-client/monthly-allowance.js", async (importOriginal) => ({
   getMonthlyAllowance: vi.fn(),
   setMonthlyAllowance: vi.fn(),
 }));
+
+// MC12: the Connect an agent dialog reads GET /api/mcp/setup through this.
+vi.mock("./api-client/mcp-setup.js", () => ({ fetchMcpSetup: vi.fn() }));
 
 // vscode-extension.md §3.5 Accessibility: axe-core finds no WCAG 2.2 A/AA
 // violation in any view, in VS Code's dark, light and high-contrast themes
@@ -608,6 +614,70 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
       fireEvent.change(screen.getByLabelText("Monthly allowance (AI Credits)"), { target: { value: "0" } });
       fireEvent.click(screen.getByRole("button", { name: "Save" }));
       await screen.findByText("Nothing was saved. The gauge is unchanged.");
+
+      await expectNoViolations();
+    });
+  });
+
+  // MC12 (mcp-client-setup.md §5.6.1, board A11y.dc.html): the open dialog in
+  // each state, in both color modes of the ledger theme.
+  describe("Connect an agent dialog", () => {
+    beforeEach(() => {
+      window.localStorage.clear();
+      vi.mocked(mcpSetupClient.fetchMcpSetup).mockResolvedValue(mcpSetupResponse());
+    });
+    afterEach(() => {
+      delete document.documentElement.dataset.colorMode;
+      vi.unstubAllGlobals();
+    });
+
+    async function openDialog(tab?: string) {
+      render(<ConnectAgent />);
+      fireEvent.click(screen.getByRole("button", { name: "Connect an agent" }));
+      await screen.findByRole("dialog", { name: "Connect an agent" });
+      await screen.findByRole("group", { name: /^Setup (command|JSON) for/ });
+      if (tab) fireEvent.click(screen.getByRole("tab", { name: tab }));
+    }
+
+    it.each(["light", "dark"])("the closed button and the dialog on Claude Code, %s", async (mode) => {
+      document.documentElement.dataset.colorMode = mode;
+      await openDialog();
+
+      await expectNoViolations();
+    });
+
+    it("the Cursor tab, with its install link and JSON", async () => {
+      await openDialog("Cursor");
+      await screen.findByRole("link", { name: "Add to Cursor" });
+
+      await expectNoViolations();
+    });
+
+    it("loading", async () => {
+      vi.mocked(mcpSetupClient.fetchMcpSetup).mockReturnValue(new Promise(() => undefined));
+      render(<ConnectAgent />);
+      fireEvent.click(screen.getByRole("button", { name: "Connect an agent" }));
+      await screen.findByText("Loading setup details…");
+
+      await expectNoViolations();
+    });
+
+    it("an API error, with the command still shown", async () => {
+      vi.mocked(mcpSetupClient.fetchMcpSetup).mockRejectedValue(new Error("status 500"));
+      render(<ConnectAgent />);
+      fireEvent.click(screen.getByRole("button", { name: "Connect an agent" }));
+      await screen.findByRole("alert");
+
+      await expectNoViolations();
+    });
+
+    it("the narrow dialog, with a select in place of the tabs", async () => {
+      vi.stubGlobal(
+        "matchMedia",
+        vi.fn(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() })),
+      );
+      await openDialog();
+      expect(screen.getByRole("combobox", { name: "Agent" })).toBeInTheDocument();
 
       await expectNoViolations();
     });

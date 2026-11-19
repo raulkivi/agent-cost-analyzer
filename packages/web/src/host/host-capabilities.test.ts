@@ -77,6 +77,18 @@ describe("colour-mode switch capability (Phase 17 D1)", () => {
   });
 });
 
+describe("Connect an agent capability (mcp-client-setup.md §5.6)", () => {
+  it("is offered by the standalone browser app", () => {
+    expect(standaloneHostCapabilities().connectAgent).toBe(true);
+    expect(hostCapabilitiesFor(new HttpTransport()).connectAgent).toBe(true);
+  });
+
+  it("is never offered inside the VS Code webview", () => {
+    const transport: ApiTransport = { call: vi.fn(), command: vi.fn() };
+    expect(hostCapabilitiesFor(transport).connectAgent).toBeFalsy();
+  });
+});
+
 describe("current host capabilities", () => {
   afterEach(() => {
     resetHostCapabilities();

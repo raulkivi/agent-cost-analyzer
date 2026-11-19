@@ -48,6 +48,9 @@ interface AppHeaderProps {
   // provider select. Its presence caps the Source select and lets the server
   // status text truncate first, so the gauge keeps its room (Header.dc.html).
   allowance?: ReactNode;
+  // The "Connect an agent" button (standalone app, both modes): after
+  // Retention, before the status text and the color switch.
+  connectAgent?: ReactNode;
 }
 
 const DEFAULT_DISPLAY_NAME = "Session Analyzer";
@@ -68,9 +71,10 @@ export function AppHeader({
   statusText,
   colorMode,
   allowance,
+  connectAgent,
 }: AppHeaderProps) {
   return (
-    <header className={allowance ? "nav nav--allowance" : "nav"}>
+    <header className={["nav", allowance && "nav--allowance", connectAgent && "nav--connect"].filter(Boolean).join(" ")}>
       {/* The brand; the VS Code theme hides it, since the editor tab
           already names the panel (step 10.11). */}
       <div className="nav-brand-block">
@@ -126,6 +130,7 @@ export function AppHeader({
           />
         </label>
       )}
+      {connectAgent}
       {statusText !== undefined && (
         <span className="text-muted app-status app-status--inline">{statusText}</span>
       )}

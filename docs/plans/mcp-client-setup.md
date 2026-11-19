@@ -259,6 +259,18 @@ approved by the owner 2026-11-19 with these answers:
 - Code blocks never wrap mid-token: they scroll sideways inside the block,
   and the dialog never scrolls sideways.
 
+Implementation notes (MC12), accepted by the owner:
+
+- "Copied" uses the accent text color with a check icon, not the boards'
+  green: the theme's success role is blue and no new token was added.
+- While loading or after an error the footer reads "Runs the latest release
+  through npx", without the version, which comes from the API.
+- The Cursor install link shows once the setup answer has loaded, since the
+  link comes from the API.
+- The select replaces the tabs at 520 px and below (the boards show 360 px).
+- Initial focus is set on the selected tab (the select at narrow widths), not
+  left to the focus trap's first control; the "×" close button stays.
+
 ### 5.7 Distribution channels (Increment 3)
 
 - **MCP Registry.**

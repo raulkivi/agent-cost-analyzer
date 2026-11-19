@@ -320,4 +320,37 @@ describe("AppHeader", () => {
     fireEvent.click(screen.getByRole("radio", { name: "Dark" }));
     expect(onColorModeChange).toHaveBeenCalledWith("dark");
   });
+
+  it("puts the connect-agent slot after Retention and before the status text, in both modes", () => {
+    for (const mode of ["learn", "analyze"] as const) {
+      const { unmount } = render(
+        <AppHeader
+          mode={mode}
+          onModeChange={vi.fn()}
+          hasConfigWarnings={false}
+          onConfigClick={vi.fn()}
+          minRetainedSessionLogsThreshold={200}
+          onRetentionThresholdChange={vi.fn()}
+          statusText="status: ok"
+          connectAgent={<button type="button">Connect slot</button>}
+        />,
+      );
+      const retention = screen.getByLabelText("Retention threshold");
+      const slot = screen.getByRole("button", { name: "Connect slot" });
+      const status = screen.getByText("status: ok");
+      expect(retention.compareDocumentPosition(slot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(slot.compareDocumentPosition(status) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      unmount();
+    }
+  });
+
+  it("marks the header so the status text, not the brand, gives way to the button", () => {
+    render(<AppHeader mode="learn" onModeChange={vi.fn()} hasConfigWarnings={false} onConfigClick={vi.fn()} connectAgent={<span />} />);
+    expect(screen.getByRole("banner")).toHaveClass("nav--connect");
+  });
+
+  it("draws no connect-agent slot when none is given", () => {
+    render(<AppHeader mode="learn" onModeChange={vi.fn()} hasConfigWarnings={false} onConfigClick={vi.fn()} />);
+    expect(screen.queryByRole("button", { name: "Connect an agent" })).not.toBeInTheDocument();
+  });
 });

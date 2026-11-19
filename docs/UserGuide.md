@@ -1,6 +1,6 @@
 # User Guide
 
-**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-19 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 A walkthrough of the Agent Cost Analyzer's two modes — **Learn** (guided,
 bundled example sessions) and **Analyze** (your own real sessions from VS
@@ -709,6 +709,14 @@ launched with `npx -y --prefer-offline agent-cost-analyzer mcp`.
   (`agent-cost-analyzer@<version>`) instead of the latest release.
 - `--project-billing-details` adds that flag after `mcp`, to share client
   names and billing codes.
+
+The standalone app's header has a **Connect an agent** button (icon only in a
+narrow window). It opens a dialog with one tab per client: the
+`npx agent-cost-analyzer mcp install --client <id>` command, the client's own
+command or JSON to set it up by hand, and, for Cursor, an install link. Each
+has a **Copy** button. The dialog only shows text and changes nothing; the
+terminal command is what writes. The VS Code extension has no such button,
+since it provides the server itself.
 
 How each client is registered:
 
