@@ -1,0 +1,13 @@
+{
+  "name": "agent-cost-analyzer",
+  "owner": {
+    "name": "Raul Kivi"
+  },
+  "plugins": [
+    {
+      "name": "agent-cost-analyzer",
+      "source": "./plugins/agent-cost-analyzer",
+      "description": "Registers the Agent Cost Analyzer MCP server for read-only analysis of your local coding-agent logs."
+    }
+  ]
+}

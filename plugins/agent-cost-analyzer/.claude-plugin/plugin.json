@@ -1,0 +1,10 @@
+{
+  "name": "agent-cost-analyzer",
+  "description": "Registers the Agent Cost Analyzer MCP server for read-only analysis of your local coding-agent logs.",
+  "author": {
+    "name": "Raul Kivi"
+  },
+  "homepage": "https://github.com/raulkivi/agent-cost-analyzer",
+  "repository": "https://github.com/raulkivi/agent-cost-analyzer",
+  "license": "MIT"
+}
