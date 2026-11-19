@@ -5,7 +5,7 @@
 Status: **Approved 2026-11-18** (owner interview, D1-D12 in §8). MC0-MC9
 and MC19 done 2026-11-18 (MC8 signed off by the owner). MC20 (VS Code
 Insiders, D14) and MC21 (review findings R5 and R6, D15) done 2026-11-18
-(PRs #443, #444). Increment 1 is complete and ships in app 1.1.0. Testing is Linux only (D13).
+(PRs #443, #444). Increment 1 is complete and ships in app 1.1.0. MC10 (boards) done 2026-11-19. Next: MC11 and MC12. Testing is Linux only (D13).
 
 Phase 18 in [implementation-plan.md](../implementation-plan.md#phase-18--mcp-client-setup-for-the-standalone-app).
 Task IDs are `MC0`-`MC21` (§10).
@@ -422,7 +422,7 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 | MC7 | Tarball smoke on Linux (D13): install, status and uninstall per client in a temporary home; JSON clients launched with the SDK stdio client; stub CLIs record argv; serve home snapshot unchanged. **Done 2026-11-18** (PR #439: `npm run smoke:mcp-setup`, on the `npm-package` job's Linux legs; it found that `install` printed a client's backup and notes under the previous client's "done" line, fixed in `change-command.ts`) | 1 | high | Opus | MC4, MC5 |
 | MC8 | `npm run test:real-clients:mcp-setup` on the owner's machine with real `claude` and `code`. **Done 2026-11-18** (PR #440). The owner signed off its output 2026-11-18: Claude Code user, local and `--pin` connected; project scope pending Claude Code's folder approval, as expected; VS Code's file layout matched with `code-insiders`; Gemini, Codex and Claude Desktop skipped (not installed, or a GUI). | 1 | medium | Sonnet + owner run | MC7 |
 | MC9 | Docs: User Guide, standalone-app.md, README, CHANGELOG; vision, architecture and threat-model amendments (D1); review of Increment 1. **Done 2026-11-18** (PR #441). Review in §11. | 1 | medium | Opus | MC7 |
-| MC10 | Mock-up board for the "Connect an agent" panel; owner approves | 2 | low | Sonnet + owner | MC9 |
+| MC10 | Mock-up board for the "Connect an agent" panel; owner approves. **Done 2026-11-19** (PR #446; boards approved by the owner with the §5.6.1 answers) | 2 | low | Sonnet + owner | MC9 |
 | MC11 | `GET /api/mcp/setup` (read-only) with route and Host-guard tests | 2 | low | Sonnet | MC1 |
 | MC12 | The panel and its header button, with component tests | 2 | medium | Sonnet | MC10, MC11 |
 | MC13 | Playwright spec: panel, copy buttons, install links, light and dark mode, axe | 2 | low | Sonnet | MC12 |
