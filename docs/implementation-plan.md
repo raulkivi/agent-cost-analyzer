@@ -1930,6 +1930,9 @@ The longest chain is pi: V14 → V27 → V29 → V30 → V31.
 
 ### Release procedure
 
+The 1.0.0 procedure as run. Later releases follow the
+[release guide](release.md).
+
 The owner approves each step that publishes.
 
 1. Every criterion C1-C16 is met and the Gantt's 1.0.0 bars are at 100%.
