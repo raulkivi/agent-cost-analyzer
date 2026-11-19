@@ -28,6 +28,8 @@ async function openDialog() {
   return { user, dialog };
 }
 
+// Two buttons are named Close: the × in the corner and the footer's.
+const footerClose = () => within(document.querySelector<HTMLElement>(".mcp-footer")!).getByRole("button", { name: "Close" });
 const selectedTab = () => screen.getByRole("tab", { selected: true });
 
 describe("the header button", () => {
@@ -82,7 +84,7 @@ describe("the dialog", () => {
     expect(await within(dialog).findByRole("group", { name: "Setup command for Claude Code" })).toHaveTextContent(/^claude mcp add --scope user/);
     expect(within(dialog).getByText(/Adds the server for every project \(user scope\)/)).toBeInTheDocument();
     expect(within(dialog).getByText("Version 1.1.0 · runs the latest release through npx")).toBeInTheDocument();
-    expect(within(dialog).getByRole("button", { name: "Close" })).toBeInTheDocument();
+    expect(footerClose()).toBeInTheDocument();
   });
 
   it("has no Pin this version switch", async () => {
@@ -178,7 +180,7 @@ describe("the remembered tab", () => {
     const { user } = await openDialog();
     await user.click(screen.getByRole("tab", { name: "Gemini CLI" }));
     expect(window.localStorage.getItem(LAST_CLIENT_STORAGE_KEY)).toBe("gemini");
-    await user.click(screen.getByRole("button", { name: "Close" }));
+    await user.click(footerClose());
 
     await user.click(screen.getByRole("button", { name: "Connect an agent" }));
 
@@ -290,7 +292,18 @@ describe("closing", () => {
   it("Close closes it and focus returns", async () => {
     const { user } = await openDialog();
 
-    await user.click(screen.getByRole("button", { name: "Close" }));
+    await user.click(footerClose());
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByRole("button", { name: "Connect an agent" })).toHaveFocus();
+  });
+
+  it("the × in the corner closes it, and focus returns", async () => {
+    const { user, dialog } = await openDialog();
+    const corner = dialog.querySelector<HTMLElement>(".mcp-x")!;
+    expect(corner).toHaveAccessibleName("Close");
+
+    await user.click(corner);
 
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByRole("button", { name: "Connect an agent" })).toHaveFocus();
@@ -307,12 +320,15 @@ describe("closing", () => {
   it("traps Tab inside: from Close it wraps to the selected tab, and back", async () => {
     const { user } = await openDialog();
     await waitFor(() => expect(screen.getByRole("button", { name: "Copy: setup command" })).toBeInTheDocument());
-    const close = screen.getByRole("button", { name: "Close" });
+    const close = footerClose();
     act(() => close.focus());
 
     await user.tab();
+    expect(document.activeElement).toBe(document.querySelector(".mcp-x"));
+    await user.tab();
     expect(selectedTab()).toHaveFocus();
 
+    await user.tab({ shift: true });
     await user.tab({ shift: true });
     expect(close).toHaveFocus();
   });

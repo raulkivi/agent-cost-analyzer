@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { fetchMcpSetup } from "../../api-client/mcp-setup.js";
 import { useEscapeKey, useFocusTrap } from "../../lib/focus.js";
 import { readLastClient, writeLastClient } from "../../lib/mcp-setup/last-client.js";
@@ -40,6 +40,12 @@ export function ConnectAgentDialog({ onClose }: ConnectAgentDialogProps) {
   const { state: setup, retry } = useCancellableLoad(fetchMcpSetup);
   useFocusTrap(dialog);
   useEscapeKey(onClose);
+  // The trap would focus the first control, the × in the corner; the person
+  // chose an agent, so focus starts there (A11y.dc.html: the selected tab, or
+  // the select at narrow widths). Declared after the trap, so it runs after.
+  useEffect(() => {
+    dialog.current?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"], .mcp-agent-select select')?.focus();
+  }, []);
 
   function select(id: McpSetupClientId): void {
     writeLastClient(localStorageOrNull(), id);
@@ -56,8 +62,13 @@ export function ConnectAgentDialog({ onClose }: ConnectAgentDialogProps) {
         aria-labelledby={titleId}
         onClick={(event) => event.stopPropagation()}
       >
-        <div id={titleId} className="dialog-title">
-          Connect an agent
+        <div className="mcp-head">
+          <div id={titleId} className="dialog-title">
+            Connect an agent
+          </div>
+          <button type="button" className="btn btn-ghost mcp-x" aria-label="Close" title="Close" onClick={onClose}>
+            <span aria-hidden="true">×</span>
+          </button>
         </div>
         <p className="mcp-intro">
           Let your coding agent ask this app about its own costs. This panel only shows commands. Run them in a terminal; nothing here
