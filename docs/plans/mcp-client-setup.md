@@ -12,6 +12,8 @@ spec) and MC17 (Increment 3 docs) done 2026-11-19. Released
 `app-v1.1.0` on `39ccdac8`) and app 1.2.0 with Increments 2 and 3 (tag
 `app-v1.2.0` on `b9d51db5`, bump PR #460; listed in the MCP Registry,
 `.mcpb` attached to the GitHub Release). Next: the owner's MC18 on 1.2.0.
+MC22 added 2026-11-20: MC18 found that VS Code's MCP search reads GitHub's
+MCP Registry, which does not list the server.
 Testing is Linux only (D13).
 
 Phase 18 in [implementation-plan.md](../implementation-plan.md#phase-18--mcp-client-setup-for-the-standalone-app).
@@ -491,6 +493,7 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 | MC18 | Owner: the first release with registry, bundle and plugin; check that each one installs | 3 | low | Owner | MC17 |
 | MC19 | `"mcpName": "io.github.raulkivi/agent-cost-analyzer"` in `packages/cli/package.json`, with a manifest test, so Increment 1's release carries it (§3.2). **Done 2026-11-18** (PR #430) | 1 | low | Haiku | — |
 | MC20 | VS Code Insiders as its own client `vscode-insiders` (D14): detect `code-insiders` or its `Code - Insiders/User` folder, write `Code - Insiders/User/mcp.json` under `servers`, skip when `~/.vscode-insiders/extensions` holds the AI Credits Analyzer extension; MC7 smoke and MC8 check extended. **Done 2026-11-18** (PR #443) | 1 | low | Sonnet | MC9 |
+| MC22 | GitHub MCP Registry listing: VS Code's MCP search (`@mcp`) reads `https://api.mcp.github.com` (the `mcpGallery.serviceUrl` in VS Code's `product.json`), GitHub's own list, not the official registry, so it does not find the server (MC18, 2026-11-20). Find out how GitHub adds a server to that list, record it in §3.2, then submit `io.github.raulkivi/agent-cost-analyzer`. Until listed, the User Guide gives the `chat.mcp.gallery.serviceUrl` workaround (added 2026-11-20). Done when `@mcp agent-cost-analyzer` finds the server in VS Code with default settings | 3 | low | Sonnet + owner | MC14 |
 | MC21 | Review findings R5 and R6 (D15): a registration's status carries the existing entry, the plan prints old and new in full, a remove-then-add whose add fails says the server is now unregistered and prints the old entry to restore; a symlinked project-scope config is refused. **Done 2026-11-18** (PR #444) | 1 | medium | Opus | MC9 |
 
 Order: MC0 → MC1/MC2/MC19 (in parallel) → MC3 → MC4/MC5/MC6 → MC7 → MC8 →
