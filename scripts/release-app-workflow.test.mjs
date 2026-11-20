@@ -253,6 +253,21 @@ test("the publisher is pinned to a release and verified before it runs", () => {
   assert.ok(download < login && login < publishIt);
 });
 
+// npm takes minutes to serve a new version, and the registry rejects a
+// version npm does not serve yet (release run 44638276742).
+test("the MCP Registry job waits until npm serves the version, then signs in", () => {
+  const steps = registry.steps.map((s) => s.run ?? "");
+  const wait = registry.steps.find((s) => /registry\.npmjs\.org/.test(s.run ?? ""));
+  assert.ok(wait, "wait-for-npm step is missing");
+  assert.equal(wait["working-directory"], "packages/cli");
+  assert.match(wait.run, /\.packages\[0\]\.identifier/);
+  assert.match(wait.run, /\.packages\[0\]\.version/);
+  assert.match(wait.run, /curl --fail/);
+  assert.match(wait.run, /for attempt in \$\(seq 1 \d+\)/, "bounded, so a missing version still ends the job");
+  const waitIndex = registry.steps.indexOf(wait);
+  assert.ok(waitIndex < steps.findIndex((r) => /mcp-publisher login github-oidc/.test(r)));
+});
+
 test("the registry publish runs from packages/cli, where server.json is, and uses no token login", () => {
   const step = registry.steps.find((s) => /mcp-publisher publish/.test(s.run ?? ""));
   assert.equal(step["working-directory"], "packages/cli");

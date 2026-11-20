@@ -1,6 +1,6 @@
 # Release guide
 
-**Last changed:** 2026-11-19 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-20 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 How to release the standalone app (Agent Cost Analyzer), the VS Code
 extension (AI Credits Analyzer), or both. Each product has its own version,
@@ -153,8 +153,10 @@ both products, push both tags; the workflows run separately.
   - Publishes to npm through trusted publishing; no token exists.
   - Publishes the alias if its version is new.
   - Creates the GitHub Release with the tarball and the `.mcpb` bundle.
-- **mcp-registry:** lists the version in the MCP Registry through GitHub
-  OIDC. A failure only warns; rerun this job later.
+- **mcp-registry:** waits up to 20 minutes until npm serves the new
+  version, since the registry rejects a version npm does not serve yet.
+  Then it lists the version in the MCP Registry through GitHub OIDC. A
+  failure only warns; rerun this job later.
 
 **Extension (`release-extension.yml`):**
 
@@ -196,4 +198,6 @@ both products, push both tags; the workflows run separately.
 - **After npm or the Marketplace accepted the version:** that version
   number is spent. Release the fix as the next patch version.
 - **MCP Registry job warned:** rerun the `mcp-registry` job from the
-  workflow run.
+  workflow run. No approval is needed: the job doesn't use the `release`
+  environment. If the error says npm does not have the version, check
+  `npm view agent-cost-analyzer@X.Y.Z version` first.
