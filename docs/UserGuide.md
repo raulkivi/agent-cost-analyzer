@@ -1,6 +1,6 @@
 # User Guide
 
-**Last changed:** 2026-11-19 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-20 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 A walkthrough of the Agent Cost Analyzer's two modes — **Learn** (guided,
 bundled example sessions) and **Analyze** (your own real sessions from VS
@@ -208,6 +208,18 @@ the registry installs the npm package `agent-cost-analyzer` and starts it
 with `mcp` over stdio. The listing is published after each app release; a
 registry outage never blocks the release, so a new version can appear there
 later than on npm.
+
+VS Code's MCP search (`@mcp` in the Extensions view) reads GitHub's MCP
+Registry by default, not the official one, so it does not find the server.
+To search the official registry, add this to your user `settings.json` and
+reload the window:
+
+```json
+"chat.mcp.gallery.serviceUrl": "https://registry.modelcontextprotocol.io"
+```
+
+Remove the setting to go back to GitHub's list. `mcp install` registers the
+server with VS Code without either registry.
 
 ## The shared layout
 

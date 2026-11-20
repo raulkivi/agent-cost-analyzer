@@ -12,6 +12,8 @@ spec) and MC17 (Increment 3 docs) done 2026-11-19. Released
 `app-v1.1.0` on `39ccdac8`) and app 1.2.0 with Increments 2 and 3 (tag
 `app-v1.2.0` on `b9d51db5`, bump PR #460; listed in the MCP Registry,
 `.mcpb` attached to the GitHub Release). Next: the owner's MC18 on 1.2.0.
+MC22 added 2026-11-20: MC18 found that VS Code's MCP search reads GitHub's
+MCP Registry, which does not list the server.
 Testing is Linux only (D13).
 
 Phase 18 in [implementation-plan.md](../implementation-plan.md#phase-18--mcp-client-setup-for-the-standalone-app).
@@ -115,6 +117,59 @@ installed on the owner's machine, so their rows rest on their docs.
 - **Not checked on a real install:** VS Code (the user `mcp.json` path,
   the extension check), Codex and Gemini. MC4's tests use
   the documented shapes; MC8 checks VS Code on a machine that has it.
+
+### 3.3 GitHub MCP Registry (MC22 research, 2026-11-20)
+
+- **VS Code reads it:** VS Code Insiders 1.148's `product.json` sets
+  `mcpGallery.serviceUrl` to `https://api.mcp.github.com`, so the `@mcp`
+  search reads GitHub's list. The user setting `chat.mcp.gallery.serviceUrl`
+  overrides it.
+- **New servers are curated by hand:** a GitHub maintainer wrote on
+  2026-11-05 that "initial onboarding is still manually curated. Publishing
+  to the open-source MCP Registry does not guarantee inclusion in the
+  GitHub MCP Registry or imply an ETA". GitHub publishes no criteria.
+- **Versions sync after onboarding:** per a GitHub engineer (2026-05-19),
+  once a server is onboarded, new versions published to the official
+  registry sync to GitHub's list. No request per release.
+- **Where to ask:** since 2026-11-13 maintainers answer requests posted in
+  `github/github-mcp-server` discussions with a pointer to the blog's
+  "How to publish your own MCP server" section: publish to the official
+  registry, then email `partnerships@github.com`. Don't post there.
+- **Turnaround:** none promised. Of about 350 requests posted in the
+  community thread (discussion #1257) from 2026-10-25 to 2026-11-20, 13
+  were in GitHub's list on 2026-11-20, each 1 to 3 weeks after the request.
+  The list held 896 servers, 377 of them published in November, so most
+  arrive by routes other than that thread.
+- **Prerequisites already met:** official registry listing under the
+  `io.github.raulkivi` namespace (GitHub OIDC, MC14), `active` and
+  `isLatest`; `mcpName` in the npm package (MC19); public repository with a
+  license.
+- **Sources:**
+  [GitHub blog, 2025-10-24](https://github.blog/ai-and-ml/generative-ai/how-to-find-install-and-manage-mcp-servers-with-the-github-mcp-registry/#h-how-to-publish-your-own-mcp-server),
+  [GitHub blog, 2025-09-16](https://github.blog/ai-and-ml/meet-the-github-mcp-registry-the-fastest-way-to-discover-mcp-servers/),
+  [discussion #1257](https://github.com/github/github-mcp-server/discussions/1257),
+  [discussion #3850](https://github.com/github/github-mcp-server/discussions/3850),
+  [official registry README](https://github.com/modelcontextprotocol/registry).
+
+MC22 steps:
+
+1. Owner: email `partnerships@github.com` from the owner's address. Include
+   the registry name `io.github.raulkivi/agent-cost-analyzer` with its
+   [registry record](https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.raulkivi/agent-cost-analyzer),
+   the latest version (`active`, `isLatest`), the npm package
+   `agent-cost-analyzer` over stdio with the `mcp` argument, the
+   repository and license, one line on what it does (reads local AI
+   coding-agent logs, read-only, no network), and the two verification
+   queries (official registry and `api.mcp.github.com`).
+2. Record the date sent and any reply here.
+3. Check weekly: `https://api.mcp.github.com/v0.1/servers?search=agent-cost-analyzer`
+   returns the server. Then VS Code's `@mcp agent-cost-analyzer` finds it
+   with default settings, and its Install button registers a working
+   server.
+4. After the next app release, check that GitHub's list shows the new
+   version without another request.
+5. Once listed, drop the workaround from the User Guide's MCP Registry
+   section, or keep it as a note for older lists.
 
 ## 4. Options considered
 
@@ -491,6 +546,7 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 | MC18 | Owner: the first release with registry, bundle and plugin; check that each one installs | 3 | low | Owner | MC17 |
 | MC19 | `"mcpName": "io.github.raulkivi/agent-cost-analyzer"` in `packages/cli/package.json`, with a manifest test, so Increment 1's release carries it (§3.2). **Done 2026-11-18** (PR #430) | 1 | low | Haiku | — |
 | MC20 | VS Code Insiders as its own client `vscode-insiders` (D14): detect `code-insiders` or its `Code - Insiders/User` folder, write `Code - Insiders/User/mcp.json` under `servers`, skip when `~/.vscode-insiders/extensions` holds the AI Credits Analyzer extension; MC7 smoke and MC8 check extended. **Done 2026-11-18** (PR #443) | 1 | low | Sonnet | MC9 |
+| MC22 | GitHub MCP Registry listing: VS Code's MCP search (`@mcp`) reads `https://api.mcp.github.com` (the `mcpGallery.serviceUrl` in VS Code's `product.json`), GitHub's own list, not the official registry, so it does not find the server (MC18, 2026-11-20). New servers are onboarded by hand: per §3.3, the owner emails `partnerships@github.com`, then the listing is checked (§3.3 steps 1-5); no ETA. Until listed, the User Guide gives the `chat.mcp.gallery.serviceUrl` workaround (added 2026-11-20). Done when `@mcp agent-cost-analyzer` finds the server in VS Code with default settings | 3 | low | Owner + Haiku (checks) | MC14 |
 | MC21 | Review findings R5 and R6 (D15): a registration's status carries the existing entry, the plan prints old and new in full, a remove-then-add whose add fails says the server is now unregistered and prints the old entry to restore; a symlinked project-scope config is refused. **Done 2026-11-18** (PR #444) | 1 | medium | Opus | MC9 |
 
 Order: MC0 → MC1/MC2/MC19 (in parallel) → MC3 → MC4/MC5/MC6 → MC7 → MC8 →
