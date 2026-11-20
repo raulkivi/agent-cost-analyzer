@@ -118,6 +118,47 @@ installed on the owner's machine, so their rows rest on their docs.
   the extension check), Codex and Gemini. MC4's tests use
   the documented shapes; MC8 checks VS Code on a machine that has it.
 
+### 3.3 GitHub MCP Registry (MC22 research, 2026-11-20)
+
+- **VS Code reads it:** VS Code Insiders 1.148's `product.json` sets
+  `mcpGallery.serviceUrl` to `https://api.mcp.github.com`, so the `@mcp`
+  search reads GitHub's list. The user setting `chat.mcp.gallery.serviceUrl`
+  overrides it.
+- **Curated, not synced:** on 2026-11-20 GitHub's list held 896 servers and
+  not this one, a day after 1.2.0 reached the official registry. The
+  official registry's README says publishing never goes through a pull
+  request to its repository.
+- **How to get listed:** GitHub's blog (2025-10-24) says to publish to the
+  official registry first, then email `partnerships@github.com` and ask for
+  the server to be included. The same post expects self-publication, with
+  updates picked up from the official registry, "in the next couple
+  months"; the missing listing shows it does not cover this server yet.
+- **Prerequisites already met:** official registry listing under the
+  `io.github.raulkivi` namespace (GitHub OIDC, MC14), `mcpName` in the npm
+  package (MC19), public GitHub repository. GitHub publishes no other
+  eligibility criteria and no review time.
+- **Sources:**
+  [GitHub blog, 2025-10-24](https://github.blog/ai-and-ml/generative-ai/how-to-find-install-and-manage-mcp-servers-with-the-github-mcp-registry/),
+  [GitHub blog, 2025-09-16](https://github.blog/ai-and-ml/github-copilot/meet-the-github-mcp-registry-the-fastest-way-to-discover-mcp-servers/),
+  [official registry README](https://github.com/modelcontextprotocol/registry).
+
+MC22 steps:
+
+1. Check [github.com/mcp](https://github.com/mcp) and GitHub Docs for a
+   self-publish or submit option; the sources above are from 2025. If one
+   exists, use it instead of step 2.
+2. Owner: email `partnerships@github.com` from the owner's address with the
+   registry name `io.github.raulkivi/agent-cost-analyzer`, the npm package
+   `agent-cost-analyzer`, the repository URL, a one-line description, and
+   that it is a local stdio server that reads local logs only.
+3. Record the reply and the date here.
+4. Once listed: `https://api.mcp.github.com/v0.1/servers?search=agent-cost-analyzer`
+   returns the server, VS Code's `@mcp agent-cost-analyzer` finds it with
+   default settings, and its Install button registers a working server.
+5. After the next app release, check that GitHub's list shows the new
+   version without another request; if it does not, add the request to
+   [release.md](../release.md).
+
 ## 4. Options considered
 
 | | Option | Verdict |
@@ -493,7 +534,7 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 | MC18 | Owner: the first release with registry, bundle and plugin; check that each one installs | 3 | low | Owner | MC17 |
 | MC19 | `"mcpName": "io.github.raulkivi/agent-cost-analyzer"` in `packages/cli/package.json`, with a manifest test, so Increment 1's release carries it (§3.2). **Done 2026-11-18** (PR #430) | 1 | low | Haiku | — |
 | MC20 | VS Code Insiders as its own client `vscode-insiders` (D14): detect `code-insiders` or its `Code - Insiders/User` folder, write `Code - Insiders/User/mcp.json` under `servers`, skip when `~/.vscode-insiders/extensions` holds the AI Credits Analyzer extension; MC7 smoke and MC8 check extended. **Done 2026-11-18** (PR #443) | 1 | low | Sonnet | MC9 |
-| MC22 | GitHub MCP Registry listing: VS Code's MCP search (`@mcp`) reads `https://api.mcp.github.com` (the `mcpGallery.serviceUrl` in VS Code's `product.json`), GitHub's own list, not the official registry, so it does not find the server (MC18, 2026-11-20). Find out how GitHub adds a server to that list, record it in §3.2, then submit `io.github.raulkivi/agent-cost-analyzer`. Until listed, the User Guide gives the `chat.mcp.gallery.serviceUrl` workaround (added 2026-11-20). Done when `@mcp agent-cost-analyzer` finds the server in VS Code with default settings | 3 | low | Sonnet + owner | MC14 |
+| MC22 | GitHub MCP Registry listing: VS Code's MCP search (`@mcp`) reads `https://api.mcp.github.com` (the `mcpGallery.serviceUrl` in VS Code's `product.json`), GitHub's own list, not the official registry, so it does not find the server (MC18, 2026-11-20). GitHub's list is curated: per §3.3, email `partnerships@github.com` (owner) after checking for a newer self-publish option, then verify the listing (§3.3 steps 1-5). Until listed, the User Guide gives the `chat.mcp.gallery.serviceUrl` workaround (added 2026-11-20). Done when `@mcp agent-cost-analyzer` finds the server in VS Code with default settings | 3 | low | Owner + Haiku (checks) | MC14 |
 | MC21 | Review findings R5 and R6 (D15): a registration's status carries the existing entry, the plan prints old and new in full, a remove-then-add whose add fails says the server is now unregistered and prints the old entry to restore; a symlinked project-scope config is refused. **Done 2026-11-18** (PR #444) | 1 | medium | Opus | MC9 |
 
 Order: MC0 → MC1/MC2/MC19 (in parallel) → MC3 → MC4/MC5/MC6 → MC7 → MC8 →
