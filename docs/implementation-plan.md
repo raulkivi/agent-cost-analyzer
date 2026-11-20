@@ -1,6 +1,6 @@
 # Implementation Plan: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-19 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-20 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 This plan sequences [architecture.md](architecture.md) into buildable phases.
 Phases 0-9.12 build the standalone app, **Agent Cost Analyzer** (every
@@ -1794,11 +1794,11 @@ vision.md §6 and the threat model (task MC9).
 recommended options). Increment 1 ships in its own app minor release. MC0
 (spike on the client facts), MC1-MC9 and MC19 done 2026-11-18 (MC8 signed off by the
 owner). MC20 (VS Code Insiders) and MC21 (review findings R5, R6)
-done 2026-11-18: Increment 1 complete, in app 1.1.0. Increment 2: MC10
+done 2026-11-18: Increment 1 complete, released in app 1.1.0 on 2026-11-19. Increment 2: MC10
 (boards) approved 2026-11-19; MC11 and MC12 (route and panel) and MC14-MC16
 (registry, `.mcpb` bundle, Claude Code plugin) done 2026-11-19. MC13 (panel
 Playwright spec) and MC17 (Increment 3 docs) done 2026-11-19: Increments 2
-and 3 ship in app 1.2.0. Next: the owner's MC18 on that release. Testing is Linux only (D13).
+and 3 released in app 1.2.0 on 2026-11-19. Next: the owner's MC18 on that release. Testing is Linux only (D13).
 
 ## 1.0.0 release
 

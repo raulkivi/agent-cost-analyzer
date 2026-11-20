@@ -1,6 +1,6 @@
 # Session handover
 
-**Last changed:** 2026-11-19 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-20 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Where the work stands at the end of the 2026-11-10 to 2026-11-12 sessions, for whoever picks it up next. Status of record stays in [implementation-plan-gantt.md](implementation-plan-gantt.md) and the plans under [plans/](plans/).
 
@@ -13,6 +13,7 @@ Where the work stands at the end of the 2026-11-10 to 2026-11-12 sessions, for w
   - Docs-only PRs skip the heavy UI and integration jobs; `test` always runs.
 - **Step 10.18 is done:** Copilot Chat sessions from a window with no folder open now appear (#209).
 - The root README is user-oriented; the developer documentation index is [README.md](README.md) in this folder.
+- **App 1.1.0 and 1.2.0 released 2026-11-19** (tags `app-v1.1.0` on `39ccdac8`, `app-v1.2.0` on `b9d51db5`): Phase 18 MCP client setup, Increment 1 in 1.1.0 and Increments 2 and 3 in 1.2.0. Only the owner's MC18 install check is left ([plans/mcp-client-setup.md](plans/mcp-client-setup.md)). Later releases follow the [release guide](release.md).
 - **Extension 0.10.0 and app 0.13.0 released 2026-11-12** (tags `ext-v0.10.0`, `app-v0.13.0` on `1d372f0`): the MCP SDK 2 and ext-apps 2.x migration ([plans/mcp-sdk-2-migration.md](plans/mcp-sdk-2-migration.md)) and the keyboard-focus fix in the MCP App views. Real-Copilot gate 33 of 33.
 
 ## Releasing
