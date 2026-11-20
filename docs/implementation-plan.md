@@ -1798,7 +1798,7 @@ done 2026-11-18: Increment 1 complete, released in app 1.1.0 on 2026-11-19. Incr
 (boards) approved 2026-11-19; MC11 and MC12 (route and panel) and MC14-MC16
 (registry, `.mcpb` bundle, Claude Code plugin) done 2026-11-19. MC13 (panel
 Playwright spec) and MC17 (Increment 3 docs) done 2026-11-19: Increments 2
-and 3 released in app 1.2.0 on 2026-11-19. Next: the owner's MC18 on that release. Testing is Linux only (D13).
+and 3 released in app 1.2.0 on 2026-11-19. The owner's MC18 install check on that release passed 2026-11-20; next: MC22, the GitHub MCP Registry listing. Testing is Linux only (D13).
 
 ## 1.0.0 release
 

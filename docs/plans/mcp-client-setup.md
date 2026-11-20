@@ -11,7 +11,9 @@ spec) and MC17 (Increment 3 docs) done 2026-11-19. Released
 2026-11-19 (owner's release split): app 1.1.0 with Increment 1 (tag
 `app-v1.1.0` on `39ccdac8`) and app 1.2.0 with Increments 2 and 3 (tag
 `app-v1.2.0` on `b9d51db5`, bump PR #460; listed in the MCP Registry,
-`.mcpb` attached to the GitHub Release). Next: the owner's MC18 on 1.2.0.
+`.mcpb` attached to the GitHub Release). MC18 done 2026-11-20: the owner
+installed 1.2.0 through `mcp install`, the Claude Code plugin, the `.mcpb`
+bundle and the MCP Registry. Next: MC22.
 MC22 added 2026-11-20: MC18 found that VS Code's MCP search reads GitHub's
 MCP Registry, which does not list the server.
 Testing is Linux only (D13).
@@ -543,7 +545,7 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 | MC15 | `.mcpb` build script, manifest, CI validation and `tools/list` check, release asset. **Done 2026-11-19** (PR #450) | 3 | medium | Sonnet | MC0 |
 | MC16 | Claude Code plugin and repository marketplace, with CI validation. **Done 2026-11-19** (PR #447) | 3 | low | Haiku | MC0 |
 | MC17 | Increment 3 docs (User Guide install options) and a threat-model row for the release assets. **Done 2026-11-19** (PR #454: User Guide "Other ways to install the MCP server", README link, threat-model row for the plugin and marketplace; the registry and `.mcpb` rows came with MC14 and MC15). MC18 checks the `.mcpb` open gesture the guide describes | 3 | low | Sonnet | MC14-MC16 |
-| MC18 | Owner: the first release with registry, bundle and plugin; check that each one installs | 3 | low | Owner | MC17 |
+| MC18 | Owner: the first release with registry, bundle and plugin; check that each one installs. **Done 2026-11-20** (owner, on 1.2.0: `mcp install`, plugin, `.mcpb` bundle and Registry each install) | 3 | low | Owner | MC17 |
 | MC19 | `"mcpName": "io.github.raulkivi/agent-cost-analyzer"` in `packages/cli/package.json`, with a manifest test, so Increment 1's release carries it (§3.2). **Done 2026-11-18** (PR #430) | 1 | low | Haiku | — |
 | MC20 | VS Code Insiders as its own client `vscode-insiders` (D14): detect `code-insiders` or its `Code - Insiders/User` folder, write `Code - Insiders/User/mcp.json` under `servers`, skip when `~/.vscode-insiders/extensions` holds the AI Credits Analyzer extension; MC7 smoke and MC8 check extended. **Done 2026-11-18** (PR #443) | 1 | low | Sonnet | MC9 |
 | MC22 | GitHub MCP Registry listing: VS Code's MCP search (`@mcp`) reads `https://api.mcp.github.com` (the `mcpGallery.serviceUrl` in VS Code's `product.json`), GitHub's own list, not the official registry, so it does not find the server (MC18, 2026-11-20). New servers are onboarded by hand: per §3.3, the owner emails `partnerships@github.com`, then the listing is checked (§3.3 steps 1-5); no ETA. Until listed, the User Guide gives the `chat.mcp.gallery.serviceUrl` workaround (added 2026-11-20). Done when `@mcp agent-cost-analyzer` finds the server in VS Code with default settings | 3 | low | Owner + Haiku (checks) | MC14 |
