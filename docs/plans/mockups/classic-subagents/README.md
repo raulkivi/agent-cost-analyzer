@@ -1,9 +1,9 @@
 # Classic subagent credits mock-ups (SA0b)
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Boards for task SA0b of step 10.19 in
-[classic-subagent-credits-implementation.md](../../local/classic-subagent-credits-implementation.md) §6.
+[classic-subagent-credits-implementation.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/classic-subagent-credits-implementation.md) §6.
 The owner approves them before SA13 (web panel), SA14 (MCP App U1) and SA15
 (extension) start. Status: **drawn, awaiting owner approval.**
 

@@ -23,7 +23,7 @@ import { boardComparison, boardReplay, lost, mea, sim } from "./replay/fixtures.
 import { SessionCostView } from "./SessionCostView.js";
 import { findingsResult, SAMPLE_FINDINGS } from "./findings/fixtures.js";
 
-// A14 (docs/plans/mcp-apps.md §7): axe-core over every rendered state of
+// A14 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §7): axe-core over every rendered state of
 // U1-U3 and the no-view state. Colour contrast is not checked here (jsdom
 // has no layout or computed colours); A6's theme-contrast tests cover it.
 

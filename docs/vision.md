@@ -1,6 +1,6 @@
 # Vision: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 ## 1. Problem
 
@@ -210,13 +210,13 @@ showing the behavioral-proxy fallback silently.
 - Not a replacement for the `/chronicle` skill's standup/search features —
   this app is about visual, turn-by-turn exploration of cache/token/AI Credits
   mechanics, not general activity reporting. The one deliberate extension
-  (Phase 9.10, [plans/tool-call-audit.md](plans/tool-call-audit.md)) is a
+  (Phase 9.10, [tool-call-audit.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/tool-call-audit.md)) is a
   **tool-call audit**: which tools and shell commands an agent ran, how many
   failed and why (missing utility, wrong directory, bad arguments, …), and
   what that failure recovery cost — because failed calls are a direct,
   avoidable driver of token spend. It is exposed in the UI and through a
   local, read-only MCP server. A second extension (Phase 9.11,
-  [plans/insights-dashboard.md](plans/insights-dashboard.md)) is a
+  [insights-dashboard.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/insights-dashboard.md)) is a
   QlikView-style **insights dashboard** across every provider. It
   associates cost, tool calls and **security signals** (risky commands,
   credential access, statistical anomalies, first-time behaviour) and says

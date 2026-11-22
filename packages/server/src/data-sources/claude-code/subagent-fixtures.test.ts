@@ -11,7 +11,7 @@ import {
   makeSymlinkedSubagentTranscript,
 } from "./subagent-fixture-builders.js";
 
-// CS3 of docs/plans/claude-code-subagents.md: synthetic fixtures for Claude
+// CS3 of https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/claude-code-subagents.md: synthetic fixtures for Claude
 // Code subagent transcripts (fixtures/claude-code/subagents/README.md).
 const fixturesDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),

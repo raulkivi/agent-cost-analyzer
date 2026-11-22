@@ -1,6 +1,6 @@
 # VS Code extension: implementation and deployment plan
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **code and docs complete (Phase 10, #57-#80); 0.1.0 released
 (`ext-v0.1.0`, 2026-11-03).** Some VS Code manual checks stay open, see
@@ -34,9 +34,9 @@ Progress (2026-10-28):
 | 10.16 | UI automation of the manual checks in a real VS Code (`wdio-vscode-service` under xvfb) | Merged (#117, #121, #127; T0-T14 done, T15 open; later specs #139, #157, #172): 13 spec files, 38 tests. Automated in a real window: 1.2, 1.3, 1.5-1.7, 1.9-1.13, 2.1, 2.2, 2.5, 2.6; partly: 1.1, 1.8 (not the charts), and 1.4 and 1.14 over fixtures; also 13.8 and R1. 2.3 and 2.4 only at tool level in the integration suite; an opt-in real-Copilot suite for 1.4, 2.3, 2.4 is written but never run end to end. The `extension-ui` CI job is informational (76 of 78 `main` runs green, 2026-11-04 to 2026-11-10); the owner decided 2026-11-11 to make it required (T15 closed, step 10.17). See [vscode-ui-automation.md](vscode-ui-automation.md) §6 |
 | 10.17 | Automated pre-release UI gate: wdio for VS Code and Copilot, Playwright for web | Done 2026-11-11 ([release-ui-gate.md](release-ui-gate.md)) |
 | 10.18 | Copilot Chat sessions from empty windows (debug logs under `globalStorage`) | Done 2026-11-11 |
-| 10.19 | AI Credits of classic Copilot Chat subagents ([classic-subagent-credits-implementation.md](classic-subagent-credits-implementation.md)) | Done 2026-11-13 (SA0 to SA18, exit criterion met on the owner's logs by `npm run test:real-data`); the release is open. Tasks and deviations: the plan's §6 and §15 |
-| 10.20 | Classic subagent tool calls in the tool audit (follow-up from 10.19 D3) | Planned: [subagent-tool-audit.md](subagent-tool-audit.md), approved 2026-11-14; a 1.0 criterion (C10) |
-| 10.21 | Monthly AI Credits allowance gauge ([monthly-allowance.md](monthly-allowance.md)) | Done 2026-11-13 (MA0 to MA12, exit criterion met); before release, the real-Copilot check of the gauge (release UI gate). MA13 (standalone app) is a later increment |
+| 10.19 | AI Credits of classic Copilot Chat subagents ([classic-subagent-credits-implementation.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/classic-subagent-credits-implementation.md)) | Done 2026-11-13 (SA0 to SA18, exit criterion met on the owner's logs by `npm run test:real-data`); the release is open. Tasks and deviations: the plan's §6 and §15 |
+| 10.20 | Classic subagent tool calls in the tool audit (follow-up from 10.19 D3) | Planned: [subagent-tool-audit.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/subagent-tool-audit.md), approved 2026-11-14; a 1.0 criterion (C10) |
+| 10.21 | Monthly AI Credits allowance gauge ([monthly-allowance.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance.md)) | Done 2026-11-13 (MA0 to MA12, exit criterion met); before release, the real-Copilot check of the gauge (release UI gate). MA13 (standalone app) is a later increment |
 
 
 ## 1. Context
@@ -2231,7 +2231,7 @@ suite only, to cover the D4 path derivation for real.
   agents.
 
 **Standalone app, on tag `app-v*`.** A GitHub Release with notes only (it
-runs from source), and the root `package.json` version bump. Since the npm package (npm-package.md §4.7) the bump also covers `packages/cli/package.json`, and `release-check.mts --also` refuses a tag whose version differs from it. Its
+runs from source), and the root `package.json` version bump. Since the npm package (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.7) the bump also covers `packages/cli/package.json`, and `release-check.mts --also` refuses a tag whose version differs from it. Its
 changelog sits at the repo root.
 
 `release-app.yml` has two jobs, as the extension's does. **build** runs the
@@ -2240,7 +2240,7 @@ checks, `npm audit --omit=dev --audit-level=high`, one `npm pack` of
 (`release` environment, owner approval) verifies the tarball's SHA-256,
 checks that the owner is the package's only npm maintainer, publishes it
 through npm trusted publishing (OIDC, no token, with provenance) and creates
-the GitHub Release with the tarball attached (npm-package.md §4.10). The
+the GitHub Release with the tarball attached (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.10). The
 owner configures the npm trusted publisher and adds `app-v*` to the
 `release` environment's deployment rule first.
 

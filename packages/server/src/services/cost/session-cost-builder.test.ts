@@ -313,7 +313,7 @@ describe("buildSessionCost", () => {
       expect(buildSessionCost(session([turn(0)]))).not.toHaveProperty("subagents");
     });
 
-    // Step CS11 (claude-code-subagents.md D13): a provider without AI Credits
+    // Step CS11 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/claude-code-subagents.md D13): a provider without AI Credits
     // shows the runs' tokens and priced cost beside the unknown AI Credits.
     describe("Claude Code runs (step CS11, D13)", () => {
       const portal: Attribution = {

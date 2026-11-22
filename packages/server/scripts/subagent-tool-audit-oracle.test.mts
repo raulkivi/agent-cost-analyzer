@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // The ST15 real-data check's oracle (subagent-tool-audit-oracle.mts) over
-// hand-made logs. Each rule is the plan's (subagent-tool-audit.md §4, §6, §11),
+// hand-made logs. Each rule is the plan's (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/subagent-tool-audit.md §4, §6, §11),
 // not the code's: a wrong helper fails here before it can agree with a wrong
 // product.
 import { readFileSync } from "node:fs";

@@ -6,7 +6,7 @@ import { turnLinesOf } from "../pricing/turn-cost-lines.js";
 import type { SessionCostSources } from "../analysis/analysis-query-service.js";
 import { subagentSpendCost } from "./subagent-spend-cost.js";
 
-// Step CS13 (docs/plans/claude-code-subagents.md §5.6): a Claude Code
+// Step CS13 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/claude-code-subagents.md §5.6): a Claude Code
 // session has no AI Credits, so the web UI and the MCP App read the priced
 // cost from the usage: `pricedCost` on the turn, the main agent's own line
 // and each run, each line priced on its own model (the same lines the cost

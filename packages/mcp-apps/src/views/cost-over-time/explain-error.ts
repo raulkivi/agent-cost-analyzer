@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { parseUnknownProjectIdText } from "@agent-cost-analyzer/domain";
 
-// A tool error as U9 explains it (docs/plans/mcp-apps.md §9.1, question 1).
+// A tool error as U9 explains it (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §9.1, question 1).
 // In the extension get_project_cost answers an unknown id with the product's
 // no-projects reason appended (domain's unknownProjectIdText); the view puts
 // that reason where the chart would be. Only a reason the domain knows

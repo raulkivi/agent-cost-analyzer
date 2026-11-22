@@ -6,7 +6,7 @@ import { connectCostFixture } from "../test-support/cost-analysis-fixture.js";
 import { readMcpSurface, surfaceFixture, type McpSurfaceClient } from "../test-support/mcp-surface.js";
 import { InMemoryViewSource } from "./apps/view-source.js";
 
-// docs/plans/mcp-sdk-2-migration.md M2: what a host reads of the standalone
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-sdk-2-migration.md M2: what a host reads of the standalone
 // server (tools with annotations, _meta.ui and output schemas, instructions,
 // capabilities, the views resource, prompts), pinned by a snapshot taken on
 // SDK 1.32.2 and ext-apps 1.7.5. A change of SDK must leave it as it is;

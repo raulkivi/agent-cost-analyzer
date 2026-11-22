@@ -25,7 +25,7 @@ export type DesktopScene = Scene<DesktopAction>;
 
 const step = (label: string, action: DesktopAction, beatMs: number) => ({ label, action, beatMs });
 
-// M1 (docs/plans/docs-refresh-and-demo-recordings.md §4.2, §4.3). The prompt goes in before the recording
+// M1 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/docs-refresh-and-demo-recordings.md §4.2, §4.3). The prompt goes in before the recording
 // starts (D17: no typing or greeting on screen), and the take stops at the side pane (D18: no fullscreen).
 const M1: DesktopScene = {
   id: "M1",
@@ -168,7 +168,7 @@ const M7: DesktopScene = {
   ],
 };
 
-// M8 (docs/plans/demo-recordings-1.0.md §3.2). The row opens in place in the pane, so the take stays in one
+// M8 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/demo-recordings-1.0.md §3.2). The row opens in place in the pane, so the take stays in one
 // view: the unused-tools row, Open cost on one of its sessions (U1 in place), Back to savings. The two tools
 // (get_savings_report, get_session_cost) are approved through the always-allow prompt like the other scenes' (D16).
 // The beats after the recording starts add up to 20 s.

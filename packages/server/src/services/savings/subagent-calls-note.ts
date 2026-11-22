@@ -4,7 +4,7 @@ import type { SavingsCoverage } from "@agent-cost-analyzer/domain";
 import { isSubagentCall } from "../tool-audit/outcome-tally.js";
 import type { SavingsSessionInput } from "./savings-detector.js";
 
-// Step 10.20 D7 (docs/plans/subagent-tool-audit.md section 5.6): the tool-call
+// Step 10.20 D7 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/subagent-tool-audit.md section 5.6): the tool-call
 // savings detectors read main-agent calls only in 1.0. A row says how many
 // subagent calls its sessions held and it left out, so the saving is never
 // read as covering them. The sessions were analyzed (for the main agent), so

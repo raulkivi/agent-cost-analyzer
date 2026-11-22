@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 // OPT-IN, OWNER-RUN, spends real AI Credits (about 1 per run): the views of the
 // Phase 12 Increment 3 tools the extension serves, in a real Copilot Chat
-// (task A33, docs/plans/mcp-apps.md §8.3; step 10.17's rule: no hand
+// (task A33, https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §8.3; step 10.17's rule: no hand
 // checklist gates a release). U12 (replay_session, compare_models_for_session),
 // U13 (get_price_changes), U4 (get_session_audit, get_audit_rollup) and U5
 // (list_sessions). No billing view: the extension serves no get_statement or

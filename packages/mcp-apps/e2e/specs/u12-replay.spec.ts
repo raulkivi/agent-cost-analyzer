@@ -5,7 +5,7 @@ import { messagesOffTemplate, modelTurnsIn, toolCallsIn } from "../support/call-
 import { APP_VERSION, expect, inEachClaudeSet, test } from "../support/host-fixture.js";
 import type { McpHost } from "../support/mcp-host.js";
 
-// A27, U12 (docs/plans/mcp-apps.md §4.5, §8.3, board Replay.dc.html and
+// A27, U12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.5, §8.3, board Replay.dc.html and
 // Increment3States.dc.html boards 8-10; the owner's answers are §9.2 Q1-Q5),
 // in Claude Desktop, light and dark. Two kinds of spec:
 //   - "real server": the fixture home's two-turn Claude Code session of

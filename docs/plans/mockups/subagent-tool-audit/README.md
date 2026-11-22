@@ -1,9 +1,9 @@
 # Subagent tool-call audit mock-ups (ST2)
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Boards for task ST2 of step 10.20 in
-[subagent-tool-audit.md](../../subagent-tool-audit.md) §5.7. The owner approves
+[subagent-tool-audit.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/subagent-tool-audit.md) §5.7. The owner approves
 them before ST12 (web and extension webview) and ST13 (MCP App U4 and findings
 view) start. Status: **approved by the owner 2026-11-15.**
 

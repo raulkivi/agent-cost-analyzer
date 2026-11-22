@@ -6,7 +6,7 @@ import { SEVERITY_ORDER } from "./insights-model.js";
 import { computeKpis, countBy, type InsightRowsView } from "./measures.js";
 
 // "What happened" — a plain-language summary of the current selection
-// (docs/plans/insights-dashboard.md §5): what, when, and what to look at.
+// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/insights-dashboard.md §5): what, when, and what to look at.
 
 const MAX_LISTED = 3;
 

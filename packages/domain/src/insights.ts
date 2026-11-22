@@ -7,7 +7,7 @@ import { toolKindSchema } from "./tool-call-record.js";
 import { triggeredEventSchema } from "./turn.js";
 import { addTurnCostFigures, costBasisTotalsSchema, turnCostFiguresSchema } from "./cost-figure.js";
 
-// Phase 9.11 insights dashboard (docs/plans/insights-dashboard.md §3): a
+// Phase 9.11 insights dashboard (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/insights-dashboard.md §3): a
 // small star schema of flat, already-redacted rows across every provider.
 // The browser's associative engine links them by key: sessions ← turns ←
 // toolCalls, and sessions ← findings.
@@ -304,7 +304,7 @@ export const insightsDatasetSchema = z.object({
 
 export type InsightsDataset = z.infer<typeof insightsDatasetSchema>;
 
-// Phase 9.12 (docs/plans/mcp-tools-v2.md §4): the MCP list_findings result —
+// Phase 9.12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-tools-v2.md §4): the MCP list_findings result —
 // findings resolved to their session so a client never has to join keys.
 export const enrichedFindingSchema = insightFindingSchema.extend({
   providerId: z.string(),

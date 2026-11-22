@@ -1,6 +1,6 @@
 # Architecture: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-19 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 ## 1. Purpose & scope
 
@@ -152,7 +152,7 @@ constraint 3. See §6.2.1 for the provider boundary in detail.
 
 **Packaged entry (npm package, from app 0.16.0).** The diagram shows the dev
 shape: Vite serves the SPA and proxies `/api` to the server. The npm package
-`agent-cost-analyzer` (`packages/cli`, [plans/npm-package.md](plans/npm-package.md))
+`agent-cost-analyzer` (`packages/cli`, [npm-package.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md))
 runs one Node.js process that serves both on a single loopback origin:
 `npx agent-cost-analyzer` binds `127.0.0.1` (default port 5199, reusing a
 running instance, then the next ten ports), serves the API and the built web
@@ -192,13 +192,13 @@ CLIs with `execFile`, never a shell.
 | `services/session-enricher` | Converts a selected provider's normalized structural/usage records into `Session`/`Turn` values; it does not know whether they originated in VS Code, mitmproxy, Anthropic, or OpenAI |
 | `platform/vscode-paths` | Resolves the active VS Code variant's user-data directory across OSes (Linux/macOS/Windows, Stable/Insiders) so `sqlite`, `jsonl`, and `vscode-settings` all locate the right files without duplicating detection logic |
 | `data-sources/vscode-settings` | Reads and merges the user (and workspace, if present) `settings.json` (JSONC) to read the prerequisite Copilot Chat debug-logging settings |
-| `services/insights` | Phase 9.11 ([plans/insights-dashboard.md](plans/insights-dashboard.md)): flattens sessions from every registered provider into the `InsightsDataset` star schema and runs injected `FindingDetector` strategies: rule-based security signals (`SecurityRule` table), robust z-score anomalies, and first-use behaviour changes. Pure apart from `InsightsService`, which loads providers through a narrow `listProviders()` port |
+| `services/insights` | Phase 9.11 ([insights-dashboard.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/insights-dashboard.md)): flattens sessions from every registered provider into the `InsightsDataset` star schema and runs injected `FindingDetector` strategies: rule-based security signals (`SecurityRule` table), robust z-score anomalies, and first-use behavior changes. Pure apart from `InsightsService`, which loads providers through a narrow `listProviders()` port |
 | `services/cost-attribution` | Phase 15 ([plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md) §4, §7): `RepositoryResolver` (a folder → its repository, over a read-only `FileSystem` port, with `RemoteUrlNormalizer`), `ProjectCatalog` and `ProjectMatcher` (the projects file; one project per turn, D1), capture rules for mitmproxy, the vendor and channel resolvers, and `SessionAttributor`, which gives a session or turn its repository, project, vendor and channel (§6.4) |
 | `services/pricing` | Phase 15 §5–§6: the `PriceBook` with history (bundled `fixtures/price-book/` plus the user's versions), `CostPricer`, which gives each turn its billed, reported and priced `CostFigure`s, and `PriceChangeDetector` (documented and observed price changes) |
 | `services/cost-analysis` | Phase 15 §8: the cost cube over the Insights dataset and the pure builders for cost over time, compare, project cost and variance (usage, price and mix effects), behind `CostAnalysisService` |
 | `services/billing` | Phase 15 §8.5–§8.6: statements (draft, freeze, diff, CSV/JSON/Markdown export) and estimates (a p50–p90 range); standalone app only |
 | `data-sources/projects`, `data-sources/statements` | Phase 15: the projects file and issued statements, as JSON in the app's own settings folder (the only files the app writes besides `settings.json`, §11.2) |
-| `services/monthly-allowance/`, `data-sources/log-providers/file-allowance-settings-store.ts`, `composition/create-monthly-allowance.ts` | MA13 ([plans/monthly-allowance-standalone.md](plans/monthly-allowance-standalone.md) §4.4–§4.6, standalone only): `MonthlyAllowanceService` (`get`, `save`) reads the VS Code provider's sessions whatever provider is active (D5), applies the domain's `computeMonthlyAllowance` to the allowance in settings and answers a `MonthlyAllowanceAnswer`: state (`not-set`, `no-source`, `no-sessions`, `unknown`, `known`), period in the machine's zone, figures, by-harness split and the VS Code variant label (a fixed string, never a path). It depends on the `CopilotSessionSource` and `AllowanceSettingsStore` ports (DIP). `FileAllowanceSettingsStore` keeps the allowance under `monthlyAllowance` in `settings.json`; `createMonthlyAllowance` wires both entry points, so the header and `get_monthly_allowance` agree. `mcp/allowance-tools.ts`, `mcp/allowance-tool-output.ts`: the `allowance` tool group, `get_monthly_allowance` (read-only, no arguments), whose text is the domain's wording and carries numbers, day keys and the zone only |
+| `services/monthly-allowance/`, `data-sources/log-providers/file-allowance-settings-store.ts`, `composition/create-monthly-allowance.ts` | MA13 ([monthly-allowance-standalone.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md) §4.4–§4.6, standalone only): `MonthlyAllowanceService` (`get`, `save`) reads the VS Code provider's sessions whatever provider is active (D5), applies the domain's `computeMonthlyAllowance` to the allowance in settings and answers a `MonthlyAllowanceAnswer`: state (`not-set`, `no-source`, `no-sessions`, `unknown`, `known`), period in the machine's zone, figures, by-harness split and the VS Code variant label (a fixed string, never a path). It depends on the `CopilotSessionSource` and `AllowanceSettingsStore` ports (DIP). `FileAllowanceSettingsStore` keeps the allowance under `monthlyAllowance` in `settings.json`; `createMonthlyAllowance` wires both entry points, so the header and `get_monthly_allowance` agree. `mcp/allowance-tools.ts`, `mcp/allowance-tool-output.ts`: the `allowance` tool group, `get_monthly_allowance` (read-only, no arguments), whose text is the domain's wording and carries numbers, day keys and the zone only |
 | Request traces (`RequestTraceReader`) | Phase 14 ([plans/analyze-session-replay.md](plans/analyze-session-replay.md) §4.1, step 14.2): an optional `LogProvider` capability (`canReadRequestTrace`, ISP) that reads a session's main chain as a numbers-only `RequestTrace`, one record per LLM request. `ClaudeCodeLogProvider` and `VscodeLogProvider` implement it (classic store first, then Agent Host through `CopilotSessionSource.readRequestTrace`); pi and mitmproxy don't yet (D1). One pure builder per provider, each reusing its provider's own turn building: `buildClaudeCodeRequestTrace` (`data-sources/claude-code/request-trace-builder.ts`), `buildLocalRequestTrace` (`data-sources/jsonl/local-request-trace.ts`) and `buildAgentHostRequestTrace` (`services/session-enricher/agent-host-request-trace.ts`) |
 | `services/session-replay/request-trace-scripter.ts` | Phase 14 step 14.3: `scriptFromRequestTrace` (and the injectable `RequestTraceScripter`) turns a trace into a `ScenarioScript` with compaction, clear, model-switch and `extended-ttl` events (pure). It replaced 13.5a's `scriptFromCapture`; calibration replays its captures through it |
 | `services/session-replay/replay-model-resolver.ts` | Phase 14 step 14.4: `ReplayModelResolver` maps a log's model id (a date suffix, `[1m]`, `copilot/`) to a vendor profile's model through Phase 15's `candidateModelIds`; no near match is guessed, and a model whose caching is undocumented is refused |
@@ -210,12 +210,12 @@ CLIs with `execFile`, never a shell.
 | `services/session-replay/replay-query-params.ts` | Phase 14 step 14.5: the replay options' zod schemas, shared by HTTP, the webview RPC and MCP so all three give the same messages |
 | `composition/create-session-replay.ts` | Phase 14 step 14.5: `createSessionReplay`, the one wiring of `SessionReplayService` used by the standalone app, its MCP server, the extension and its MCP server |
 | `mcp/replay-tools.ts` | Phase 14 step 14.5 (D7): the `replay` tool group, `replay_session` and `compare_models_for_session` (read-only, domain output schemas) |
-| `services/savings/` | Phase 16 ([plans/savings-report.md](plans/savings-report.md) §5.2): the savings report, a service of its own and not a finding kind (D2). `SavingsService.report(filter, options, signal)` loads the window's sessions one at a time (at most `MAX_ROLLUP_SESSION_LIMIT`, 500, newest first) through `SavingsSessionLoader`, runs the registered `SavingsDetector` strategies and ranks the result with the pure `SavingsRanker`. Detectors take plain data and return plain data: `UnusedToolsDetector` (O1), `CacheBreakDetector` (O2–O4, over the pure `cache-break-classifier.ts` and `cache-rules.ts`), `FailedCallsDetector` (O5, over `buildSessionAudit`) and `CheaperModelDetector` (O6, over a `ReplayComparer` port, with `cheaper-model-candidates.ts`). `CounterfactualPricer` prices N tokens as one token type versus another through `CostPricer`. `savings-names.ts` (`savingsName`) folds, redacts and caps every log-derived name; `savings-window.ts` is the window (30 days to today by default); `savings-query-params.ts` is the zod query schema shared by HTTP, RPC and MCP; `savings-session-order.ts` (`sessionsByContribution`, D16) lists each opportunity's sessions largest contribution first, for O1, O2–O4 and O5, by the session's own saving. Increment 3 ([plans/savings-increment-3.md](plans/savings-increment-3.md)): `sessionRefOf` (`savings-amounts.ts`) puts each session's start and its own saving over the window on its reference (V24, every detector); `UnusedToolsDetector` lists a group's tools with their estimated tokens (V26), weights a tool by the requests it was declared for and leaves a forked pi branch's shared requests out (V27, D27, D34), and gives a session with no known price channel its own `unused-tools:<group>:unpriced` row, "Not priced" with the channel's reason (D33) |
+| `services/savings/` | Phase 16 ([plans/savings-report.md](plans/savings-report.md) §5.2): the savings report, a service of its own and not a finding kind (D2). `SavingsService.report(filter, options, signal)` loads the window's sessions one at a time (at most `MAX_ROLLUP_SESSION_LIMIT`, 500, newest first) through `SavingsSessionLoader`, runs the registered `SavingsDetector` strategies and ranks the result with the pure `SavingsRanker`. Detectors take plain data and return plain data: `UnusedToolsDetector` (O1), `CacheBreakDetector` (O2–O4, over the pure `cache-break-classifier.ts` and `cache-rules.ts`), `FailedCallsDetector` (O5, over `buildSessionAudit`) and `CheaperModelDetector` (O6, over a `ReplayComparer` port, with `cheaper-model-candidates.ts`). `CounterfactualPricer` prices N tokens as one token type versus another through `CostPricer`. `savings-names.ts` (`savingsName`) folds, redacts and caps every log-derived name; `savings-window.ts` is the window (30 days to today by default); `savings-query-params.ts` is the zod query schema shared by HTTP, RPC and MCP; `savings-session-order.ts` (`sessionsByContribution`, D16) lists each opportunity's sessions largest contribution first, for O1, O2–O4 and O5, by the session's own saving. Increment 3 ([savings-increment-3.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md)): `sessionRefOf` (`savings-amounts.ts`) puts each session's start and its own saving over the window on its reference (V24, every detector); `UnusedToolsDetector` lists a group's tools with their estimated tokens (V26), weights a tool by the requests it was declared for and leaves a forked pi branch's shared requests out (V27, D27, D34), and gives a session with no known price channel its own `unused-tools:<group>:unpriced` row, "Not priced" with the channel's reason (D33) |
 | `composition/create-savings-report.ts` | Phase 16 SR10: `createSavingsReport`, the one wiring of `SavingsService` over the price book, attribution, turn pricer and session replay, used by the standalone app, the extension and both MCP servers (`mcp-services.ts`, Increment 2) |
-| `composition/package-layout.ts`, `composition/bundled-vendor-profiles.ts` | npm package task NP3 ([plans/npm-package.md](plans/npm-package.md) §4.2 "Paths"): `PackageLayout`, where a packaged build keeps the learn scripts, vendor profiles, price book, MCP App views, web app and the `package.json` whose version it reports; `npmPackageLayout(packageRoot)` is the npm tarball's layout. `loadBundledVendorProfiles` prices the profiles from the layout's price book. Without a layout each loader keeps its `import.meta.url` default, so the dev paths are unchanged |
+| `composition/package-layout.ts`, `composition/bundled-vendor-profiles.ts` | npm package task NP3 ([npm-package.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md) §4.2 "Paths"): `PackageLayout`, where a packaged build keeps the learn scripts, vendor profiles, price book, MCP App views, web app and the `package.json` whose version it reports; `npmPackageLayout(packageRoot)` is the npm tarball's layout. `loadBundledVendorProfiles` prices the profiles from the layout's price book. Without a layout each loader keeps its `import.meta.url` default, so the dev paths are unchanged |
 | `standalone-app.ts`, `mcp/standalone-mcp-server.ts` | The standalone composition roots, each taking an optional `PackageLayout` (the extension passes its paths the same way, G4): `composeStandaloneApp` runs the startup configuration check (§6.3) and returns `createApp`'s app and the version, without listening; `createStandaloneMcpServerFactory` composes the MCP services once and returns the version and a server factory, and `serveStandaloneMcpStdio` serves it over stdio. `server.ts` and `mcp/stdio.ts` are thin dev entries over them; the npm package's CLI is the other caller |
 | `mcp/savings-tools.ts`, `mcp/savings-tool-output.ts` | Phase 16 SR19 (plan §8): the `savings` tool group, `get_savings_report` (read-only, both servers; `limit` 1–20, default 10; `includeSimulated` off by default). `savingsToolOutput` cuts the report to `limit` rows with their rank (ranked rows only, R12) and at most 10 sessions each, with their start and own saving (`sessionsTotal` says how many), and an unused-tools row to at most 20 tools (`toolsTotal`; the text answer prints 5), renders the fixed action text, and folds, redacts and caps every log-derived string (names through `savingsName`; reasons, including an unknown amount's, through `excerptOf` at 600 characters, SR22). `savingsReportText` is the ranked text answer for a host without views. `review_costs` starts from this tool when the group is served |
-| `mcp/apps/` | Phase 12 ([plans/mcp-apps.md](plans/mcp-apps.md) §4.2): the MCP App views as a tool group. `registerAppViews` registers the one `ui://<server name>/views.html` resource, adds `_meta.ui.resourceUri` to the tools in `APP_VIEW_TOOL_NAMES` that the server actually registered (`captureRegisteredTools` records them, so the other groups don't change) and registers the app-only `get_turn_series`. `ViewSource` is the port for the HTML (`FileViewSource` reads the built file on every call, `InMemoryViewSource` is the test double). `injectBrand` fills the page's `aca-brand` meta with the escaped `ViewBrand` from `toViewBrand(identity, version)`. `resolveAppViews(path, onMissing)` turns a path into the `appViews` option, or into nothing when the file is missing, so both entry points start without the group instead of failing at `resources/read` |
+| `mcp/apps/` | Phase 12 ([mcp-apps.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md) §4.2): the MCP App views as a tool group. `registerAppViews` registers the one `ui://<server name>/views.html` resource, adds `_meta.ui.resourceUri` to the tools in `APP_VIEW_TOOL_NAMES` that the server actually registered (`captureRegisteredTools` records them, so the other groups don't change) and registers the app-only `get_turn_series`. `ViewSource` is the port for the HTML (`FileViewSource` reads the built file on every call, `InMemoryViewSource` is the test double). `injectBrand` fills the page's `aca-brand` meta with the escaped `ViewBrand` from `toViewBrand(identity, version)`. `resolveAppViews(path, onMissing)` turns a path into the `appViews` option, or into nothing when the file is missing, so both entry points start without the group instead of failing at `resources/read` |
 | `services/cost/turn-series-builder.ts` | Phase 12 A1: `buildTurnSeries` turns a session into the bounded per-turn figures (default 500 turns, at most 2000) that `get_turn_series` returns for the chart. `SessionCost` carries only `topTurns` |
 | `services/config-check` | Runs at server startup and on demand (§6.3): checks `agentDebugLog.fileLogging.enabled` and `maxRetainedSessionLogs` against constraints 8/10, producing actionable `ConfigWarning`s |
 | `domain` | The shared normalized TypeScript types (§5), plus schema validation, used by every other module and re-exported to the frontend build |
@@ -323,7 +323,7 @@ Keeping this in its own package (not duplicated ad hoc in each app) is what
 makes constraint 3 (decoupling) actually enforceable rather than aspirational.
 
 Pure logic that both products must compute the same way lives here too.
-`src/allowance/` (MA13, [plans/monthly-allowance-standalone.md](plans/monthly-allowance-standalone.md)
+`src/allowance/` (MA13, [monthly-allowance-standalone.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md)
 §4.1, D8) holds the monthly allowance: the billing period (`periodOf`), day
 keys in the user's zone (`dayKeyOf`, `dayStartInstant`), the known-only sum
 (`knownSum`, `billedCredits`, `knownCredits`), the figures
@@ -407,7 +407,7 @@ interface ToolCallRecord {
   origin?: ToolCallOrigin; // step 10.20: absent = main agent
 }
 
-// Phase 9.10 (plans/tool-call-audit.md). "unknown" requires a reason
+// Phase 9.10 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/tool-call-audit.md). "unknown" requires a reason
 // (constraint 6); only error/interrupted/denied carry a failureCategory.
 interface ToolCallOutcome {
   status: "success" | "error" | "interrupted" | "denied" | "unknown" | "canceled"; // canceled: a user stop, no failureCategory
@@ -513,7 +513,7 @@ type RepositoryAttribution =
 ```
 
 Classic subagent runs (step 10.19, `packages/domain`;
-[plans/classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md)
+[classic-subagent-credits-implementation.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/classic-subagent-credits-implementation.md)
 §4.1). All additions are optional:
 
 - `subagentRunUsageSchema`: one run of a classic Copilot Chat subagent.
@@ -691,7 +691,7 @@ identities' instructions share `COST_BASIS_INSTRUCTIONS` (the three cost
 bases, as-of-use versus today's prices, 1 AI Credit = $0.01).
 
 MCP SDK and transport (since 2026-11-12,
-[plans/mcp-sdk-2-migration.md](plans/mcp-sdk-2-migration.md)):
+[mcp-sdk-2-migration.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-sdk-2-migration.md)):
 - **Packages.** `@modelcontextprotocol/server`, `client` and `core`
   2.4.0 and `@modelcontextprotocol/ext-apps` 2.0.4, each pinned exactly.
   `@modelcontextprotocol/sdk` 1.x is gone. `packages/server` lists
@@ -1003,7 +1003,7 @@ Where a rule a turn depends on is `unknown` for the chosen vendor, the turn's
 cache fields and cost are unavailable, never zero (constraint 6). Vendors whose
 whole caching kind is unknown are listed but not simulated. The rules and
 their sources are in
-[plans/vendor-aware-learn-simulation.md](plans/vendor-aware-learn-simulation.md)
+[vendor-aware-learn-simulation.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/vendor-aware-learn-simulation.md)
 §5 and [learn-rule-register.md](learn-rule-register.md).
 
 Phase 14 runs this same simulator, with the same rules, on the token shape
@@ -1590,7 +1590,7 @@ list, the detail, the status bar and the MCP tools, so they cannot drift.
 
 ##### Classic subagent tool calls in the audit (step 10.20)
 
-[plans/subagent-tool-audit.md](plans/subagent-tool-audit.md). The detail read
+[subagent-tool-audit.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/subagent-tool-audit.md). The detail read
 of a classic session puts the tool calls of the subagent runs a turn started
 into the same audit as the main agent's calls, each with `origin`. The list
 path (`listSessions`) reads no child file for it.
@@ -2300,7 +2300,7 @@ match shows a plain-text message pointing at `npm run configure` rather
 than the VS Code-specific hint.
 
 **Tool inventory and forks for the savings report** (savings Increment 3
-V27, [plans/savings-increment-3.md](plans/savings-increment-3.md) §7.1,
+V27, [savings-increment-3.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md) §7.1,
 §7.4). `replaySystemMessages` replays a branch's system messages in order
 and keeps, per declared tool, its last definition (so a tool removed
 mid-session still has a definition size) and the assistant requests after
@@ -2445,7 +2445,7 @@ size threshold. A session's subagent transcripts are read separately; see
 "Subagent runs" below.
 
 **Subagent runs (plan C15,
-[plans/claude-code-subagents.md](plans/claude-code-subagents.md)).** A
+[claude-code-subagents.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/claude-code-subagents.md)).** A
 session's runs live beside its file: `<session-id>/subagents/agent-<id>.jsonl`
 with an `agent-<id>.meta.json`. `listClaudeCodeSessionFiles` still walks two
 levels and never lists them; the provider finds them from the session file's
@@ -2940,13 +2940,13 @@ themselves.
 | `GET /api/sessions/:id` | Full enriched `Session` from the active provider (mode=`analyze`), including `usageDataAvailable` |
 | `GET /api/sessions/:id/system-prompt` | Raw `text/plain` of the session's captured base system prompt (Phase 6 addendum); 404 if no system-prompt artifact was captured |
 | `GET /api/sessions/:id/turns/:turnIndex` | `TurnInspectorDetail` — one turn's actual LLM request/response round-trip(s), scoped to only the content that turn added (Phase 9.5, §6.2.4); used for on-demand deep dives, avoiding sending every turn's full detail up front. 404 if the session or turn index doesn't exist; 400 for a non-numeric/negative `turnIndex` |
-| `GET /api/sessions/:id/audit` | `SessionAudit` (Phase 9.10, [plans/tool-call-audit.md](plans/tool-call-audit.md)): per-status totals, failure rate over known outcomes (`null` when none known), by-tool/program/category breakdowns, per-turn outcome counts, every classified call (each with `origin`), retry groups, failure-recovery cost, outcome coverage, and, when a subagent run exists, `byOrigin` and the `subagentRuns` table (step 10.20). Optional `?provider=<id>` audits a provider other than the active one (400 if unknown); 404 for an unknown session |
+| `GET /api/sessions/:id/audit` | `SessionAudit` (Phase 9.10, [tool-call-audit.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/tool-call-audit.md)): per-status totals, failure rate over known outcomes (`null` when none known), by-tool/program/category breakdowns, per-turn outcome counts, every classified call (each with `origin`), retry groups, failure-recovery cost, outcome coverage, and, when a subagent run exists, `byOrigin` and the `subagentRuns` table (step 10.20). Optional `?provider=<id>` audits a provider other than the active one (400 if unknown); 404 for an unknown session |
 | `GET /api/sessions/:id/tool-calls` | `{ total, calls: AuditedToolCall[] }`: one session's classified tool calls, filtered by `status`/`category`/`kind` (comma-separated enum lists), `origin` (`main`, `subagent`), `runId`, `tool`, `program`, `turn`, paged by `offset`/`limit`, optional `provider`. 400 on an invalid value |
 | `GET /api/sessions/:id/replay?model&pricing&provider` | `SessionReplay` (Phase 14 step 14.5, §6.5): the session replayed on `model` (a vendor profile's model id, at most 100 characters; log spellings resolve), per turn and in total beside the measured figures, with coverage, the self-check and the assumptions, always `simulated: true`. `pricing` is `session-channel` (default), `copilot` or `api` (D2); optional `provider`. 400 for a bad query or a model no vendor profile lists; 404 for an unknown session or one that can't be replayed, with the reason. Webview RPC `getSessionReplay` in the extension (D5); also MCP `replay_session` |
 | `GET /api/sessions/:id/replay/compare?models&pricing&provider` | `SessionReplayComparison` (Phase 14 step 14.5): the session's simulated total on each of `models` (comma-separated, 1 to 10 with the session's own model, which is added first when a profile lists it) beside its measured total. Errors as for `/replay`; any unknown model refuses the whole comparison. RPC `compareSessionReplay`; also MCP `compare_models_for_session` |
 | `GET /api/savings?since&until&provider&pricing&includeSimulated` | `SavingsReport` (Phase 16 SR12, §6.6): ranked opportunities, the Simulated ones apart, `notAnalysed` and `sessionsLeftOut`. `since` and `until` are `YYYY-MM-DD` (default: the last 30 days); `provider` limits to one log provider; `pricing` is `as-of-use` (default) or `today`; `includeSimulated` (default false) runs the cheaper-model replays. No `limit`: the session cap is the service's. A bad query or window is 400; a product with no price book answers 404; computed on request, aborted when the client closes, never stored. GET only |
 | `GET /api/audit` | `AuditRollup` over the most recent sessions (`limit`, default 50, max 500) whose `startedAt` falls in `since`..`until` (ISO date or timestamp, compared at the bound's precision): totals, top failing commands, daily counts, per-session summary, category/program/tool breakdowns. Optional `provider` |
-| `GET /api/insights` | `InsightsDataset` (Phase 9.11, [plans/insights-dashboard.md](plans/insights-dashboard.md)): the most recent sessions from **every** registered provider (`limit` per provider, default 50, max 500; `since`/`until` as for `/api/audit`; optional `provider` restricts to one, 400 if unknown), flattened to session/turn/tool-call rows, plus security, anomaly and behaviour-change findings. Each provider's availability, error or truncation is reported in `providers[]`; one failing provider never fails the response. Since Phase 15 step 15.6 each turn row carries its billed, reported and priced `cost` figures and each session row their per-basis totals |
+| `GET /api/insights` | `InsightsDataset` (Phase 9.11, [insights-dashboard.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/insights-dashboard.md)): the most recent sessions from **every** registered provider (`limit` per provider, default 50, max 500; `since`/`until` as for `/api/audit`; optional `provider` restricts to one, 400 if unknown), flattened to session/turn/tool-call rows, plus security, anomaly and behaviour-change findings. Each provider's availability, error or truncation is reported in `providers[]`; one failing provider never fails the response. Since Phase 15 step 15.6 each turn row carries its billed, reported and priced `cost` figures and each session row their per-basis totals |
 | `GET /api/mcp/setup` | `McpSetupResponse` (Phase 18 MC11, [plans/mcp-client-setup.md](plans/mcp-client-setup.md) §5.6): the version and, per MCP client in a fixed order, its label, the `mcp install` command, the by-hand step (a one-line command, or the whole config file as JSON with its display path) and, for Cursor, an install link. Unpinned, user scope, paths for the server's OS with the home folder shown as `~` (`%USERPROFILE%` and `%APPDATA%` on Windows). Read-only (D1: no route writes a client config), no query, `Cache-Control: no-store`, behind the Host guard. Standalone app only: the VS Code extension has no HTTP API and no RPC for it |
 | `GET /api/config/status` | `ConfigStatus` — current prerequisite-setting check results and any `warnings[]` (§6.3), including the effective `minRetainedSessionLogsThreshold` |
 | `GET /api/projects` | `ProjectsState` (Phase 15 step 15.3, [plans/cost-by-repository-and-project.md](plans/cost-by-repository-and-project.md) §7): `status` (`missing`, `valid` or `invalid`), the file in use, its `problems` and its `location` |
@@ -2997,7 +2997,7 @@ estimate rules, with a `simulation` block. `GET /api/estimates` doesn't take
 | Token estimation | `gpt-tokenizer` (`o200k_base` encoding), pure JS/no native build step | Matches VS Code's own model-catalog encoding for Claude models (§6.2.2 Phase 6 addendum); only ever used to produce an explicitly `estimated: true` `TokenCount`, never a substitute for real usage data |
 | MCP | `@modelcontextprotocol/server`, `client`, `core` 2.4.0 and `@modelcontextprotocol/ext-apps` 2.0.4, pinned exactly | The official TypeScript SDK and MCP Apps library; `serveStdio` serves 2025-era and 2026-07-28 clients (§5, "MCP SDK and transport") |
 | Monorepo tooling | npm workspaces | Small project; avoids adding a build-orchestration tool (Turborepo/Nx) before it's needed |
-| npm package bundle | esbuild (`packages/cli/scripts/build.mts`, `npm run build:cli`, the last step of `npm run build`): one ES module `dist/cli.js` for Node 22.18 with code splitting on, a banner that defines `require` through `createRequire(import.meta.url)` for CommonJS dependencies, `node:` builtins external, not minified, no source maps. The metafile goes to `build/meta.json` (not shipped) and generates `THIRD-PARTY-NOTICES.md` with a license allow-list | The package has no dependencies, so `npx` fetches one tarball; users can read the code they run; the extension bundles the same server code the same way (§12) ([npm-package.md](plans/npm-package.md) §4.2, §4.9) |
+| npm package bundle | esbuild (`packages/cli/scripts/build.mts`, `npm run build:cli`, the last step of `npm run build`): one ES module `dist/cli.js` for Node 22.18 with code splitting on, a banner that defines `require` through `createRequire(import.meta.url)` for CommonJS dependencies, `node:` builtins external, not minified, no source maps. The metafile goes to `build/meta.json` (not shipped) and generates `THIRD-PARTY-NOTICES.md` with a license allow-list | The package has no dependencies, so `npx` fetches one tarball; users can read the code they run; the extension bundles the same server code the same way (§12) ([npm-package.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md) §4.2, §4.9) |
 
 These are default choices consistent with the constraints, not locked in —
 see §13 for what's still open.
@@ -3049,7 +3049,7 @@ agent-cost-analyzer/
     pi-system-prompt-logger/ # vendored Pi coding-agent extension: captures the
                               # assembled system prompt to a JSONL sidecar log,
                               # optionally consumed by server/pi-agent (§6.2.5)
-    cli/              # the npm package `agent-cost-analyzer` (plans/npm-package.md):
+    cli/              # the npm package `agent-cost-analyzer` (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md):
                       # src/ (args, serve, mcp, browser opener), bin/ shim,
                       # scripts/build.mts → dist/ (bundle, web, views, JSON data)
   package.json          # workspaces root (private)
@@ -3094,7 +3094,7 @@ on `domain` and on `web`'s presentational exports only, never on `server`
   loopback hostname, any port. Only the raw `Host` header is read, never
   `X-Forwarded-Host` (`trust proxy` stays off). The Vite dev server itself
   rejects non-loopback hosts via its own default `server.allowedHosts`.
-- **The npm package's origin (NP4, [plans/npm-package.md](plans/npm-package.md) §4.4).**
+- **The npm package's origin (NP4, [npm-package.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md) §4.4).**
   The `serve` command binds `127.0.0.1` only (`assertLoopbackBindHost`) and
   composes after listening, so the Host guard allows exactly the bound port
   (also for `--port 0`). `http/web-app-server.ts`'s `createWebAppServer`
@@ -3138,7 +3138,7 @@ on `domain` and on `web`'s presentational exports only, never on `server`
   prompts and responses, command and evidence excerpts) is therefore
   passed through `redactSecrets` and bounded before it is returned, and
   its tools are all read-only and never reach the network
-  ([plans/mcp-tools-v2.md](plans/mcp-tools-v2.md) §6). Repositories are
+  ([mcp-tools-v2.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-tools-v2.md) §6). Repositories are
   returned by their normalised remote key (credentials stripped) or, for
   a local one, its folder name, never its path; client names and billing
   codes come only from `get_statement`, and from `list_projects` when the
@@ -3495,7 +3495,7 @@ by repository (§6.4 has the product table):
 
 **As built (step 10.21, monthly allowance).** The standalone app has the same gauge (MA13, §4.1 and §4.2); the extension keeps its own settings and status bar and imports the shared figures and wording from the domain package (§4.3), so both products say the same thing. A month-to-date AI Credits
 gauge against the user's allowance, in the status bar and the Sessions view
-(plan [plans/monthly-allowance.md](plans/monthly-allowance.md)):
+(plan [monthly-allowance.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance.md)):
 - **Model.** The figures are the domain's `computeMonthlyAllowance`
   (`packages/domain/src/allowance/`, §4.3, MA13 MS1), shared with the
   standalone app: the period (`periodOf`), the day keys (`dayKeyOf`,
@@ -3649,7 +3649,7 @@ open questions:
   ago"), not an absolute date.
 - Keyboard accessibility → in scope: session cards and table rows are
   `tabIndex="0"` with an Enter/Space `onKeyDown` mirroring their `onClick`.
-- Dark theme → stayed out of scope, per the v2 handoff's explicit call. Phase 17 later brought light and dark modes to the standalone app only (owner decisions D1 and D4, 2026-11-14): an Auto/Light/Dark switch in the header, Auto following `prefers-color-scheme`; see [plans/dense-ledger-ui.md](plans/dense-ledger-ui.md).
+- Dark theme → stayed out of scope, per the v2 handoff's explicit call. Phase 17 later brought light and dark modes to the standalone app only (owner decisions D1 and D4, 2026-11-14): an Auto/Light/Dark switch in the header, Auto following `prefers-color-scheme`; see [dense-ledger-ui.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/dense-ledger-ui.md).
 - App icon/favicon → stayed out of scope, deferred to Phase 10.
 - AI Credit formatting precision → up to 6 decimals with trailing zeros
   removed (`2.79598`), matching the nano-AIU source precision without a

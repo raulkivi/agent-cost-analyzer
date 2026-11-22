@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // The monthly AI Credits allowance, shared by the extension and the
-// standalone app (MA13, monthly-allowance-standalone.md §4.1, D8).
+// standalone app (MA13, https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md §4.1, D8).
 export { dayKeyOf, dayStartInstant } from "./day-key.js";
 export { periodOf, type BillingPeriod } from "./billing-period.js";
 export { billedCredits, knownCredits, knownSum, type CreditsOf, type KnownSum } from "./session-credits.js";

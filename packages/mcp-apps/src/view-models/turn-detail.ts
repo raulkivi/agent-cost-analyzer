@@ -8,7 +8,7 @@ import { eventLabel } from "./session-cost.js";
 import { UNKNOWN_TEXT, formatCount, pluralize } from "./format.js";
 import type { MeasureView } from "./format.js";
 
-// The expanded turn under a top-turn row (docs/plans/mcp-apps.md §4.3):
+// The expanded turn under a top-turn row (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.3):
 // formats a get_turn result for display. Pure. The prompt excerpt is logged
 // text: it is shown in the card and never forwarded to the model (§6).
 

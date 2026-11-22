@@ -31,7 +31,7 @@ export default defineConfig(({ mode }) => {
   const extension = mode === "extension";
   return {
     // The npm packages each build bundles feed the third-party notices of what
-    // ships it: the standalone app in the npm package (npm-package.md §4.9),
+    // ships it: the standalone app in the npm package (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.9),
     // the webview in the .vsix.
     plugins: [
       react(),

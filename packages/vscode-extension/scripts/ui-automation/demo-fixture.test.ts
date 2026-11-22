@@ -19,7 +19,7 @@ const SERVER = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..
 const DAY_MS = 86_400_000;
 const LOGGING = "github.copilot.chat.agentDebugLog.fileLogging.enabled";
 
-// Scenes E1, E3-E8 and E10 run on this fixture (docs/plans/docs-refresh-and-demo-recordings.md
+// Scenes E1, E3-E8 and E10 run on this fixture (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/docs-refresh-and-demo-recordings.md
 // task 1.6a): every claim below is read back through the extension's own ApiService.
 describe("createDemoFixture", () => {
   let rootDir: string;

@@ -3,7 +3,7 @@
 import type { MonthlyAllowanceAnswer } from "@agent-cost-analyzer/domain";
 import { allowanceView } from "./allowance-view.js";
 
-// MS7 (monthly-allowance-standalone.md §4.7): the details dialog's label and
+// MS7 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md §4.7): the details dialog's label and
 // value rows, as drawn on Details.dc.html. The wording is the domain's
 // `detailLines` (shared with the extension's tooltip); this only gives each
 // line its label and adds the facts the dialog states beside them (warn at,

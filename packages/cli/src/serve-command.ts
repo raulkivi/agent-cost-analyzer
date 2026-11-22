@@ -27,7 +27,7 @@ export interface ServeDeps extends PortProbes<ServerHandle> {
 export const MCP_SETUP_HINT = "MCP: npx agent-cost-analyzer mcp install";
 
 /**
- * The default command (npm-package.md §4.4 steps 3-7). Listening comes
+ * The default command (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.4 steps 3-7). Listening comes
  * before composing so that `--port 0` can name the port the Host guard
  * allows; no request can arrive in between, as both happen in one turn of
  * the event loop. stdout gets the start line first; only a terminal run

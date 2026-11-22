@@ -6,7 +6,7 @@ import { expect, test } from "../support/app-fixture.js";
 import { DEMO_PI_SESSION, DEMO_UNUSED_TOOLS_SERVER, DEMO_UNUSED_TOOLS_SESSIONS, DEMO_UNUSED_TOOLS_TOOLS } from "../support/demo-fixture-home.mts";
 import { FIXTURE_NOW } from "../support/fixture-clock.js";
 
-// DR1 (docs/plans/demo-recordings-1.0.md §4): the demo variant of the fixture home, read through the
+// DR1 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/demo-recordings-1.0.md §4): the demo variant of the fixture home, read through the
 // real server's Savings API as W3, F4 and M8 will see it. The shared home (every other spec) has none
 // of these rows; sv1-savings-report.spec.ts pins that.
 test.use({ demo: true });

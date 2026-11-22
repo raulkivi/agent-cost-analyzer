@@ -145,7 +145,7 @@ function copilotSubagentSession(home: string, cwd: string, startedAt: string): v
   }
 }
 
-// MS8 (monthly-allowance-standalone.md §11): Copilot sessions inside the
+// MS8 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md §11): Copilot sessions inside the
 // period of FIXTURE_NOW (2026-11-06, UTC, reset day 1: 2026-11-01 up to
 // 2026-12-01), which the sessions above (2026-10-27 and 28) fall before. Each
 // has its own start day, so the reset day picks which of them a test counts:

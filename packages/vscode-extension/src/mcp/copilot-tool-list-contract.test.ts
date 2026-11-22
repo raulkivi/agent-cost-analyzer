@@ -9,7 +9,7 @@ import { readMcpSurface, surfaceFixture, type McpSurfaceClient } from "@agent-co
 import { FIXTURE_VENDOR_PROFILES_DIR } from "@agent-cost-analyzer/server/src/test-support/vendor-profiles-dir";
 import { createCopilotMcpServer } from "./copilot-mcp-server.js";
 
-// docs/plans/mcp-sdk-2-migration.md M2: what a host reads of the
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-sdk-2-migration.md M2: what a host reads of the
 // extension's MCP child (tools with annotations, _meta.ui and output
 // schemas, instructions, capabilities, the views resource, prompts), pinned
 // by a snapshot taken on SDK 1.32.2 and ext-apps 1.7.5. Only the JSON

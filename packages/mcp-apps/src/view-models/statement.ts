@@ -7,7 +7,7 @@ import type { MeasureView } from "./format.js";
 import { formatMoney, formatSignedMoney } from "./money.js";
 import { mergeUserPriceIds } from "./user-price.js";
 
-// U14, a project's statement for a period (docs/plans/mcp-apps.md §2,
+// U14, a project's statement for a period (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §2,
 // §4.5). Pure: formats a get_statement result. Lines per basis, currency,
 // channel and model; totals per currency; AI Credits before USD; unknown
 // turns are counted with their reason, never as 0; an issued period shows

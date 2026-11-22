@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// Pause after each E5 step, in order (docs/plans/demo-recordings-1.0.md §3.3, D37).
+// Pause after each E5 step, in order (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/demo-recordings-1.0.md §3.3, D37).
 // Pure data so the beat list and its budget are unit-tested; the scene supplies the actions.
 export const E5_BEATS = [
   { label: "open the analyzer panel", beatMs: 300 },

@@ -6,7 +6,7 @@ import { tokenCountSchema } from "./token-count.js";
 import { failureCategorySchema } from "./tool-call-outcome.js";
 import { toolCallRecordSchema } from "./tool-call-record.js";
 
-// Phase 9.10 (docs/plans/tool-call-audit.md §4): provider-agnostic
+// Phase 9.10 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/tool-call-audit.md §4): provider-agnostic
 // aggregates computed server-side from normalized ToolCallRecords.
 
 export const outcomeTotalsSchema = z.object({

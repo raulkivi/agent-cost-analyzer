@@ -5,7 +5,7 @@ import { expect, inEachClaudeSet, test, VSCODE_SETS } from "../support/host-fixt
 import { sessionCost } from "../../src/view-models/fixtures.js";
 import { subagentRun, turnViewWithRuns } from "../../src/view-models/turn-view-fixture.js";
 
-// SA14 (docs/plans/classic-subagent-credits-implementation.md §6-7, board
+// SA14 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/classic-subagent-credits-implementation.md §6-7, board
 // U1TurnDetail.dc.html): U1's expanded turn lists the subagent runs a classic
 // Copilot Chat turn folded in. The fixture home has no such session, so the
 // fake host answers get_turn with the shape the server returns (usage.subagents

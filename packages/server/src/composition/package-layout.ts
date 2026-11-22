@@ -12,7 +12,7 @@ export interface BundledDataDirs {
 }
 
 // Where a packaged build keeps the files the app reads at run time
-// (npm-package.md §4.2 "Paths"). A bundle can't find them through
+// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.2 "Paths"). A bundle can't find them through
 // import.meta.url, so its entry point passes them to both composition roots
 // (standalone-app.ts, mcp/standalone-mcp-server.ts), as the extension
 // passes its media/ paths (G4, vscode-extension.md §2.2).
@@ -25,7 +25,7 @@ export interface PackageLayout extends Required<BundledDataDirs> {
   packageJsonPath: string;
 }
 
-// The npm tarball's layout under its package root (npm-package.md §4.2).
+// The npm tarball's layout under its package root (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.2).
 export function npmPackageLayout(packageRoot: string): PackageLayout {
   const dist = path.join(packageRoot, "dist");
   return {

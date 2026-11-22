@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// Step 10.20 ST15 (docs/plans/subagent-tool-audit.md §11): real-data check of
+// Step 10.20 ST15 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/subagent-tool-audit.md §11): real-data check of
 // the subagent tool calls in the tool-call audit against this machine's own
 // Copilot logs. Opt-in and local only:
 //

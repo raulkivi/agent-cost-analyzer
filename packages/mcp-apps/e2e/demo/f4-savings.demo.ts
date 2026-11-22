@@ -12,7 +12,7 @@ import { recordScene } from "./support/record.js";
 // The demo home (DR1): realistic model names and an unused-tools row.
 test.use({ demoHome: true });
 
-// F4 (docs/plans/demo-recordings-1.0.md §3.2): the savings view, a row open in place, Open replay, Back.
+// F4 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/demo-recordings-1.0.md §3.2): the savings view, a row open in place, Open replay, Back.
 test("F4: savings row, replay, back", async ({ page, host }) => {
   await applyDemoLayout(page);
   const view = await host.show("get_savings_report", F4_ARGS);

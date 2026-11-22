@@ -1,8 +1,8 @@
 # Claude Code subagent mock-ups (CS2)
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Boards for task CS2 of [claude-code-subagents.md](../../claude-code-subagents.md) (1.0 criterion C15). They amend the step 10.19 boards in [../classic-subagents/](../classic-subagents/README.md) for runs that have tokens and a priced cost but no AI Credits. The owner approves them before CS13 (web and MCP App U1) starts. Status: **approved by the owner 2026-11-15, as drawn.**
+Boards for task CS2 of [claude-code-subagents.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/claude-code-subagents.md) (1.0 criterion C15). They amend the step 10.19 boards in [../classic-subagents/](../classic-subagents/README.md) for runs that have tokens and a priced cost but no AI Credits. The owner approves them before CS13 (web and MCP App U1) starts. Status: **approved by the owner 2026-11-15, as drawn.**
 
 Same `.dc.html` format and `canvas.json` as the other sets; `./support.js` is not in the repo, and every state is static markup, so each board also opens in a plain browser (serve the folder over HTTP). Light (Industry) and Dark Modern, at 640 px (600 px for U1) and 320 px. All data is invented. PNG captures are in [screenshots/](screenshots/).
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { defineConfig } from "@playwright/test";
 
-// The npm-package smoke's UI check (npm-package.md §4.8 step 5, §10): the
+// The npm-package smoke's UI check (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.8 step 5, §10): the
 // page the installed package serves, at AGENT_COST_ANALYZER_SMOKE_URL, which
 // scripts/npm-package-smoke.mts sets after starting the bin. Headless
 // Chromium from the Playwright the repository pins; a machine with another

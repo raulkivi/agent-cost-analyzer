@@ -1,6 +1,6 @@
 # VS Code extension mock-ups
 
-**Last changed:** 2026-11-13 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Boards in the `.dc.html` format, listed in `canvas.json`. They reference `./support.js`, which isn't in the repo. Every state is static markup, so each board also renders in a plain browser. All figures are invented.
 
@@ -15,7 +15,7 @@ Boards in the `.dc.html` format, listed in `canvas.json`. They reference `./supp
 
 ## MonthlyAllowance.dc.html
 
-Plan: [monthly-allowance.md](../../monthly-allowance.md) §3.4, §3.8, §5, §10, §13.
+Plan: [monthly-allowance.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance.md) §3.4, §3.8, §5, §10, §13.
 
 - **Status bar.** Eight states plus "Not set" and "Required config warning", each in Dark Modern, Light Modern and Dark High Contrast: normal, near limit, over, partial ("at least"), near and partial, over and partial, all unknown, no sessions this period. Today's item sits to its left. Words and icon carry the state; only `statusBarItem.warningBackground` and `errorBackground` are used.
 - **Tooltips.** Plain-text tooltip for each of the eight states.

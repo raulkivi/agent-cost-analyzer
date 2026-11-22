@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // The MS10 real-data check's oracle (allowance-oracle.mts) over hand-made logs.
-// Each rule is the plan's (monthly-allowance-standalone.md §4.4, §4.5; D11):
+// Each rule is the plan's (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md §4.4, §4.5; D11):
 // billed only, whole-session known, attribution by start in the machine's zone,
 // the period from the reset day. A wrong helper fails here before it can agree
 // with a wrong product.

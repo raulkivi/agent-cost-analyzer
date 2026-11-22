@@ -1,9 +1,9 @@
 # Claude Code subagent fixtures
 
-**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Synthetic, hand-built fixtures for task CS3 of
-[docs/plans/claude-code-subagents.md](../../../../../docs/plans/claude-code-subagents.md)
+[claude-code-subagents.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/claude-code-subagents.md)
 (1.0 criterion C15). Field names and nesting follow the real files found by
 CS0 (§4) and CS0b (§13); every value is invented: no real prompt text, ids,
 paths or user names. Paths use the same placeholder `/home/dev/project` as the

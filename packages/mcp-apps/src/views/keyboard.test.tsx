@@ -22,7 +22,7 @@ import { SessionCostView } from "./SessionCostView.js";
 import { findingsResult, SAMPLE_FINDINGS } from "./findings/fixtures.js";
 import { boardComparison, boardReplay } from "./replay/fixtures.js";
 
-// A14 (docs/plans/mcp-apps.md §7): every drill-down and filter works from
+// A14 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §7): every drill-down and filter works from
 // the keyboard alone (Tab, Enter, Space, arrows), and focus lands somewhere
 // sensible when the content under it is replaced.
 

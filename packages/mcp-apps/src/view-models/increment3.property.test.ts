@@ -11,7 +11,7 @@ import { toReplayViewModel } from "./replay.js";
 import type { ReplayCompareViewModel, ReplayDetailViewModel } from "./replay.js";
 import { toStatementViewModel } from "./statement.js";
 
-// Invariants of docs/plans/mcp-apps.md §4.5 for U12 to U15: the "Simulated",
+// Invariants of https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.5 for U12 to U15: the "Simulated",
 // "inferred" and "estimate" labels are always there; a null figure reads
 // "Unknown", never 0; AI Credits come before USD.
 

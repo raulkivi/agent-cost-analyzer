@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { ACTIVE_SESSION_WINDOW_MINUTES } from "@agent-cost-analyzer/domain";
 
-// docs/plans/mcp-apps.md §4.7: one rule for every log provider. A running
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.7: one rule for every log provider. A running
 // chat's log is incomplete (the latest turn is undercounted), so its figures
 // are flagged as possibly still changing. Pure: the caller passes the clock.
 

@@ -3,7 +3,7 @@
 import { sumTokenCounts, unavailableTokenCount, type SubagentSpend, type TokenCount, type TurnUsage } from "@agent-cost-analyzer/domain";
 import { NO_AI_CREDITS_REASON } from "./subagent-run-usage.js";
 
-// Step CS11 (docs/plans/claude-code-subagents.md D13): what a Claude Code
+// Step CS11 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/claude-code-subagents.md D13): what a Claude Code
 // session's subagent runs added, for the Sessions list and `get_session_cost`.
 // Claude Code records no AI Credits, so the tokens stand in; the priced cost
 // needs the price book, so the cost builder adds it.

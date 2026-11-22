@@ -1,8 +1,8 @@
 # Agent Host subagent audit fixtures
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Step 10.20, task ST4 ([plan](../../../../../docs/plans/subagent-tool-audit.md)).
+Step 10.20, task ST4 ([plan](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/subagent-tool-audit.md)).
 A fake Copilot home like `../copilot-cli/`: `session-state/<sdkSessionId>/events.jsonl`,
 with no `rows.json` (tests build the catalog rows they need). Synthetic: event
 types and field names follow real Copilot CLI 1.0.x logs (plan §4.2, §14.2);

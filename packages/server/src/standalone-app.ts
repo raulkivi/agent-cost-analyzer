@@ -12,7 +12,7 @@ import { checkConfig } from "./services/config-check/config-check.js";
 // The layout replaces the separate data-folder and version options, so
 // there is one way to say where the app's files are.
 export interface StandaloneAppOptions extends Omit<CreateAppOptions, keyof BundledDataDirs | "appVersion"> {
-  // A packaged build's files (npm-package.md §4.2); omitted, this package's
+  // A packaged build's files (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.2); omitted, this package's
   // own, found through import.meta.url (dev).
   layout?: PackageLayout;
   // Where the startup configuration warnings go; stderr by default.
@@ -42,7 +42,7 @@ function warnAboutConfig({ vscodeSettingsPath, agentHostUserDataDir }: ConfigChe
 // The standalone app's composition root, short of listening: the startup
 // configuration check, then the HTTP app over every log provider, reading
 // its data and version from the layout when one is given. server.ts (dev)
-// and the npm package's CLI (npm-package.md §4.4) are thin entries over it;
+// and the npm package's CLI (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.4) are thin entries over it;
 // each binds its own loopback port and names the Host ports to accept.
 // The clock is AGENT_COST_ANALYZER_NOW's unless `now` is given.
 export function composeStandaloneApp(options: StandaloneAppOptions = {}): StandaloneApp {

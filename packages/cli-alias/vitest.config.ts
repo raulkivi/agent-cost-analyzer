@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// The package has no `scripts` field (npm-package.md §4.2), so the root
+// The package has no `scripts` field (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.2), so the root
 // `test:cli-alias` script runs this config instead of a workspace test script.
 import { configDefaults, defineConfig } from "vitest/config";
 

@@ -1,8 +1,8 @@
 # Phase 12 A16: owner's manual check results
 
-**Last changed:** 2026-11-10 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Results of [mcp-apps-a16-checklist.md](../mcp-apps-a16-checklist.md), run 2026-11-09/10. Every row passes; "Pass (owner)" rows were confirmed by the owner without a screenshot.
+Results of [mcp-apps-a16-checklist.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps-a16-checklist.md), run 2026-11-09/10. Every row passes; "Pass (owner)" rows were confirmed by the owner without a screenshot.
 
 ## Hosts
 
@@ -46,7 +46,7 @@ Each fix is test-first; all are in the A16 fix PR.
 6. **U3 layout.** Backtick spans render as code; kind filters are separate chips; the expanded detail is a full-width row and the table fits the card in Desktop.
 7. **Ranking not shown.** U1 and U2 say "by AI Credits" or "by input tokens" (the server's `rankedBy`); U2 has an Input tok. column; U1's chart plots the ranking measure, so a Claude Code session shows input tokens per turn.
 8. **Overhead bar glare in dark mode.** A single segment uses the chart colour.
-9. **Figures of a running chat looked final.** Sessions whose latest turn started in the last 15 minutes carry `active`; the text says the figures may still change; U1 and U2 show an "active" tag ([mcp-apps.md §4.7](../mcp-apps.md)).
+9. **Figures of a running chat looked final.** Sessions whose latest turn started in the last 15 minutes carry `active`; the text says the figures may still change; U1 and U2 show an "active" tag ([mcp-apps.md §4.7](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md)).
 10. **U2 Session column squeezed at narrow width.** With Turns, AI Credits and Input tok., titles wrap after every word. Fixed: at 480px and below, Turns moves into the meta line under the title with provider and model.
 11. **Chart labels shrink with the chart.** At about 300px the axis labels are about 5px. Fixed: chart labels grow in chart units at 480, 420 and 360px (about 9.5px on screen); turn labels are spaced 48 units apart and the daily chart labels at most 6 dates.
 12. **Copy confirmation spacing.** The title in a code element reads as "Copied  title ." in High Contrast. Fixed: the title is quoted in plain text.

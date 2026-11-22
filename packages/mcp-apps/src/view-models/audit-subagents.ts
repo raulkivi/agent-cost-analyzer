@@ -3,7 +3,7 @@
 import type { AuditedRun, OriginTotals, OutcomeTotals, SessionAudit } from "@agent-cost-analyzer/domain";
 import { formatCount, pluralize, UNKNOWN_TEXT } from "./format.js";
 
-// Step 10.20, ST13 (docs/plans/subagent-tool-audit.md §5.7, §6, D12, D14):
+// Step 10.20, ST13 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/subagent-tool-audit.md §5.7, §6, D12, D14):
 // the subagent half of U4. Pure. Run labels and reasons are logged text:
 // display only, never sent to the host's model (§6).
 

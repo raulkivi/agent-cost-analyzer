@@ -19,7 +19,7 @@ import { AuditQueryService } from "../services/tool-audit/audit-query-service.js
 import { FakeProvider, lookup, session, shell } from "../test-support/audit-fakes.js";
 import { createMcpServer } from "./mcp-server.js";
 
-// Step 10.20 (docs/plans/subagent-tool-audit.md §5.8, D9): the audit tools
+// Step 10.20 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/subagent-tool-audit.md §5.8, D9): the audit tools
 // take `origin` and `runId` and return it; without them the totals are true.
 
 const status: LogProviderStatus = { activeProviderId: "fake", providers: [{ id: "fake", label: "Fake", available: true }] };

@@ -3,7 +3,7 @@
 import { toolCallsIn } from "../support/call-log.js";
 import { APP_VERSION, expect, inEachClaudeSet, test } from "../support/host-fixture.js";
 
-// A24 §2.3 (U11 part), 2.7 and 2.8 (docs/plans/mcp-apps-a24-checklist.md):
+// A24 §2.3 (U11 part), 2.7 and 2.8 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps-a24-checklist.md):
 // U11 in Claude Desktop, light and dark. Customer portal across Claude
 // Sonnet 5.5's documented 2026-10-07 cache-read cut (the fixture's price
 // change, as in the web suite's MCP exit criterion), so the price effect is

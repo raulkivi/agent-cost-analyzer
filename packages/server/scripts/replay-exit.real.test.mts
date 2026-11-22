@@ -32,7 +32,7 @@
 // REAL_DATA_VIEW_PARENT=<dir> (default ~/.cache): where the snapshot copy of Claude Code's
 // logs is made (about 4 GB; not tmpdir, which may be RAM). Removed when the check ends.
 //
-// Claude Code's subagent runs (C15, plan claude-code-subagents.md) are asserted
+// Claude Code's subagent runs (C15, plan https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/claude-code-subagents.md) are asserted
 // like Copilot local's: coverage.subagentRuns lists them, with the runs' tokens,
 // as the oracle reads them from the subagents/ folder (the check's view holds a
 // copy of it). Reported, not asserted: Agent Host's sub-agent calls (plan §12.1,

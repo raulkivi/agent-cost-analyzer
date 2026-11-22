@@ -1,8 +1,8 @@
 # MCP Apps mock-ups (A0b MVP, A17b Increment 2, A25b Increment 3, SR18 savings)
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Boards for task A0b in [mcp-apps.md](../../mcp-apps.md) §5.6 and §7. They
+Boards for task A0b in [mcp-apps.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md) §5.6 and §7. They
 show the MVP views U1, U2 and U3 inside a VS Code Copilot Chat frame and a
 Claude Desktop frame, inline at about 600 px. The owner approved them
 before A9 and A11 started. Status: **drawn and approved by the owner (2026-11-07).** The copy-command text `AI Credits Analyzer: Open Session <id>` is adopted.
@@ -23,8 +23,8 @@ out as static markup, so each board also renders in a plain browser.
 
 ### Increment 2 boards (A17b)
 
-Drawn 2026-11-10 for task A17b in [mcp-apps.md](../../mcp-apps.md) §7.1.
-Status: **drawn and approved by the owner (2026-11-10)**, with the answers in [mcp-apps.md](../../mcp-apps.md) §9.1. Two deviations from the boards: U11's waterfall shows a fall in the host's success colour (not info), and U11's "Not explained" tile reads "3 turns" with the note "no price for these turns; not counted as 0", shown only when there are such turns. A23 also drew period totals in the brand data colour instead of series-1 blue, which failed 3:1 on Claude dark (confirmed by the owner 2026-11-10).
+Drawn 2026-11-10 for task A17b in [mcp-apps.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md) §7.1.
+Status: **drawn and approved by the owner (2026-11-10)**, with the answers in [mcp-apps.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md) §9.1. Two deviations from the boards: U11's waterfall shows a fall in the host's success color (not info), and U11's "Not explained" tile reads "3 turns" with the note "no price for these turns; not counted as 0", shown only when there are such turns. A23 also drew period totals in the brand data color instead of series-1 blue, which failed 3:1 on Claude dark (confirmed by the owner 2026-11-10).
 They show U9, U10 and U11 in the same two host frames, light and dark, with
 invented neutral data (local repositories by folder name).
 
@@ -46,7 +46,7 @@ Checks for the Increment 2 boards:
 
 ### Increment 3 boards (A25b)
 
-Drawn 2026-11-11 for task A25b in [mcp-apps.md](../../mcp-apps.md) §7.2. Status: **drawn and approved by the owner (2026-11-11)**, all 17 defaults in [mcp-apps.md](../../mcp-apps.md) §9.2 kept. The owner's questions, each with the default A27–A30 start on, are in [mcp-apps.md](../../mcp-apps.md) §9.2. They show U12, U4 and U5 in both host frames, light and dark, and U13 to U15 on a states board (U14 and U15 in the Claude Desktop frame only, as the standalone app is their only product). The footers use the Increment 3 target versions (v0.8.0 and v0.12.0, §7.3). All sessions, models and figures are invented.
+Drawn 2026-11-11 for task A25b in [mcp-apps.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md) §7.2. Status: **drawn and approved by the owner (2026-11-11)**, all 17 defaults in [mcp-apps.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md) §9.2 kept. The owner's questions, each with the default A27–A30 start on, are in [mcp-apps.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md) §9.2. They show U12, U4 and U5 in both host frames, light and dark, and U13 to U15 on a states board (U14 and U15 in the Claude Desktop frame only, as the standalone app is their only product). The footers use the Increment 3 target versions (v0.8.0 and v0.12.0, §7.3). All sessions, models and figures are invented.
 
 | Board | Shows |
 | ----- | ----- |
@@ -137,6 +137,6 @@ Checks for the savings boards:
 
 ### Savings Increment 3 amendments (V23b)
 
-Amended 2026-11-15 for task V23b in [savings-increment-3.md](../../savings-increment-3.md) §10; **approved by the owner 2026-11-15** (D32). The owner's answers are in [../savings-report/README.md](../savings-report/README.md).
+Amended 2026-11-15 for task V23b in [savings-increment-3.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md) §10; **approved by the owner 2026-11-15** (D32). The owner's answers are in [../savings-report/README.md](../savings-report/README.md).
 
 - `Savings.dc.html` frame 1: each session's saving now carries its unit ("up to 61.2 AI Credits"). New frames 5 (VS Code Dark Modern) and 6 (Claude Desktop light): the opened "Tools loaded but never used" row with evidence, the per-tool list ("inferred", "estimate", "about", "and 18 more"), the action text, and three sessions with date and saving. Ids only, no titles (D19), and a line saying so. No new control, no Copy, no new host call.

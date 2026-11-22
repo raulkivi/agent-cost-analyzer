@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 
-// docs/plans/mcp-apps.md §4.7: the plain sentence a model or non-view host
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.7: the plain sentence a model or non-view host
 // reads next to the JSON, so a running chat's figures aren't taken as final
 // (a rollup read mid-turn won't reconcile with a later session read).
 

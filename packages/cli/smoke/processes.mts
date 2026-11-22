@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // How the npm-package smoke runs npm, npx and the installed bin on each OS,
-// how it stops the server, and the environment they all get (npm-package.md
+// how it stops the server, and the environment they all get (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md
 // §4.8 steps 3-7).
 import path from "node:path";
 import { fixtureHomeEnv } from "./home.mts";

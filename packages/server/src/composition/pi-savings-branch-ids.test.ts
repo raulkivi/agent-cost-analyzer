@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// V29 (savings-increment-3.md §8 R16, §9): since V27 a forked pi file's
+// V29 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md §8 R16, §9): since V27 a forked pi file's
 // branches reach get_savings_report as `<hash>__branch__<leaf id>`. The model
 // must be able to pass such an id on to get_session_cost unchanged. V28 was to
 // test this with the pi trace; V28 moved after 1.0, V27's pi rows did not.

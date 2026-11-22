@@ -20,7 +20,7 @@ interface ListBoxProps {
   onClear: () => void;
 }
 
-// A QlikView list box (docs/plans/insights-dashboard.md §2): every value of
+// A QlikView list box (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/insights-dashboard.md §2): every value of
 // one field, coloured by its associative state. Colour is never the only
 // cue — aria-selected, a title and the count carry the same information.
 export function ListBox({ label, values, onSelect, onClear }: ListBoxProps) {

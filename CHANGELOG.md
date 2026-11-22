@@ -1,6 +1,6 @@
 # Changelog
 
-**Last changed:** 2026-11-19 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 All notable changes to this project are documented in this file.
 
@@ -645,7 +645,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   workflow instructions, declares an output schema for every tool and
   returns errors that name the next step. `list_sessions` gains a title/id
   `query` and a `total`; `list_tool_calls` gains `kind` and `offset` (also
-  on `GET /api/sessions/:id/tool-calls`). Plan: `docs/plans/mcp-tools-v2.md`.
+  on `GET /api/sessions/:id/tool-calls`). Plan: [mcp-tools-v2.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-tools-v2.md).
 
 ### Changed
 - The standalone app bundles its Barlow fonts instead of loading them from
@@ -697,7 +697,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   data upload, raw sockets, package installs, denied actions), statistical
   anomalies and first-time behaviour, each with when, why and redacted
   evidence. New endpoint: `GET /api/insights`. Plan:
-  `docs/plans/insights-dashboard.md`.
+  [insights-dashboard.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/insights-dashboard.md).
 - Community health files: `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, issue forms and a
   pull request template.
 

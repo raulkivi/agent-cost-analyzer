@@ -3,7 +3,7 @@
 import { messagesOffTemplate, modelTurnsIn, toolCallsIn } from "../support/call-log.js";
 import { expect, inEachClaudeSet, test } from "../support/host-fixture.js";
 
-// A24 §2.3 (U10 part), 2.5 and 2.6 (docs/plans/mcp-apps-a24-checklist.md):
+// A24 §2.3 (U10 part), 2.5 and 2.6 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps-a24-checklist.md):
 // U10 and the full U10 → U9 → U1 chain for projects in Claude Desktop, light
 // and dark. The fixture home's three projects in October 2026; Customer
 // portal's top sessions include the Copilot session "Fix the bug" (billed in

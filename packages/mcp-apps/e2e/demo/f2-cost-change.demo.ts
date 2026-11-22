@@ -7,7 +7,7 @@ import { DEMO_MAX_BEAT_MS, F2, F2_ARGS, FULLSCREEN, type DemoContext } from "./s
 import { applyDemoLayout, installPointer } from "./support/demo-setup.js";
 import { recordScene } from "./support/record.js";
 
-// F2 (docs/plans/docs-refresh-and-demo-recordings.md §4.2): waterfall colours, the price timeline and two currencies.
+// F2 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/docs-refresh-and-demo-recordings.md §4.2): waterfall colors, the price timeline and two currencies.
 // The fixture's cost change is in USD only, so the currency switch is shown on the project's cost over time.
 test("F2: cost change, price changes, Back; the currency switch", async ({ page, host }) => {
   await applyDemoLayout(page);

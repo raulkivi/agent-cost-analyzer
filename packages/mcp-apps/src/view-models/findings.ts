@@ -3,7 +3,7 @@
 import type { EnrichedFinding, FindingKind, FindingSeverity, FindingsQueryResult } from "@agent-cost-analyzer/domain";
 import { formatCount, formatDay, pluralize } from "./format.js";
 
-// U3, findings (docs/plans/mcp-apps.md §4.3). Pure: formats a list_findings
+// U3, findings (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.3). Pure: formats a list_findings
 // result for display. The filter is the part of the tool's arguments the
 // view offers (kind and minimum severity); the server's own filter type is a
 // superset, so it is assignable here.

@@ -139,7 +139,7 @@ describe("createCopilotMcpServer with Agent Host event logs (step 10.14)", () =>
   });
 });
 
-// Phase 12 A13 (mcp-apps.md §4.2, §7): the composition boundary the child
+// Phase 12 A13 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.2, §7): the composition boundary the child
 // process uses (mcp/stdio.ts passes <extension>/dist/mcp-apps/views.html).
 describe("createCopilotMcpServer with the app views (Phase 12 A13)", () => {
   let dir: string;
@@ -220,7 +220,7 @@ describe("createCopilotMcpServer with the app views (Phase 12 A13)", () => {
   });
 });
 
-// docs/plans/mcp-sdk-2-migration.md M2: serveStdio calls the server factory
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-sdk-2-migration.md M2: serveStdio calls the server factory
 // once per connection and once more for a server/discover probe it may
 // discard, so the services and the views lookup are composed once, when
 // the factory is made, and each call only builds a server over them.

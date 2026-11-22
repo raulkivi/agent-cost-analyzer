@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// What the build copies into the package, and where (npm-package.md §4.2).
+// What the build copies into the package, and where (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.2).
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { npmPackageLayout } from "../../server/src/composition/package-layout.js";

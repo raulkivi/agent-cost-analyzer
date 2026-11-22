@@ -9,7 +9,7 @@ import { statusOf } from "../tool-audit/outcome-tally.js";
 import { excerptOf, redactSecrets } from "../tool-audit/output-redactor.js";
 import { resolveToolKind } from "../tool-audit/tool-kind-resolver.js";
 
-// Phase 9.12 (docs/plans/mcp-tools-v2.md §4/§6): one turn for the MCP
+// Phase 9.12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-tools-v2.md §4/§6): one turn for the MCP
 // get_turn tool. Everything returned enters the client model's context, so
 // free text is redacted and then bounded. Pure.
 

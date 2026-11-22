@@ -40,7 +40,7 @@ const standard = (overrides: Partial<ProviderPricingPolicy> = {}): ProviderPrici
 
 // Per provider (step 15.6 notes in plan §14.1):
 // - Claude Code writes its cache with the 1-hour lifetime (calibration,
-//   docs/plans/learn-calibration-findings.md, finding 1; #145), so writes its
+//   https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/learn-calibration-findings.md, finding 1; #145), so writes its
 //   log doesn't split are priced at the 1-hour rate; its use may be under a
 //   subscription, so its priced figures are API-equivalent (§5, D4).
 // - Copilot keeps the 5-minute (standard) rate, as the calibration decided;

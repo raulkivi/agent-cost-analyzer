@@ -21,7 +21,7 @@ export const N1_COMMAND = "npx agent-cost-analyzer";
 
 const step = (label: string, action: TerminalAction, beatMs: number) => ({ label, action, beatMs });
 
-// N1 (docs/plans/demo-recordings-1.0.md §3.2). Typing and the waits add to these beats: the master runs about 17 s.
+// N1 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/demo-recordings-1.0.md §3.2). Typing and the waits add to these beats: the master runs about 17 s.
 export const N1: TerminalScene = {
   id: "N1",
   slug: "npx-quick-start",

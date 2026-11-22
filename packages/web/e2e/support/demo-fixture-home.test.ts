@@ -43,7 +43,7 @@ const textOf = (home: string, ext: string): string =>
     .map((file) => readFileSync(file, "utf8"))
     .join("\n");
 
-// D36 and the DR1 additions (docs/plans/demo-recordings-1.0.md §4): the demo variant of the
+// D36 and the DR1 additions (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/demo-recordings-1.0.md §4): the demo variant of the
 // web e2e fixture home, for W3, F4 and (through the Desktop home) M8.
 describe("createDemoFixtureHome", () => {
   let root: string;

@@ -1,6 +1,6 @@
 # Phase 15: Cost by repository and project, price history, billing and estimates
 
-**Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **In progress**: steps 15.0–15.13 are done (see §14.1). The exit check
 (C4) passes on the owner's logs; the owner signed off its output on 2026-11-14
@@ -569,7 +569,7 @@ MCP tools are specified in §10.1.
 ### 10.1 MCP tools
 
 This extends the MCP server of Phase 9.12
-([mcp-tools-v2.md](mcp-tools-v2.md)) and follows its conventions:
+([mcp-tools-v2.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-tools-v2.md)) and follows its conventions:
 
 - names are `verb_noun` in snake_case, and none of the existing tools is
   renamed;
@@ -672,14 +672,14 @@ prompts apart.
   - that statements are issued only in the app.
 - **MCP Apps.** An interactive project-cost view for MCP Apps hosts is
   not part of this phase. It belongs to Phase 12
-  ([mcp-apps.md](mcp-apps.md)) and would render `get_project_cost`'s
+  ([mcp-apps.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md)) and would render `get_project_cost`'s
   `structuredContent`, which is why that schema carries the series and
   breakdowns, not only totals.
 
 #### 10.1.5 Security and privacy
 
 Tool output enters the client model's context, which is usually a hosted
-model ([mcp-tools-v2.md §6](mcp-tools-v2.md#6-security)). So:
+model ([mcp-tools-v2.md §6](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-tools-v2.md#6-security)). So:
 
 - Repositories are identified by their **normalised key**
   (`github.com/org/repo`), never by local folder paths. `local:` and
@@ -733,7 +733,7 @@ its own:
 
 - the "Industry" design handoff in [`Design/README.md`](../../Design/README.md);
 - the Dashboard's associative model and layout
-  ([insights-dashboard.md](insights-dashboard.md) §2, §5 and §10);
+  ([insights-dashboard.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/insights-dashboard.md) §2, §5 and §10);
 - the UX and accessibility standards in
   [vscode-extension.md §3.5](vscode-extension.md#35-ux-and-accessibility-standards),
   which bind both products because the UI code is shared;
@@ -2220,7 +2220,7 @@ of `claude-subagent-runs-oracle.mts`). It reads:
   request per message id, `<synthetic>` left out, plus the subagent runs the
   turn's `Agent` calls started, one part per run on its own model, each round
   once, fork copies and off-branch runs not counted, a missing run making the
-  turn unknown; C15, `claude-code-subagents.md` §5.4 and §6), pi (a user message to the
+  turn unknown; C15, [claude-code-subagents.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/claude-code-subagents.md) §5.4 and §6), pi (a user message to the
   next, every usage), Copilot Chat (session-store rows of interactive chat,
   agent name `GitHub Copilot Chat` per
   [agentic-coding-explained.md](../agentic-coding-explained.md) §18.2, usage

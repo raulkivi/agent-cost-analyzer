@@ -1,6 +1,6 @@
 # Phase 14: Replay a real Analyze session on another model
 
-**Last changed:** 2026-11-17 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 **Status: built (8 of 9 steps); the owner's review is open.** Steps
 14.0–14.7 are done (2026-11-07) and shipped from extension 0.4.0 and app
@@ -14,7 +14,7 @@ owner to revisit (§11).
 
 The question this answers: **"What would this real session have cost on
 another model?"** It reuses Phase 13's simulator
-([vendor-aware-learn-simulation.md](vendor-aware-learn-simulation.md),
+([vendor-aware-learn-simulation.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/vendor-aware-learn-simulation.md),
 decision D18 there) on the token shape of a session the user really ran.
 The measured figures always stay next to the replay, and the replay is
 labelled **Simulated** (implementation-plan.md, Phase 14).
@@ -47,7 +47,7 @@ labelled **Simulated** (implementation-plan.md, Phase 14).
   series (gap, uncached, cache read, cache write, output) and derives each
   step's new tokens. Over 15,320 real Claude Code requests the simulator
   agreed with the recorded cache reads in 99.8% of requests
-  ([learn-calibration-findings.md](learn-calibration-findings.md)).
+  ([learn-calibration-findings.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/learn-calibration-findings.md)).
   Phase 14 is that path, made general, run on any Analyze session, with the
   target model chosen by the user.
 - **Phase 15** priced turns from a dated price book and left "estimate on
@@ -614,12 +614,12 @@ compaction the scripter reads differently fails the session.
 **Claude Code subagent transcripts (C15, as built).**
 The transcripts (`<session>/subagents/*.jsonl`) are not replayed. The replay covers
 the main agent only. The session cost counts the runs
-(`docs/plans/claude-code-subagents.md`), the measured side uses the main
+([claude-code-subagents.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/claude-code-subagents.md)), the measured side uses the main
 agent's own usage including its own 1-hour cache writes, and
 `coverage.subagentRuns` gives the runs' count, tokens and priced cost. The
 real-data check asserts that count and those tokens against an oracle
 (`scripts/claude-subagent-runs-oracle.mts`, unit-tested) that places each run by
-the rules of `docs/plans/claude-code-subagents.md` §5.4 and §6. Its Claude Code
+the rules of [claude-code-subagents.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/claude-code-subagents.md) §5.4 and §6. Its Claude Code
 view holds a copy of each session's `subagents/` folder: the product refuses a
 symlinked folder, so a view of symlinks alone made every `Agent` call read as a
 missing run. Agent Host sub-agent calls are left out the same way; only a turn

@@ -19,7 +19,7 @@ const ANNOUNCEMENTS: Record<AllowanceSaveOutcome, string> = {
   removed: "Monthly allowance removed.",
 };
 
-// The header gauge and its two dialogs (monthly-allowance-standalone.md §4.7).
+// The header gauge and its two dialogs (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md §4.7).
 // Mounted only in Analyze mode, and only by a product with the flag, so it
 // loads when Analyze mode is entered (§4.8), after a save, and on Recount.
 // Before the first answer, and where the product has no allowance (404), it

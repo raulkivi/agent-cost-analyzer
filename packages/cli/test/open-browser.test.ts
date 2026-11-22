@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// Browser opener (npm-package.md §4.5): one opener per OS, no shell, skip rules.
+// Browser opener (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.5): one opener per OS, no shell, skip rules.
 import { EventEmitter } from "node:events";
 import { describe, expect, it } from "vitest";
 import { loopbackUrl, openBrowser, type OpenOptions, type Spawner } from "../src/open-browser.js";

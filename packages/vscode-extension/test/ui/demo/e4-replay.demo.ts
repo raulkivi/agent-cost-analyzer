@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 // Free demo scene E4 on made-up data: `npm run demo:record`. Replay a session on another
 // model: Replay on, the summary strip's self-check and coverage line, the Simulated
-// columns, then Compare models (docs/plans/docs-refresh-and-demo-recordings.md §4.1).
+// columns, then Compare models (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/docs-refresh-and-demo-recordings.md §4.1).
 import { browser, expect } from "@wdio/globals";
 import { DEMO_FIXTURE_ENV, parseDemoFixture } from "../../../scripts/ui-automation/demo-fixture.mts";
 import { AnalyzerPanel } from "../support/analyzer-panel.js";

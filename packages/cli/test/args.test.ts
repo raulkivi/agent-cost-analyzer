@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// One test per row of the command table in npm-package.md §4.3.
+// One test per row of the command table in https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.3.
 import { describe, expect, it } from "vitest";
 import { parseCliArgs } from "../src/args.js";
 

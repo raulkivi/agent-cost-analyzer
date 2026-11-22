@@ -12,7 +12,7 @@ import {
 import { identityTranslate, type Translate } from "../l10n/localize.js";
 
 // The monthly AI Credits allowance gauge (step 10.21, plan
-// monthly-allowance.md §3.2 to §3.4). Pure and free of `vscode`: the status
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance.md §3.2 to §3.4). Pure and free of `vscode`: the status
 // bar adapter and the Sessions view apply it. The figures are the domain's
 // (`computeMonthlyAllowance`, shared with the standalone app) and so are the
 // words (`describeMonthlyAllowance`, MS2); this module adds the status bar's

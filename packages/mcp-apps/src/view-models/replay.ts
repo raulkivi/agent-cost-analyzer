@@ -4,7 +4,7 @@ import type { Currency, MeasuredCost, ReplayCoverage, ReplayPricing, ReplaySelfC
 import { MINUS, UNKNOWN_TEXT, coverageNote, formatCount, pluralize } from "./format.js";
 import { formatMoney, formatSignedMoney } from "./money.js";
 
-// U12, a session replayed on another model (docs/plans/mcp-apps.md §2,
+// U12, a session replayed on another model (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §2,
 // §4.5). Pure: formats a replay_session or compare_models_for_session
 // result. Every simulated figure carries "Simulated" (known or not); the
 // measured figure stays apart; a null figure reads "Unknown", never 0; a

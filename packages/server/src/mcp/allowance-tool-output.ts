@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { describeMonthlyAllowance, type MonthlyAllowanceAnswer, type MonthlyAllowanceFigures } from "@agent-cost-analyzer/domain";
 
-// The text half of get_monthly_allowance (monthly-allowance-standalone.md §6):
+// The text half of get_monthly_allowance (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md §6):
 // the answer put into the domain's wording, the words the app's header and
 // the extension's status bar use. Built from numbers, day keys and the zone
 // only, so no session title or path can reach the model.

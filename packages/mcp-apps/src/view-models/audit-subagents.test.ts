@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { toAuditRollupViewModel, toSessionAuditViewModel } from "./audit.js";
 import { auditRollup, sessionAudit, subagentAudit } from "./audit-fixtures.js";
 
-// Step 10.20, ST13 (docs/plans/subagent-tool-audit.md §5.7, §6, D12, D14).
+// Step 10.20, ST13 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/subagent-tool-audit.md §5.7, §6, D12, D14).
 
 describe("toSessionAuditViewModel without subagent runs", () => {
   it("has no subagent section, no sub-line and no canceled line", () => {

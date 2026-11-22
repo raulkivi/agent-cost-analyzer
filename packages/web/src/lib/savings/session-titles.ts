@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { InsightSessionRow, SavingsSessionRef } from "@agent-cost-analyzer/domain";
 
-// V25 (docs/plans/savings-increment-3.md §5, D24): a session's title is looked
+// V25 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md §5, D24): a session's title is looked
 // up here, in the browser, from the insights dataset the Dashboard also uses.
 // It never goes into a report, an RPC answer or a tool result (D19).
 

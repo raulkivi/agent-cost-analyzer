@@ -1,8 +1,8 @@
 # Read VS Code Stable and Insiders together (1.0 C16)
 
-**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Status: **post-1.0 plan; 1.0 takes VB1 only (owner 2026-11-14), done in PR #302.** Decisions D1–D11 stay open until the post-1.0 work starts. 1.0 criterion C16 (owner, 2026-11-14), found while planning MA13 ([monthly-allowance-standalone.md](monthly-allowance-standalone.md) §3.2, D5). No code before the owner approves this plan.
+Status: **post-1.0 plan; 1.0 takes VB1 only (owner 2026-11-14), done in PR #302.** Decisions D1–D11 stay open until the post-1.0 work starts. 1.0 criterion C16 (owner, 2026-11-14), found while planning MA13 ([monthly-allowance-standalone.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md) §3.2, D5). No code before the owner approves this plan.
 
 ## Contents
 
@@ -302,6 +302,6 @@ Task VB14 unless noted; each with its header date:
 - [standalone-app.md](../standalone-app.md): the store and `settings.json` locations (both variants read, no fallback).
 - [UserGuide.md](../UserGuide.md): the variant badge and select; totals include both; frozen statements and the re-run diff; the allowance counts both.
 - [threat-model.md](../threat-model.md) §4: §6's rows (VB13).
-- [monthly-allowance-standalone.md](monthly-allowance-standalone.md): §4.4, §4.6, D5 and the risk row, per D8 (VB10).
+- [monthly-allowance-standalone.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md): §4.4, §4.6, D5 and the risk row, per D8 (VB10).
 - The root `CHANGELOG.md` (the app's) `[Unreleased]`: "The app reads VS Code and VS Code Insiders together".
 - implementation-plan.md (C16 row and build tasks), the Gantt and docs/README.md: the main session, not this task.

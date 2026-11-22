@@ -113,7 +113,7 @@ describe("savingsOpportunitySchema", () => {
     expect(() => savingsOpportunitySchema.parse(opportunity({ evidence: { sessions: 1, requests: 40, tokens: { known: true, value: 1200, estimated: false }, occurrences: null } }))).toThrow(/estimate/);
   });
 
-  // V26 (savings-increment-3.md §6): per-tool figures on unused-tools rows.
+  // V26 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md §6): per-tool figures on unused-tools rows.
   describe("tools", () => {
     const tool = (name: string, value = 300, sessions = 1) => ({ name, tokens: { known: true as const, value, estimated: true }, sessions });
 
@@ -162,7 +162,7 @@ describe("savingsOpportunitySchema", () => {
     expect(() => savingsOpportunitySchema.parse(opportunity({ kind: "cheaper-model" }))).toThrow(/simulated/);
   });
 
-  // V24 (savings-increment-3.md §4): each session reference carries its date
+  // V24 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md §4): each session reference carries its date
   // and its own saving over the window, with the row's basis, label and currency.
   describe("session date and saving (V24)", () => {
     const ref = (extra: Record<string, unknown>) => ({ providerId: "claude-code", sessionId: "s1", ...extra });
@@ -292,7 +292,7 @@ describe("domain index", () => {
   });
 });
 
-// R23, D35 (savings-increment-3.md §17): the tokens of "and N more" are shown
+// R23, D35 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md §17): the tokens of "and N more" are shown
 // only when every listed tool was loaded in every session of the row.
 describe("unlistedTools", () => {
   const tool = (sessions: number, value = 300) => ({ name: "t", tokens: { known: true as const, value, estimated: true as const }, sessions });

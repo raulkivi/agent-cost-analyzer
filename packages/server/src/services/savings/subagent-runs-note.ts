@@ -3,7 +3,7 @@
 import type { SavingsOpportunity } from "@agent-cost-analyzer/domain";
 import type { DetectorResult, SavingsSessionInput } from "./savings-detector.js";
 
-// Step CS11 (docs/plans/claude-code-subagents.md D10): the savings read the
+// Step CS11 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/claude-code-subagents.md D10): the savings read the
 // main agent only in 1.0. A row says how many subagent runs its sessions
 // started, so the saving is never read as covering them. Only a session whose
 // provider records the runs' tokens (Claude Code) carries the count; Copilot's

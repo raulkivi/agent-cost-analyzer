@@ -3,7 +3,7 @@
 import { expect, test } from "../support/app-fixture.js";
 import { DEMO_MAX_BEAT_MS, play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
 
-// W1, "Learn mode" (docs/plans/docs-refresh-and-demo-recordings.md §4.1):
+// W1, "Learn mode" (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/docs-refresh-and-demo-recordings.md §4.1):
 // pick a scenario, step through its turns, then the cache-expiry and
 // compaction markers. Made-up bundled scenarios only; nothing personal.
 const scenario = (page: import("@playwright/test").Page, name: RegExp) => page.getByRole("list", { name: "Scenarios" }).getByRole("button", { name });

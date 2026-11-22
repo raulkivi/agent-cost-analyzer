@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// Manifest rules of the `agent-cost-analyser` alias (npm-package.md D3, §4.1,
+// Manifest rules of the `agent-cost-analyser` alias (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md D3, §4.1,
 // §4.2, §4.7). The name's British spelling is the point of the package.
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";

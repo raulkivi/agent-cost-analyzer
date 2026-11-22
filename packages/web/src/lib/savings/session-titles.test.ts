@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { InsightSessionRow } from "@agent-cost-analyzer/domain";
 import { MAX_TITLE_LENGTH, sessionTitleLookup, titleText } from "./session-titles.js";
 
-// V25 (savings-increment-3.md §5, D24): titles come from the insights dataset
+// V25 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md §5, D24): titles come from the insights dataset
 // rows, keyed providerId:sessionId, and are cleaned before they are shown.
 
 const row = (providerId: string, sessionId: string, title: string) => ({ key: `${providerId}:${sessionId}`, providerId, sessionId, title }) as InsightSessionRow;

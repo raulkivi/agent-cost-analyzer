@@ -12,7 +12,7 @@ import { injectBrand } from "./inject-brand.js";
 import { toViewBrand } from "./view-brand.js";
 import type { ViewSource } from "./view-source.js";
 
-// Phase 12 (docs/plans/mcp-apps.md §4.2, §4.5): the MCP App views as a tool
+// Phase 12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.2, §4.5): the MCP App views as a tool
 // group. One resource holds every view; each increment adds the names of the
 // tools it gives a view to APP_VIEW_TOOL_NAMES. A tool gets _meta.ui only
 // when the server actually registered it.

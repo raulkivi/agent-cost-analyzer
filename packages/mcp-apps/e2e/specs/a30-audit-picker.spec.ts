@@ -4,7 +4,7 @@ import { messagesOffTemplate, modelTurnsIn, toolCallsIn } from "../support/call-
 import type { McpHost } from "../support/mcp-host.js";
 import { APP_VERSION, expect, inEachClaudeSet, test, VSCODE_SETS } from "../support/host-fixture.js";
 
-// A30 (docs/plans/mcp-apps.md §4.5, §8.3; owner answers Q6 to Q10 in §9.2):
+// A30 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.5, §8.3; owner answers Q6 to Q10 in §9.2):
 // U4 (tool-call audit) and U5 (session picker) in Claude Desktop, light and
 // dark. The fixture's Claude Code sessions record no tool calls, so U4 shows
 // 0 calls with a failure rate that reads Unknown, never 0 %. The per-day chart

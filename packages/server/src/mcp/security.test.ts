@@ -40,7 +40,7 @@ const CALLS: [name: string, args: Record<string, unknown>][] = [
   ["compare_models_for_session", { sessionId: "cp-1", models: ["claude-haiku-5.5", "gpt-6.1-sol"], provider: "vscode" }],
   // Phase 16 SR19 (savings-report.md §8, threat-model.md §11): the savings report, with the replays on.
   ["get_savings_report", { includeSimulated: true, limit: 20 }],
-  // MS9 (monthly-allowance-standalone.md §7): the allowance answer, over the fixture's allowance.
+  // MS9 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md §7): the allowance answer, over the fixture's allowance.
   ["get_monthly_allowance", {}],
 ];
 const REPLAY_TOOLS = ["replay_session", "compare_models_for_session"];
@@ -140,7 +140,7 @@ describe("MCP security across every tool (step 15.13, plan §10.1.5)", () => {
     }
   });
 
-  // V25 (savings-increment-3.md §5, D19, D24): the Savings tab looks titles up
+  // V25 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md §5, D19, D24): the Savings tab looks titles up
   // client-side, so no report, RPC answer or MCP result may carry one. The
   // titles come from the same fixture's insights dataset, not from a literal.
   it("carries no session title in get_savings_report's structured result, text or the tab's report", async () => {
@@ -159,7 +159,7 @@ describe("MCP security across every tool (step 15.13, plan §10.1.5)", () => {
     }
   });
 
-  // MS9 (monthly-allowance-standalone.md §7): the allowance answer is numbers,
+  // MS9 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md §7): the allowance answer is numbers,
   // day keys, the zone and fixed words; a hostile session title, a path or a
   // credential in the logs never reaches it, in the text or the structure.
   it("returns no session title, local path or credential from get_monthly_allowance", async () => {
@@ -180,7 +180,7 @@ describe("MCP security across every tool (step 15.13, plan §10.1.5)", () => {
     }
   });
 
-  // Step 10.20 (subagent-tool-audit.md §5.8, §9): a subagent's label and run
+  // Step 10.20 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/subagent-tool-audit.md §5.8, §9): a subagent's label and run
   // id come from a log file. They reach the model only as `origin` fields of
   // structured data, never in prose, and neither the subagent's prompt nor a
   // call's result is in any audit, turn or finding output.

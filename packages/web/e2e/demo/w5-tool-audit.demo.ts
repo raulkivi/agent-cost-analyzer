@@ -6,7 +6,7 @@ import { AUDIT_READ_SESSION_TITLE } from "../support/fixture-home.mts";
 import { assertPrivate, probed } from "./support/privacy-probe.js";
 import { DEMO_MAX_BEAT_MS, play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
 
-// W5, "Tool audit with subagent calls" (docs/plans/demo-recordings-1.0.md §3.2): Analyze on the
+// W5, "Tool audit with subagent calls" (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/demo-recordings-1.0.md §3.2): Analyze on the
 // VS Code Copilot Chat source, the audit session, the Tool audit tab (the KPI sub-line and the
 // Calls by agent split), the Agent filter on Subagents (the Agent column, the runs table with
 // an unread run and its reason), then the All sessions audit. Runs on the demo home with the

@@ -30,7 +30,7 @@ import { captureRegisteredTools, registerAppViews } from "./apps/register-app-vi
 import type { ViewSource } from "./apps/view-source.js";
 
 // Local, read-only MCP interface over the analyzer (docs/plans/
-// tool-call-audit.md §10, docs/plans/mcp-tools-v2.md) so a user can attach
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/tool-call-audit.md §10, https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-tools-v2.md) so a user can attach
 // it to Claude Code or any MCP-capable harness and query their own
 // sessions. Transport-agnostic: stdio.ts serves it over stdio; tests
 // connect it in memory. Each tool group registers itself (open/closed).
@@ -73,7 +73,7 @@ export interface McpServerDeps {
   // (the standalone server only; the extension leaves the group out).
   monthlyAllowance?: Pick<MonthlyAllowanceQueries, "get">;
   version: string;
-  // Phase 12 (docs/plans/mcp-apps.md §4.2): the MCP App views. When given,
+  // Phase 12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.2): the MCP App views. When given,
   // the server serves the views resource, the app-only get_turn_series and
   // names the view on the tools that have one; absent, nothing changes.
   appViews?: { source: ViewSource };
@@ -92,7 +92,7 @@ export interface McpServerDeps {
 export const MCP_TOOL_GROUPS = ["sessions", "audit", "cost", "findings", "attribution", "pricing", "costAnalysis", "replay", "savings", "billing", "allowance"] as const;
 export type McpToolGroup = (typeof MCP_TOOL_GROUPS)[number];
 // The extension's set: billing and estimates are standalone-only (D7), and so
-// is the allowance (monthly-allowance-standalone.md D7).
+// is the allowance (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md D7).
 const STANDALONE_ONLY_TOOL_GROUPS: readonly McpToolGroup[] = ["billing", "allowance"];
 export const EXTENSION_TOOL_GROUPS: readonly McpToolGroup[] = MCP_TOOL_GROUPS.filter((group) => !STANDALONE_ONLY_TOOL_GROUPS.includes(group));
 
@@ -123,7 +123,7 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
       websiteUrl: MCP_WEBSITE_URL,
       icons: MCP_ICONS,
     },
-    // No cache hints (D4, docs/plans/mcp-sdk-2-migration.md §6): SDK 2 answers
+    // No cache hints (D4, https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-sdk-2-migration.md §6): SDK 2 answers
     // 2026-07-28 requests with ttlMs 0, so a host never keeps the views file
     // past an update.
     { instructions: identity.instructions, maxToolInputElements: MAX_TOOL_INPUT_ELEMENTS },

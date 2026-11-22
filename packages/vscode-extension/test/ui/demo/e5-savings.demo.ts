@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 // Free demo scene E5 on made-up data: `npm run demo:record`. Analyze, Savings, 90 then 30
 // days, the top row's sessions (title, id, date, saving), the unused-tools row's tool list
-// ("and N more"), Include simulated, Not analysed. Beat list: docs/plans/demo-recordings-1.0.md §3.3. // codespell:ignore analysed
+// ("and N more"), Include simulated, Not analysed. Beat list: https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/demo-recordings-1.0.md §3.3. // codespell:ignore analysed
 import { browser, expect } from "@wdio/globals";
 import { AnalyzerPanel } from "../support/analyzer-panel.js";
 import { readSavings, waitForSavings } from "../support/savings-view.js";

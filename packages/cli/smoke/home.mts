@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// The npm-package smoke's write-scope check (npm-package.md §4.4, §4.8 step
+// The npm-package smoke's write-scope check (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.4, §4.8 step
 // 7): the app writes only its own settings folder, so the fixture home is
 // recorded before and after and every other change fails the smoke.
 import { createHash } from "node:crypto";

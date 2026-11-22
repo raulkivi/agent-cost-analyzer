@@ -7,7 +7,7 @@ import type { MeasureView } from "./format.js";
 import { basisText, formatSignedMoney, moneyViews, perCurrencyViews } from "./money.js";
 import type { MoneyView } from "./money.js";
 
-// U10, which repository or project costs the most (docs/plans/mcp-apps.md
+// U10, which repository or project costs the most (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md
 // §2, §4.5). Pure: formats a compare_costs result. A change against a
 // period with nothing known reads "no earlier figure", never a change from
 // 0. A row's drill-down arguments for U9 come only from the input.

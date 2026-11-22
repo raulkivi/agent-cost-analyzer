@@ -28,7 +28,7 @@ import { createSessionReplay } from "./create-session-replay.js";
 
 // G4 (vscode-extension.md §2.2): the data folders default to this package's
 // own files, located through import.meta.url; a packaged build passes its
-// layout's (npm-package.md §4.2).
+// layout's (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.2).
 export interface StandaloneApiServiceOptions extends LogProviderCompositionOptions, BundledDataDirs {
   appVersion?: string;
   // The clock (plan §12.4.1): the real one unless a test or the
