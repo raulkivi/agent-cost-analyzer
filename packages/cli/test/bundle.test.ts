@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // The built package (`npm run build`): dist/cli.js runs `--version`, `serve`
-// and `mcp` under plain Node (npm-package.md §7: CommonJS in the ESM bundle,
+// and `mcp` under plain Node (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §7: CommonJS in the ESM bundle,
 // import.meta.url paths), its notices cover every bundled npm package, and
 // `npm pack` stays within the file list and size budget. Skipped locally
 // before a build; CI builds first and sets CI, which turns a skip into a

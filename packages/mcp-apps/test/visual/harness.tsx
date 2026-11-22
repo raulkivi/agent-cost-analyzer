@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// A14 visual check (docs/plans/mcp-apps.md §7): renders the real App, CSS
+// A14 visual check (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §7): renders the real App, CSS
 // and host theme binding with fixture data and the fake port, so a browser
 // can screenshot each view in light and dark at any width. Built on demand
 // with test/visual/vite.config.ts into a scratch directory; never part of

@@ -3,7 +3,7 @@
 import type { CostFigure, SubagentRunUsage, SubagentSpend, SubagentTokens, TokenCount, Turn, TurnCostFigures, TurnUsage } from "@agent-cost-analyzer/domain";
 import { formatUsd } from "./ai-credits-usd.js";
 
-// Step CS13 (docs/plans/claude-code-subagents.md §5.6, CS2 boards): what a
+// Step CS13 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md §5.6, CS2 boards): what a
 // turn without AI Credits (Claude Code) shows of its subagent runs: tokens
 // and a priced cost. The API puts `pricedCost` on the turn, the main agent's
 // own line and each run. Unknown is never 0: a part with an unknown field

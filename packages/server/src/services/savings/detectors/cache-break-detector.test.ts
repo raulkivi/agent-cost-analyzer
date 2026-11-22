@@ -220,7 +220,7 @@ describe("CacheBreakDetector: Not analysed (never 0)", () => {
   });
 });
 
-// V24 (savings-increment-3.md §4, D22): each session's date and its own saving.
+// V24 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md §4, D22): each session's date and its own saving.
 describe("CacheBreakDetector: each session's date and saving", () => {
   const idle = (id: string, gap: number) => claudeSession(id, [cold(0, 10_000), warm(1, 10_400), cold(gap, 10_600)]);
 
@@ -249,7 +249,7 @@ describe("CacheBreakDetector: each session's date and saving", () => {
   });
 });
 
-// R24, D36 (savings-increment-3.md §17): a session with one priced and one
+// R24, D36 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md §17): a session with one priced and one
 // unpriced break is left out of the row's amount and listed under coverage with
 // the reason, the way O5 does; its own saving is unknown with that reason.
 describe("CacheBreakDetector: a session with an unpriced break (D36)", () => {

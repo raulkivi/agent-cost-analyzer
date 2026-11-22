@@ -22,7 +22,7 @@ export function versionFromTag(tag: string, prefix: string): string {
 }
 
 // Every listed manifest must carry the version the tag releases (the app's
-// root package.json and the npm package, packages/cli, npm-package.md §4.7).
+// root package.json and the npm package, packages/cli, https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.7).
 export function assertSameVersions(version: string, manifests: { path: string; version: string }[]): void {
   for (const manifest of manifests) {
     if (manifest.version !== version) {

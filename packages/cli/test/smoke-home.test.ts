@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// The npm-package smoke's write-scope check (npm-package.md §4.4, §4.8 step
+// The npm-package smoke's write-scope check (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.4, §4.8 step
 // 7): the fixture home before and after, and only the app's settings folder
 // may change.
 import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";

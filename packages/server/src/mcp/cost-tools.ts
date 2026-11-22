@@ -45,7 +45,7 @@ import {
   type Guard,
 } from "./tool-helpers.js";
 
-// Phase 9.12 (docs/plans/mcp-tools-v2.md §4.1). Step 15.6 (cost-by-
+// Phase 9.12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-tools-v2.md §4.1). Step 15.6 (cost-by-
 // repository-and-project.md §10.1.2): the cost basis in both tools.
 
 // What every cost figure means, shared by the cost tools and get_turn. It
@@ -53,7 +53,7 @@ import {
 export const COST_BASIS_TEXT =
   "Cost figures carry their basis: billed (what GitHub Copilot billed, AI Credits), reported (what the agent logged itself, USD) and priced (tokens × the price version in force on the turn's channel at the turn's time; see get_price_book, and priceVersionIds). The preferred figure is billed, else reported, else priced. A priced figure with apiEquivalent: true is what the same use costs on the API, though a flat-fee plan may have covered it. A priced figure with userPriceVersionIds used price versions the user added themselves (not bundled prices); say so when you quote it. An unknown figure is {known:false, reason}, never 0; totals give knownTurns of turns per basis. Currencies stay apart; `usd` converts only at 1 AI Credit = $0.01.";
 
-// docs/plans/mcp-apps.md §4.7: a running chat's log is incomplete, so its
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.7: a running chat's log is incomplete, so its
 // figures are not final.
 const ACTIVE_TEXT = `\`active\`: true marks a session whose latest turn started in the last ${ACTIVE_SESSION_WINDOW_MINUTES} minutes; its figures may still change.`;
 

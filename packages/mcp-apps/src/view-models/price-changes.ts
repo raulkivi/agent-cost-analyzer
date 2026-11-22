@@ -9,7 +9,7 @@ import { formatDay, periodText, pluralize } from "./format.js";
 import { sameModel } from "./model-match.js";
 import { formatMoney } from "./money.js";
 
-// U13, price changes (docs/plans/mcp-apps.md §2, §4.5). Pure: formats a
+// U13, price changes (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §2, §4.5). Pure: formats a
 // get_price_changes result. Documented changes (from the price book, with
 // sources) and observed ones (inferred from billed vs priced) stay apart;
 // an observed change is always "inferred".

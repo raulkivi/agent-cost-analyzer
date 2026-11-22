@@ -12,7 +12,7 @@ import {
 import type { AllowanceSettingsStore } from "./allowance-settings-store.js";
 import { MonthlyAllowanceService, NO_COPILOT_LOGS_REASON, variantOfUserDataDir, type CopilotSessionSource } from "./monthly-allowance-service.js";
 
-// monthly-allowance-standalone.md §4.4 to §4.6, MS4: every state of the
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md §4.4 to §4.6, MS4: every state of the
 // answer, the per-harness split and what the service reads.
 
 const NOW = new Date("2026-11-12T12:00:00Z");

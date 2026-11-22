@@ -9,7 +9,7 @@ import { monthlyAllowanceAnswerSchema, type Session, type TokenCount } from "@ag
 import { createApp } from "./app.js";
 import type { LogProvider } from "./data-sources/log-providers/log-provider.js";
 
-// MS4 (monthly-allowance-standalone.md §4.3, §4.6): GET and PUT
+// MS4 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md §4.3, §4.6): GET and PUT
 // /api/monthly-allowance over the real composition. The VS Code provider is
 // replaced by a fake with the same id (the registry keeps the last one), so
 // the sessions and their costs are exact.

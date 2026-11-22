@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { formatCount, pluralize } from "./format.js";
 
-// U5, session picker (docs/plans/mcp-apps.md §4.5, board SessionPicker.dc.html).
+// U5, session picker (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.5, board SessionPicker.dc.html).
 // Pure: formats a list_sessions result. A row has no cost: the tool returns
 // none (owner answer Q8). The title is logged text, shown in the row and
 // never part of a message (§6); the only message names the session id.

@@ -4,7 +4,7 @@ import { existsSync } from "node:fs";
 import type { McpServerDeps } from "../mcp-server.js";
 import { FileViewSource } from "./view-source.js";
 
-// Phase 12 A13 (docs/plans/mcp-apps.md §4.2, §7): the one place both entry
+// Phase 12 A13 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.2, §7): the one place both entry
 // points (the standalone stdio.ts and the extension's mcp-stdio.js) turn the
 // path of the built views.html into the createMcpServer `appViews` option.
 // A missing file (no path, or mcp-apps never built) yields no option at all,

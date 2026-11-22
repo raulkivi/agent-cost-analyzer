@@ -4,7 +4,7 @@ import { subagentLabelSchema, subagentRunIdSchema, type SubagentRunGap, type Too
 import type { CopilotEvent } from "../../data-sources/agent-host/copilot-event.js";
 
 // Which agent issued an Agent Host tool call (step 10.20,
-// docs/plans/subagent-tool-audit.md §5.3). Pure: walks parentToolCallId up,
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/subagent-tool-audit.md §5.3). Pure: walks parentToolCallId up,
 // like the builder's roundOf.
 
 // The part of a call draft the walk needs.

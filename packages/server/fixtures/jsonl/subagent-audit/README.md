@@ -1,8 +1,8 @@
 # Classic subagent audit fixtures
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Step 10.20, task ST4 ([plan](../../../../../docs/plans/subagent-tool-audit.md)).
+Step 10.20, task ST4 ([plan](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/subagent-tool-audit.md)).
 Synthetic: span field names, nesting and value types follow the real Copilot
 Chat debug logs (plan §4.1, §14); ids, paths and texts are invented
 (`/workspace/example`, `example.invalid`). `attrs.args` is a JSON string and

@@ -3,7 +3,7 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 
-// Canned workflows (docs/plans/tool-call-audit.md §10, mcp-tools-v2.md §4.2).
+// Canned workflows (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/tool-call-audit.md §10, https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-tools-v2.md §4.2).
 
 function scope(since?: string, provider?: string): string {
   return [since ? ` since ${since}` : "", provider ? ` for provider "${provider}"` : ""].join("");

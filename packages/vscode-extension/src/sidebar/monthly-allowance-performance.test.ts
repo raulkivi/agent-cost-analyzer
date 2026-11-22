@@ -4,7 +4,7 @@ import type { AllowanceSettings, ConfigStatus, Session } from "@agent-cost-analy
 import { describe, expect, it, vi } from "vitest";
 import { SidebarController, type SidebarSources } from "./sidebar-controller.js";
 
-// Step 10.21 MA8 (plan monthly-allowance.md §3.6): 5,000 session summaries
+// Step 10.21 MA8 (plan https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance.md §3.6): 5,000 session summaries
 // stay under 50 ms and a setting change calls no source.
 const BUDGET_MS = 50;
 const NOW = new Date("2026-10-24T15:00:00Z");

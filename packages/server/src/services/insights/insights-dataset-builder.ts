@@ -21,7 +21,7 @@ import { statusOf } from "../tool-audit/outcome-tally.js";
 import { resolveToolKind } from "../tool-audit/tool-kind-resolver.js";
 import { latestTurnStart } from "../cost/session-activity.js";
 
-// Phase 9.11 (docs/plans/insights-dashboard.md §3/§4): pure flattening of
+// Phase 9.11 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/insights-dashboard.md §3/§4): pure flattening of
 // normalized Sessions from every provider into the dashboard's star schema.
 
 export interface ProviderSessions {

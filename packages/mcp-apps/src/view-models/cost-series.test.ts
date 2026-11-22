@@ -88,7 +88,7 @@ describe("toCostSeriesViewModel chart", () => {
     expect(chart.points[1]?.cumulative[0]?.amount).toBe(100);
   });
 
-  // mcp-apps.md §9.1 answer 5: AI Credits first, then USD, whichever currency the first bucket knows.
+  // https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §9.1 answer 5: AI Credits first, then USD, whichever currency the first bucket knows.
   it("lists the currencies AI Credits first, then USD, even when the first bucket has only USD", () => {
     const usdOnly = usdTotal(0.5, 3, 3);
     const both = { ...costTotal(10, 5, 5), amounts: [{ currency: "AI_CREDITS" as const, amount: 10, knownTurns: 5 }, { currency: "USD" as const, amount: 4, knownTurns: 5 }] };

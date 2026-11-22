@@ -1,7 +1,7 @@
 /* SPDX-FileCopyrightText: 2026 Raul Kivi
    SPDX-License-Identifier: MIT
 */
-/* U11 CostChangeView (docs/plans/mcp-apps.md §4.5, board CostChange.dc.html).
+/* U11 CostChangeView (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.5, board CostChange.dc.html).
    Host tokens for structure; no colour literals (§5.4). A rise is the host's
    danger colour, a fall its success colour, and the sign is always written too. */
 

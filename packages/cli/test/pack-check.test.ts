@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// The tarball's file list and size budget (npm-package.md §4.2), checked on
+// The tarball's file list and size budget (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.2), checked on
 // `npm pack --dry-run --json` output.
 import { describe, expect, it } from "vitest";
 import { PACK_BUDGET, packProblems, type PackReport } from "../scripts/pack-check.mts";

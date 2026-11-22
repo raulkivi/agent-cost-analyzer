@@ -27,7 +27,7 @@ import {
   type Guard,
 } from "./tool-helpers.js";
 
-// Phase 9.10 tools (docs/plans/tool-call-audit.md §10), refined in 9.12.
+// Phase 9.10 tools (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/tool-call-audit.md §10), refined in 9.12.
 
 const DEFAULT_TOOL_CALL_LIMIT = 50;
 

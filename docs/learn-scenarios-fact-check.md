@@ -111,7 +111,7 @@ for the owner to approve.
 
 **Decision (2026-11-03).** The owner chose true per-vendor simulation over
 hand edits. R-01 to R-06 are fixed by construction in Phase 13 (steps 13.3 to 13.10)
-([plans/vendor-aware-learn-simulation.md](plans/vendor-aware-learn-simulation.md),
+([vendor-aware-learn-simulation.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/vendor-aware-learn-simulation.md),
 rules S2, S5 and S8). The numbers below remain the reference for its
 Anthropic golden tests.
 

@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// The npm-package smoke's tarball checks (npm-package.md §4.8 step 2), on
+// The npm-package smoke's tarball checks (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.8 step 2), on
 // tarballs built here byte by byte.
 import { gzipSync } from "node:zlib";
 import { describe, expect, it } from "vitest";

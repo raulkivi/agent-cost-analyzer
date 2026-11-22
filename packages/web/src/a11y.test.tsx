@@ -546,7 +546,7 @@ describe.each(Object.keys(THEMES) as ThemeName[])("axe: no WCAG 2.2 AA violation
     await expectNoViolations();
   });
 
-  // MS7 (monthly-allowance-standalone.md §4.7, board A11y.dc.html): the
+  // MS7 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md §4.7, board A11y.dc.html): the
   // gauge in the header in each state, the details dialog and the settings
   // dialog, with a server 400 on two fields.
   describe("monthly allowance", () => {

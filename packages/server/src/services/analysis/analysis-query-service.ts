@@ -13,7 +13,7 @@ import { NOT_ATTRIBUTED, type RowAttributor } from "../insights/insights-dataset
 import type { TurnPricing } from "../pricing/turn-cost-figures.js";
 import { redactRepositoryKey } from "../cost-attribution/repository-key-privacy.js";
 
-// Phase 9.12 (docs/plans/mcp-tools-v2.md §5): cost, findings and turn
+// Phase 9.12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-tools-v2.md §5): cost, findings and turn
 // queries for the MCP server. Composes the pure builders over two narrow
 // ports (DIP): one provider at a time for a session, and the dashboard's
 // cross-provider dataset for rollups and findings.
@@ -39,7 +39,7 @@ export class AnalysisQueryService {
     private readonly providers: ProviderLookup,
     private readonly insights: InsightsSource,
     private readonly costs: SessionCostSources = {},
-    // Judges which sessions are active (docs/plans/mcp-apps.md §4.7);
+    // Judges which sessions are active (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.7);
     // public so the tools phrase "N minutes ago" against the same time.
     readonly now: () => Date = () => new Date(),
   ) {}

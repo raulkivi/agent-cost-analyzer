@@ -39,7 +39,7 @@ export function readSettingsFile(settingsDir: string, fs: SettingsFileFs = nodeF
 // (architecture.md §11.2). Reads the current contents first so keys this
 // caller does not own survive. The new contents go to a temporary file in the
 // same folder (mode 0600), then rename over the old file, so a second reader
-// process never sees a torn file (monthly-allowance-standalone.md D10).
+// process never sees a torn file (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md D10).
 export function writeSettingsFile(
   settingsDir: string,
   patch: Record<string, unknown>,

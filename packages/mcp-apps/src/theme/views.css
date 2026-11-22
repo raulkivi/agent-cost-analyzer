@@ -1,7 +1,7 @@
 /* SPDX-FileCopyrightText: 2026 Raul Kivi
    SPDX-License-Identifier: MIT
 */
-/* Layout of the MCP App views (docs/plans/mcp-apps.md §5, boards in
+/* Layout of the MCP App views (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §5, boards in
    docs/plans/mockups/mcp-apps/). Structure uses the host's tokens through
    theme-mcp-host.css; the brand shows only in the accent tokens. No colour
    literals here (§5.4). Load order: theme.css, brand.css, theme-mcp-host.css,

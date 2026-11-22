@@ -1,8 +1,8 @@
 # Monthly allowance mock-ups (standalone app)
 
-**Last changed:** 2026-11-15 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-Boards for task MS0 in [monthly-allowance-standalone.md](../../monthly-allowance-standalone.md) §5 (1.0 criterion C9). **Drawn 2026-11-15, approved by the owner 2026-11-15** with two tweaks (below). MS7 (the UI code) may start.
+Boards for task MS0 in [monthly-allowance-standalone.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md) §5 (1.0 criterion C9). **Drawn 2026-11-15, approved by the owner 2026-11-15** with two tweaks (below). MS7 (the UI code) may start.
 
 Same `.dc.html` format as [../savings-report/](../savings-report/README.md), listed in `canvas.json`. They reference `./support.js`, which isn't in the repo; every state is static markup, so each board also renders in a plain browser. All figures are invented.
 

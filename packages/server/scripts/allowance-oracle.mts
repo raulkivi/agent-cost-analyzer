@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// MS10 (docs/plans/monthly-allowance-standalone.md §11, D11): an independent
+// MS10 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md §11, D11): an independent
 // oracle for the monthly allowance's real-data check. It reads the raw logs and
 // shares no code with the product: the session readers, the alignment of log
 // turns to store turns, the allowance figures and the period are each written
@@ -17,7 +17,7 @@
 //   - billed only: Copilot's own AI Credits (copilotUsageNanoAiu in the debug
 //     logs, copilotUsage.totalNanoAiu in session.db and events.jsonl) / 1e9;
 //     nothing estimated;
-//   - whole-session known (constraint 6, monthly-allowance.md D7): one turn
+//   - whole-session known (constraint 6, https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance.md D7): one turn
 //     or request without billed credits makes the session unknown, never a
 //     partial sum; a classic session's turns are its store rows plus any
 //     logged turn past the store's last; each needs a logged request;

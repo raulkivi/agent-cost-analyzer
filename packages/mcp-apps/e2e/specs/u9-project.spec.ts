@@ -3,7 +3,7 @@
 import { modelTurnsIn, toolCallsIn } from "../support/call-log.js";
 import { expect, inEachClaudeSet, test } from "../support/host-fixture.js";
 
-// A24 §2.2-2.4 (docs/plans/mcp-apps-a24-checklist.md): U9 for a project in
+// A24 §2.2-2.4 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps-a24-checklist.md): U9 for a project in
 // Claude Desktop, light and dark. Customer portal (portal-web and
 // portal-api) is the fixture's two-currency project: Copilot's "Fix the bug"
 // is billed in AI Credits, the Claude Code and pi turns are priced in USD.

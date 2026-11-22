@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// ST15 (docs/plans/subagent-tool-audit.md §11): an independent oracle for the
+// ST15 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/subagent-tool-audit.md §11): an independent oracle for the
 // tool-call audit's subagent calls. It reads raw log text and imports nothing:
 // no product code, no other oracle (subagent-tool-audit-oracle.test.mts checks
 // that). Rules are the plan's (§4, §6, §7), restated here, not copied:

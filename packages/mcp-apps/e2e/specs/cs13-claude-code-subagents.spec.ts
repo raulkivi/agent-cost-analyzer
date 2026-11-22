@@ -5,7 +5,7 @@ import { expect, inEachClaudeSet, test, VSCODE_SETS } from "../support/host-fixt
 import { sessionCost } from "../../src/view-models/fixtures.js";
 import { claudeRun, claudeTurnView, missingClaudeRun, priced } from "../../src/view-models/turn-view-fixture.js";
 
-// CS13 (docs/plans/claude-code-subagents.md §5.6, board U1TurnDetail.dc.html):
+// CS13 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md §5.6, board U1TurnDetail.dc.html):
 // U1's expanded turn lists the subagent runs a Claude Code turn folded in,
 // with tokens and a priced cost, and "AI Credits n/a". The fixture home has no
 // such session, so the fake host answers get_turn with the shape the server

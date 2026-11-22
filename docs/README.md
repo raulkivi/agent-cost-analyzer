@@ -1,6 +1,6 @@
 # Developer documentation
 
-**Last changed:** 2026-11-19 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 For people building or changing Agent Cost Analyzer and the AI Credits
 Analyzer extension. Users: start at the [root README](../README.md).
@@ -38,6 +38,8 @@ An npm workspace:
   reuses the other packages.
 
 ## Documentation index
+
+Completed plans were removed from `docs/plans/` on 2026-11-22. Links to them point to their last version at commit `5d430c72`.
 
 - [Release guide](release.md): how to release the app, the extension or
   both: version rules, checks, tags and what each workflow publishes.
@@ -78,25 +80,25 @@ An npm workspace:
 - [Threat model](threat-model.md) — trust boundaries, STRIDE analysis
   of the API/data-source surface, and verified mitigations (path
   traversal, SQL injection, XSS, CSRF) vs. residual risks.
-- [Tool-call audit plan](plans/tool-call-audit.md) — design and
+- [Tool-call audit plan](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/tool-call-audit.md) — design and
   decisions for the tool-call audit (outcomes, failure classification,
   cross-session rollup, audit charts) and its read-only MCP server
   (`scripts/mcp-server.sh`; see the User Guide's "Querying the audit from
   Claude Code").
-- [MCP tools v2 plan](plans/mcp-tools-v2.md) — assessment of the MCP
+- [MCP tools v2 plan](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-tools-v2.md) — assessment of the MCP
   tools and the Phase 9.12 additions: session and cross-provider cost,
   security/anomaly/behaviour findings, a one-turn drill-down, server
   instructions and output schemas.
-- [MCP Apps plan](plans/mcp-apps.md) — Phase 12 (done: MVP released in
+- [MCP Apps plan](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md) — Phase 12 (done: MVP released in
   extension 0.4.0 and app 0.10.0; Increment 2 in extension 0.6.0 and app
   0.11.0 on 2026-11-11; Increment 3 in extension 0.8.0 and app 0.12.0 on
   2026-11-12; handover in
-  [mcp-apps-handover.md](plans/mcp-apps-handover.md)):
+  [mcp-apps-handover.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps-handover.md)):
   branded, interactive views (session cost, spend rollup, findings, cost
   over time, cost comparison, cost change) that MCP Apps hosts such as VS
   Code Copilot Chat and Claude Desktop render next to the MCP tool
   results. Includes the use-case analysis, branding rules and tasks.
-- [MCP SDK 2 migration plan](plans/mcp-sdk-2-migration.md) — Phase 12
+- [MCP SDK 2 migration plan](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-sdk-2-migration.md) — Phase 12
   follow-up (M0–M5 done 2026-11-12; M6, the release check, is the
   owner's): both MCP servers and the views moved from
   `@modelcontextprotocol/sdk` 1.x and ext-apps 1.7.5 to the split SDK 2
@@ -114,7 +116,7 @@ An npm workspace:
   projects, compare them over time, split a project by vendor and model,
   versioned model prices with price-change markers, billing statements
   and estimates.
-- [Insights dashboard plan](plans/insights-dashboard.md) — design and
+- [Insights dashboard plan](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/insights-dashboard.md) — design and
   decisions for the QlikView-style associative dashboard across every
   provider: cost and tokens, tool calls and failures, and security
   signals (risky commands, anomalies, behaviour changes) that say what
@@ -130,17 +132,17 @@ An npm workspace:
   record of the owner's hand checks before step 10.17 automated them, what
   each suite now covers, and the two checks that stay manual (remote
   windows, screenshots); none gates a release.
-- [Classic subagent credits implementation plan](plans/classic-subagent-credits-implementation.md) —
+- [Classic subagent credits implementation plan](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/classic-subagent-credits-implementation.md) —
   step 10.19 (planned, owner decisions accepted 2026-11-12): tasks SA0 to
   SA17 that fold subagent runs into the totals, with UI checks, threat-model
   rows and risks.
-- [Monthly allowance plan](plans/monthly-allowance.md) — step 10.21
+- [Monthly allowance plan](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance.md) — step 10.21
   (planned): a user-set monthly AI Credits allowance with a status-bar gauge
   and a Sessions row in the extension.
-- [Docs refresh and demo recordings plan](plans/docs-refresh-and-demo-recordings.md) —
+- [Docs refresh and demo recordings plan](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/docs-refresh-and-demo-recordings.md) —
   steps 10.22 and 10.23: README and User Guide updates, then GIF demos
   recorded by wdio, Playwright and Claude Desktop under Xvfb.
-- [Demo recordings for the 1.0 features](plans/demo-recordings-1.0.md) —
+- [Demo recordings for the 1.0 features](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/demo-recordings-1.0.md) —
   proposal (owner review): which 1.0 features extend an existing demo
   scene, which get a new recording (npx quick start, the app's allowance
   gauge, savings in the chat), which scenes are stale, and their fixtures.
@@ -148,27 +150,27 @@ An npm workspace:
   ranked list of what to change to spend less, with estimated savings.
   Increment 1 (the Savings tab in both products) is built; Increment 2 (an
   MCP tool and view) is planned.
-- [Classic subagent credits plan](plans/classic-subagent-credits.md) —
+- [Classic subagent credits plan](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/classic-subagent-credits.md) —
   step 10.19's design: counting the AI Credits that classic Copilot Chat subagents
   log to sibling files next to `main.jsonl`, with measured impact, format
   facts, options and open questions.
-- [Claude Code subagents plan](plans/claude-code-subagents.md) — 1.0
+- [Claude Code subagents plan](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md) — 1.0
   criterion C15 (approved 2026-11-14): counting the usage in Claude Code's
   `subagents/` transcripts in every total, with the CS0 spike's findings,
   owner decisions and a real-data check.
-- [npm package plan](plans/npm-package.md) — 1.0 criterion C8 (approved
+- [npm package plan](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md) — 1.0 criterion C8 (approved
   2026-11-14): the standalone app on npm as `agent-cost-analyzer`, trusted
   publishing, and the owner's placeholder publish (NP0).
 - [MCP client setup plan](plans/mcp-client-setup.md) — Phase 18
   (approved 2026-11-18): `agent-cost-analyzer mcp install` for six MCP
   clients, a "Connect an agent" web panel, the MCP Registry, a `.mcpb`
   bundle and a Claude Code plugin.
-- [Monthly allowance in the standalone app](plans/monthly-allowance-standalone.md) —
+- [Monthly allowance in the standalone app](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md) —
   1.0 criterion C9, step 10.21's MA13 (approved 2026-11-14).
-- [Subagent tool-audit plan](plans/subagent-tool-audit.md) — 1.0 criterion
+- [Subagent tool-audit plan](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/subagent-tool-audit.md) — 1.0 criterion
   C10, step 10.20 (approved 2026-11-14): classic subagent tool calls in the
   audit and security findings.
-- [Savings Increment 3 plan](plans/savings-increment-3.md) — 1.0 criterion
+- [Savings Increment 3 plan](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md) — 1.0 criterion
   C11 (approved 2026-11-14): pi, per-tool tokens, per-session figures and
   titles.
 - [Automated pre-release UI gate](plans/release-ui-gate.md) —

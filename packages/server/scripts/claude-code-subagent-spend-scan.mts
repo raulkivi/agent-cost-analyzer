@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // Folder scan of the Claude Code subagent real-data check (plan
-// claude-code-subagents.md §10, CS16): reads ~/.claude/projects as the oracle
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md §10, CS16): reads ~/.claude/projects as the oracle
 // needs it, and shares no code with the server's readers. Read-only: it opens
 // files for reading and takes `lstat`s. (claude-code-view.mts makes the snapshot
 // the check reads.)

@@ -371,7 +371,7 @@ describe("get_savings_report hostile names", () => {
     expect(row.sessionsTotal).toBe(30);
   });
 
-  // V24 (savings-increment-3.md §4, §9, D19): date and saving per shown session, no title.
+  // V24 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md §4, §9, D19): date and saving per shown session, no title.
   describe("each shown session's date and saving", () => {
     const sessionsWith = [
       { providerId: "claude-code", sessionId: "s-a", startedAt: "2026-11-11T09:30:00.000Z", perWindow: known(0.5, 1.2) },
@@ -418,7 +418,7 @@ describe("get_savings_report hostile names", () => {
     });
   });
 
-  // V26 (savings-increment-3.md §6, D26): per-tool tokens on unused-tools rows.
+  // V26 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md §6, D26): per-tool tokens on unused-tools rows.
   describe("per-tool tokens of an unused-tools row", () => {
     const est = (value: number) => ({ known: true as const, value, estimated: true as const });
     const toolsOf = (count: number) => Array.from({ length: count }, (_, index) => ({ name: `mcp_github_tool_${String(index).padStart(2, "0")}`, tokens: est(600 - index * 10), sessions: 31 }));

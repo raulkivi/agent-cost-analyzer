@@ -7,7 +7,7 @@ import { allowanceSettingsSchema } from "./allowance-settings.js";
 import { ALLOWANCE_LEVELS } from "./monthly-allowance.js";
 
 // What GET /api/monthly-allowance and MCP get_monthly_allowance answer
-// (monthly-allowance-standalone.md §4.6). Numbers, day keys, the zone and
+// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md §4.6). Numbers, day keys, the zone and
 // fixed labels only: no session id, title, path or repository name, so every
 // object is strict. Unknown is never 0: `used` exists only in the known
 // state, which needs a session with cost data.

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // Packs the real package and the alias, installs both tarballs with no
-// registry, and runs the alias (npm-package.md D3, §4.8). Needs `npm run
+// registry, and runs the alias (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md D3, §4.8). Needs `npm run
 // build` first, as the cli's own bundle test does.
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";

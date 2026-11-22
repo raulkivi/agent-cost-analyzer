@@ -3,7 +3,7 @@
 import { isFailedStatus, type InsightFinding, type InsightSessionRow } from "@agent-cost-analyzer/domain";
 import { callsOfSession, indexRows, type DetectorInput, type FindingDetector, type RowIndex } from "./finding-detector.js";
 
-// Session-level outliers by robust z-score (docs/plans/insights-dashboard.md
+// Session-level outliers by robust z-score (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/insights-dashboard.md
 // §4.2): deterministic and explainable — every finding names the value,
 // the median and the sample size it was compared against.
 

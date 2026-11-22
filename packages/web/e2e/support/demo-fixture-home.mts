@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// Step 10.24 DR1 (docs/plans/demo-recordings-1.0.md §4, D36): the demo variant of the
+// Step 10.24 DR1 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/demo-recordings-1.0.md §4, D36): the demo variant of the
 // web e2e fixture home, for the scenes that record the standalone app (W3), the fake host
 // (F4) and, through `createDemoDesktopHome`, Claude Desktop (M8). The shared fixture home
 // and its asserted figures stay as they are; this wraps it and

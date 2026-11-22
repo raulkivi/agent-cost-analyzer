@@ -3,7 +3,7 @@
 import { expect, test } from "@playwright/test";
 import { isLoopbackRequest } from "./checks.mts";
 
-// npm-package.md §4.8 step 5: the web app the installed package serves loads
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.8 step 5: the web app the installed package serves loads
 // from its own origin. The web-e2e suite covers the screens; this proves the
 // packaged build runs: Learn mode renders a scenario, nothing logs an error,
 // and no request leaves 127.0.0.1 (no remote font, script or call).

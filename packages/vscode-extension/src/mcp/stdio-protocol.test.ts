@@ -18,7 +18,7 @@ import { mcpServerBundleOptions } from "../../scripts/esbuild-options.mts";
 const serverFixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../server/fixtures");
 const VIEWS_URI = "ui://ai-credits-analyzer/views.html";
 
-// docs/plans/mcp-sdk-2-migration.md D1: the built child process
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-sdk-2-migration.md D1: the built child process
 // (dist/mcp-stdio.js) serves 2025-era clients (an `initialize` at
 // 2025-06-18 or 2025-11-25, what VS Code sends today) and 2026-07-28 ones
 // (`server/discover`, then requests carrying the `_meta` envelope); D4: the

@@ -11,7 +11,7 @@ import { injectBrand } from "./inject-brand.js";
 import { toViewBrand } from "./view-brand.js";
 import { InMemoryViewSource } from "./view-source.js";
 
-// Phase 12 A8 (docs/plans/mcp-apps.md §4.2): the views resource, the
+// Phase 12 A8 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.2): the views resource, the
 // app-only get_turn_series tool and _meta.ui on three tools.
 
 const HTML = '<!doctype html><html><head><meta name="aca-brand" content=""></head><body>views</body></html>';
@@ -252,7 +252,7 @@ describe("registerAppViews", () => {
     expect(byName(tools, "get_session_cost")!._meta?.ui).toEqual({ resourceUri: uri });
   });
 
-  // A14 security review (docs/plans/mcp-apps.md §6): the resource keeps the
+  // A14 security review (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §6): the resource keeps the
   // host's default CSP (no connect or resource domains, no frames) and asks
   // for no sandbox origin, in the listing and in the read result.
   it("declares no CSP domains, no sandbox domain and keeps the host's border", async () => {

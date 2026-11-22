@@ -31,7 +31,7 @@ interface ProviderLoad {
   sessions?: ProviderSessions;
 }
 
-// Phase 9.11 (docs/plans/insights-dashboard.md §4): loads the most recent
+// Phase 9.11 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/insights-dashboard.md §4): loads the most recent
 // sessions from every provider (or one, with providerId), flattens them and
 // runs the injected finding detectors. A provider that is unavailable or
 // fails is reported in providers[] — it never fails the whole dataset.

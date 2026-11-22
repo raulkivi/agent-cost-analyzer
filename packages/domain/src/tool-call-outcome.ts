@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { z } from "zod";
 
-// Phase 9.10 tool-call audit (docs/plans/tool-call-audit.md §4). "unknown"
+// Phase 9.10 tool-call audit (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/tool-call-audit.md §4). "unknown"
 // is a first-class status rather than an absent field so a provider whose
 // source records no outcome says so explicitly (constraint 6) instead of
 // being counted as a success.

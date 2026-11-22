@@ -1,7 +1,7 @@
 /* SPDX-FileCopyrightText: 2026 Raul Kivi
    SPDX-License-Identifier: MIT
 */
-/* U2 CostRollupView (docs/plans/mcp-apps.md §4.3, board SpendRollup.dc.html).
+/* U2 CostRollupView (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.3, board SpendRollup.dc.html).
    Host tokens for structure; the brand shows only in the data marks. No
    colour literals (§5.4). */
 

@@ -12,7 +12,7 @@ import { bundledPackagesPlugin } from "../web/vite-plugins/bundled-packages.ts";
 // FileViewSource reads.
 export default defineConfig({
   // The list of bundled npm packages feeds the npm package's third-party
-  // notices (npm-package.md §4.9); the plugin is shared with the web build.
+  // notices (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.9); the plugin is shared with the web build.
   plugins: [react(), viteSingleFile(), bundledPackagesPlugin(fileURLToPath(new URL("./build/bundled-packages.json", import.meta.url)))],
   build: {
     target: "es2022",

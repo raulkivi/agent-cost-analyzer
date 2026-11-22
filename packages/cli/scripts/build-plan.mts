@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// What the npm package's build reads and writes (npm-package.md §4.2): pure
+// What the npm package's build reads and writes (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.2): pure
 // paths, so the build (build.mts) and the tests share them.
 import path from "node:path";
 import { npmPackageLayout } from "../../server/src/composition/package-layout.ts";

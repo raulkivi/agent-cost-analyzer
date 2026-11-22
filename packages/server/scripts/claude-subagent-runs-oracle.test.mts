@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 // Unit tests of claude-subagent-runs-oracle.mts on small synthetic logs. Every
 // expected figure is worked out by hand from the rules in the plan
-// (docs/plans/claude-code-subagents.md §5.4, §6), not taken from the product.
+// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md §5.4, §6), not taken from the product.
 import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";

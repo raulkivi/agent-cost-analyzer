@@ -1,6 +1,6 @@
 # Automated pre-release UI gate (step 10.17)
 
-**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **done 2026-11-11: G0 (#203), G1 (#202), G2 (#207), G3 (#208, #210), G4 (#211), G5 (#205, #206), G6 (#204) and G7 (with the D11 chart fixes) all built; G7's PR is the last to merge.** Owner rule, 2026-11-11: every UI check
 before a release is automated. VS Code and Copilot checks use wdio
@@ -73,7 +73,7 @@ repo.
 
 | # | Task | Cx | Model | Depends | Exit |
 |---|---|---|---|---|---|
-| G0 | Docs: the rule in architecture.md §11, CLAUDE.md's repo rules, manual-checks doc reframed as "what the suites cover", mcp-apps.md A24/A33 as automated tasks, vscode-ui-automation.md T15/Q2 closed by D4 | low | Haiku | — | Docs say the same thing; no CHANGELOG entry |
+| G0 | Docs: the rule in architecture.md §11, CLAUDE.md's repo rules, manual-checks doc reframed as "what the suites cover", https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md A24/A33 as automated tasks, vscode-ui-automation.md T15/Q2 closed by D4 | low | Haiku | — | Docs say the same thing; no CHANGELOG entry |
 | G1 | CI: drop `continue-on-error` from `extension-ui`; `release-extension.yml` runs `test:ui:vscode` under xvfb with the cached download; `release-app.yml` builds web and runs `test:e2e`. Owner: mark `extension-ui` and `web-e2e` required in branch protection. **Done 2026-11-11:** ruleset 27004539 on `main` (created on the owner's go) requires `extension-ui`, `web-e2e`, `mcp-apps-e2e`, `test`, `extension`, `scan`, `Analyze (actions)`, `Analyze (javascript-typescript)` and `CodeQL`; branches needn't be up to date; repository admins may bypass. Scorecard (`analysis`) is left out: it never runs on a PR. `claude-review` stays advisory | low | Haiku | — | Both release workflows fail on a red suite; green on a dry-run tag in a fork or a `workflow_dispatch` run |
 | G2 | Release evidence for D1: the real-Copilot suite writes its result (commit, VS Code version, tests passed, skipped with reasons, AI Credits spent) as a git note under `refs/notes/release-ui`; a release check reads the note for the tagged commit and refuses a missing, failed or skipped result (tightened from "skipped without reason", see below) | high | Opus | — | Unit tests for the note format and the check; the release workflow fetches notes and fails without one |
 | G3 | First end-to-end run of the real-Copilot suite with the owner (sign-in, model, `chat.tools.global.autoApprove`), fix what breaks | medium | Opus + owner | — | 3 tests green on the owner's machine; note written (G2) |
@@ -464,7 +464,7 @@ in `evidence.test.ts` and `check.test.ts`; `testIdOf` now reads `SR<n>` ids).
 runs that pressed it. VS Code 1.146 accepts the view's message (the button
 reads Sent) and puts exactly `Analyse session <id>` in the chat input; it
 sends nothing until the user presses Enter, so the press starts no model
-turn and costs no AI Credits. Owner decision in mcp-apps.md §6.1.
+turn and costs no AI Credits. Owner decision in https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §6.1.
 
 Findings, fixed test-first:
 
@@ -555,7 +555,7 @@ can't express the exceptions.
   protocol and Claude's recorded theme, not Claude Desktop's own chrome.
   Accepted by D3. Claude Desktop's permission prompts for a view's tool
   calls fall under it: accepted by the owner on 2026-11-14, no gate row
-  ([mcp-apps.md](mcp-apps.md) §6.1).
+  ([mcp-apps.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md) §6.1).
 - **R5 Normal mode leans on internals (G3).** The real-Copilot suite depends on
   wdio-vscode-service's arg key (`extensionTestsPath`) and proxy module path,
   and on VS Code state keys (`chat.tools.global.autoApprove.optIn`,

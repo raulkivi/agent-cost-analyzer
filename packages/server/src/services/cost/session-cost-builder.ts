@@ -26,7 +26,7 @@ import {
 import { sessionActivity } from "./session-activity.js";
 import { subagentSpendCost } from "./subagent-spend-cost.js";
 
-// Phase 9.12 (docs/plans/mcp-tools-v2.md §4): Session → SessionCost. Pure.
+// Phase 9.12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-tools-v2.md §4): Session → SessionCost. Pure.
 
 export const DEFAULT_TOP_TURNS = 5;
 const USER_MESSAGE_EXCERPT_LENGTH = 160;
@@ -92,7 +92,7 @@ function contextOverhead(session: Session): SessionCost["contextOverhead"] {
 
 const tokenFigureOf = (count: TokenCount): number | null => (count.known ? count.value : null);
 
-// Step CS11 (claude-code-subagents.md D13): the runs' tokens and priced cost,
+// Step CS11 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md D13): the runs' tokens and priced cost,
 // for a provider without AI Credits; the cost sums the runs' cost lines, each
 // priced on its own model.
 function subagentTokensAndCost(spend: SubagentSpend, rows: InsightTurnRow[]): Pick<NonNullable<SessionCost["subagents"]>, "tokens" | "cost"> {

@@ -8,7 +8,7 @@ import { triggeredEventSchema } from "./turn.js";
 import { turnUsageSchema } from "./turn-usage.js";
 import { costFigureSchema, turnCostFiguresSchema } from "./cost-figure.js";
 
-// Phase 9.12 (docs/plans/mcp-tools-v2.md §4/§6): one turn as the MCP
+// Phase 9.12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-tools-v2.md §4/§6): one turn as the MCP
 // get_turn tool returns it — free text redacted and bounded, tool calls
 // reduced to their outcome and a bounded command excerpt.
 export const turnViewToolCallSchema = z.object({

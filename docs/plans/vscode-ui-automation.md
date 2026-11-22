@@ -1,6 +1,6 @@
 # VS Code UI automation of the manual checks
 
-**Last changed:** 2026-11-18 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **merged to `main` (#117, #121, #127; later specs #139, #157,
 #172); T15 and Q2 closed by the owner's decision D4, 2026-11-11: the job is required and runs in the release workflow (step 10.17 G1, #202)**; §6 records
@@ -619,7 +619,7 @@ The after-chat check of the logged model id (item 4 below) stays. 1.14's chat is
 
 ## 8. Demo recordings
 
-The demo scenes record the README GIFs and some docs stills. They are recorders, not checks: they never gate a release, and they are not in CI, `test:ui:vscode` or `npm test`. Plan: [docs-refresh-and-demo-recordings.md](docs-refresh-and-demo-recordings.md).
+The demo scenes record the README GIFs and some docs stills. They are recorders, not checks: they never gate a release, and they are not in CI, `test:ui:vscode` or `npm test`. Plan: [docs-refresh-and-demo-recordings.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/docs-refresh-and-demo-recordings.md).
 
 Commands:
 

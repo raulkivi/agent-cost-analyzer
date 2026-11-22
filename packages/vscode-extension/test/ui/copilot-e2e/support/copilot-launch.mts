@@ -4,7 +4,7 @@
 // profile in normal mode (docs/plans/vscode-ui-automation.md §7,
 // docs/plans/release-ui-gate.md G3): the real-Copilot release suite
 // (wdio.copilot.conf.mts) and the real-Copilot demo recordings share it
-// (docs/plans/docs-refresh-and-demo-recordings.md task 1.2). The release
+// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/docs-refresh-and-demo-recordings.md task 1.2). The release
 // evidence (results reporter, git note) stays in wdio.copilot.conf.mts.
 //
 // wdio loads a config in the launcher and again in every worker. Only the

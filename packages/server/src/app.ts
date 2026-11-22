@@ -59,7 +59,7 @@ export function createApp(options: CreateAppOptions = {}): Express {
   app.use(express.json());
 
   app.get("/api/health", route(async (_req, res) => {
-    // `app` lets the CLI tell a running instance of this app from any other server on its port (npm-package.md §4.4).
+    // `app` lets the CLI tell a running instance of this app from any other server on its port (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.4).
     res.json({ app: APP_ID, ...(await api.getHealth()) });
   }));
 

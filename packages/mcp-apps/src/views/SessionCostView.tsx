@@ -18,7 +18,7 @@ import { sessionSearchText } from "./session-cost/open-command.js";
 import { callParsed, parseSessionCost, parseTurnSeries, useResource } from "./session-cost/tool-data.js";
 import type { SessionCost, TurnSeries } from "@agent-cost-analyzer/domain";
 
-// U1, session cost (docs/plans/mcp-apps.md §4.3, §5.5). Renders the
+// U1, session cost (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.3, §5.5). Renders the
 // get_session_cost result, fetches the per-turn series for the chart through
 // the port, and expands a top turn through get_turn. Nothing logged is ever
 // sent to the model (§6): this view calls no sendMessage and no

@@ -8,7 +8,7 @@ into a concrete, turn-by-turn example.
 The docs teach each vendor's own default cache lifetime (Anthropic's is 5
 minutes). In the app, the Claude Code harness uses the 1-hour lifetime Claude
 Code itself requests, as its logs show
-([learn-calibration-findings.md](../plans/learn-calibration-findings.md)); the
+([learn-calibration-findings.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/learn-calibration-findings.md)); the
 TTL scenarios (9, 13 and 14) use a longer break there so the lesson still
 happens. Copilot keeps the 5-minute default.
 

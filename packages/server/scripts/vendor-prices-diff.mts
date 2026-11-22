@@ -1,5 +1,5 @@
 // Diffs the vendor profiles' prices against GitHub's published Copilot price
-// table (docs/plans/vendor-aware-learn-simulation.md §6, step 13.9). It only
+// table (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/vendor-aware-learn-simulation.md §6, step 13.9). It only
 // reports: it never edits the profiles, because a price change is a reviewed,
 // sourced data change.
 //

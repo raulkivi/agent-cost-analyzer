@@ -14,7 +14,7 @@ import {
 } from "@agent-cost-analyzer/domain";
 import type { AllowanceSettingsStore } from "./allowance-settings-store.js";
 
-// The monthly AI Credits allowance answer (monthly-allowance-standalone.md
+// The monthly AI Credits allowance answer (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md
 // §4.4 to §4.6): the VS Code Copilot sessions, whatever provider is active,
 // against the user's settings. The figures come from the domain's
 // computeMonthlyAllowance, the one computation the extension shares.

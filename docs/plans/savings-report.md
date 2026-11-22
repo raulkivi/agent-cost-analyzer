@@ -1,8 +1,8 @@
 # Savings report: ranked, quantified fixes
 
-**Last changed:** 2026-11-16 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
-**Status: Increment 3 (G6) built 2026-11-16 except V28 (the pi request trace, after 1.0): V24–V27 and the V29 review ([savings-increment-3.md](savings-increment-3.md) §17); its exit check passed on the owner's logs 2026-11-16 and awaits the owner's sign-off. Increment 2 built 2026-11-14, 23 of 23 tasks (SR18 boards approved, SR19 `get_savings_report` in PR #275, SR20 U18 view in PR #278, SR21 U18 specs in PR #281, SR22 review and docs in PR #285, §17); its exit check (§14) passed on the owner's logs 2026-11-14 and the owner signed it off the same day (exit criterion met); ships in extension 0.14.0 and app 0.15.0. Increment 1 built (SR0-SR17, 2026-11-13); owner decisions D1-D12 accepted 2026-11-12, D13-D15 answered 2026-11-14; Increment 1 exit criterion met 2026-11-14 (owner sign-off on the automated check, §14); the owner approved the docs 2026-11-14; ships in app 0.14.0 and extension 0.12.0; Increment 2 not started.** Phase 16 in
+**Status: Increment 3 (G6) built 2026-11-16 except V28 (the pi request trace, after 1.0): V24–V27 and the V29 review ([savings-increment-3.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md) §17); its exit check passed on the owner's logs 2026-11-16 and awaits the owner's sign-off. Increment 2 built 2026-11-14, 23 of 23 tasks (SR18 boards approved, SR19 `get_savings_report` in PR #275, SR20 U18 view in PR #278, SR21 U18 specs in PR #281, SR22 review and docs in PR #285, §17); its exit check (§14) passed on the owner's logs 2026-11-14 and the owner signed it off the same day (exit criterion met); ships in extension 0.14.0 and app 0.15.0. Increment 1 built (SR0-SR17, 2026-11-13); owner decisions D1-D12 accepted 2026-11-12, D13-D15 answered 2026-11-14; Increment 1 exit criterion met 2026-11-14 (owner sign-off on the automated check, §14); the owner approved the docs 2026-11-14; ships in app 0.14.0 and extension 0.12.0; Increment 2 not started.** Phase 16 in
 [implementation-plan.md](../implementation-plan.md) (owner decision D9).
 
 The question this answers: **"What should I change to spend less, and
@@ -60,11 +60,11 @@ and (Increment 2) as an MCP tool with an MCP App view.
 - G4. Recommendations are text the user acts on. The extension may offer a
   Copy button; it opens nothing the existing `openSetting` allow-list does
   not already allow (D6).
-- G5. Increment 2: `get_savings_report` MCP tool and a U18 view (U16 and U17 are reserved by [mcp-apps.md](mcp-apps.md) §11), following
-  [mcp-apps.md](mcp-apps.md).
+- G5. Increment 2: `get_savings_report` MCP tool and a U18 view (U16 and U17 are reserved by [mcp-apps.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md) §11), following
+  [mcp-apps.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md).
 - G6. Increment 3 (1.0): decided scope, owner 2026-11-14 (criterion C11
   in [implementation-plan.md](../implementation-plan.md#100-release)).
-  Planned and built in [savings-increment-3.md](savings-increment-3.md)
+  Planned and built in [savings-increment-3.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md)
   (V23–V29; (a) reduced to O1 per tool for pi, V27; O2–O4 for pi, V28, after
   1.0). Built 2026-11-16 except V28; exit check passed, sign-off pending.
   - (a) pi coverage: O2–O4 cache breaks, which need a pi request trace
@@ -271,7 +271,7 @@ Recommendation (D2): a new `services/savings` module, not a fifth
 |---|---|---|---|---|---|
 | O1 unused tools | Yes, with debug logging (tools file; the list changes mid-session, so use the per-request list) | No: total tokens only (`toolDefinitionsTokens`) | Yes, per tool with server (`api-request-shape` `shape.tools`; deferred tools at name-only cost) | Yes, per tool, from the session file's system messages, weighted by the requests each tool was declared for (Increment 3 V27); a file with none (sidecar only) has no inventory (D29); a local model is "Not priced" (D33) | No tool inventory |
 | O2–O4 cache breaks | Yes (trace; writes inferred without `agent-traces.db`) | Yes (trace) | Yes (trace) | No trace yet (Phase 14 D1; Increment 3 V28, after 1.0) | No trace yet |
-| O5 failed calls | Yes, where outcomes are logged ([tool-call-audit.md](tool-call-audit.md) §5) | No: tool calls unknown | Yes | Per audit §5 | Per audit §5 |
+| O5 failed calls | Yes, where outcomes are logged ([tool-call-audit.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/tool-call-audit.md) §5) | No: tool calls unknown | Yes | Per audit §5 | Per audit §5 |
 | O6 cheaper model | Yes | Yes | Yes | No | No |
 
 A provider or session that cannot give an opportunity appears under "Not
@@ -290,7 +290,7 @@ runs not analyzed: this saving reads main-agent usage only." in its coverage
   week"); never a bare number.
 - Coverage on every row: "38 of 41 sessions; 3 had no request trace".
 - The labels "estimate", "inferred", "up to" and "Simulated" come from the
-  view model, not CSS, and a test asserts them (as mcp-apps.md §6).
+  view model, not CSS, and a test asserts them (as https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §6).
 - Action text is a suggestion in the second person; it never says the app
   changed anything.
 - O6 always carries the A1 sentence and the self-check.
@@ -367,7 +367,7 @@ repo.
 |---|---|---|---|---|---|
 | SR18 | U18 mock-ups in both host frames, light and dark, with states | Boards approved by the owner | medium | Sonnet (frontend-design skill) + owner | SR17 |
 | SR19 | `get_savings_report` in `mcp/savings-tools.ts`, group `savings`, both servers; `mcp/security.test.ts` covers it; `review_costs` updated; tool counts updated in tests; the tool and the prompt declare arguments as `z.object(...)` (SDK 2); the tool-list snapshots (`packages/server/src/mcp/__snapshots__/tool-list-standalone.json` and `packages/vscode-extension/src/mcp/__snapshots__/tool-list-extension.json`) updated on purpose | In-memory client tests green; Claude Code CLI text answer unchanged in shape | medium | Sonnet | SR10 |
-| SR20 | `toSavingsViewModel`, `SavingsView` (U18), router, `APP_VIEW_TOOL_NAMES`, no-forwarding allow-list (`get_session_cost`, `replay_session`), component, axe, keyboard, hostile-text tests; if ext-apps is on 2.1 or later by then, `webMcpBridge: false` and its test ([mcp-sdk-2-migration.md](mcp-sdk-2-migration.md) §9a) **Done 2026-11-14 (PR #278).** | Bundle stays under the 1.2 MiB budget (742 KB before U18, ext-apps 2.0.4) | medium | Sonnet | SR18, SR19 |
+| SR20 | `toSavingsViewModel`, `SavingsView` (U18), router, `APP_VIEW_TOOL_NAMES`, no-forwarding allow-list (`get_session_cost`, `replay_session`), component, axe, keyboard, hostile-text tests; if ext-apps is on 2.1 or later by then, `webMcpBridge: false` and its test ([mcp-sdk-2-migration.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-sdk-2-migration.md) §9a) **Done 2026-11-14 (PR #278).** | Bundle stays under the 1.2 MiB budget (742 KB before U18, ext-apps 2.0.4) | medium | Sonnet | SR18, SR19 |
 | SR21 | UI specs: Playwright fake host `packages/mcp-apps/e2e/specs/u18-savings.spec.ts` (Claude light and dark); wdio real-Copilot row for U18 in the G4 suite (run by the owner before tagging, release-ui-gate D1, D12 cap) | G5 spec passes in CI; G4 spec written and typechecks. **Done 2026-11-14 (PR #281):** `u18-savings.spec.ts` (10 specs, light and dark) and `copilot-savings-view.e2e.ts` (rows `SR21 U18`, `SR21 themes`, `SR21 narrow`, `SR21 footer`, required in `COPILOT_SAVINGS_ROWS`; written, not run: the owner runs it before tagging); the axe scan found the "Open cost" buttons under the 24 px target size, fixed in `savings.css` | medium | Sonnet | SR20 |
 | SR22 | Review (as A32) and docs: architecture.md §4.1.1/§4.4, threat-model §6.1, both guides' MCP sections, both CHANGELOGs, Gantt | Docs match the code. **Done 2026-11-14 (PR #285, §17):** 2 findings fixed (an unknown amount's reason reached the model unredacted; the G4 seed gave U18 no row to open), 6 recorded, SR19's missing red run noted; the real-data check extended to `get_savings_report` (§14) | medium | Opus | SR21 |
 
@@ -458,7 +458,7 @@ the same evening failed only on `~/.claude.json`, which a running Claude
 Code session rewrites (the app never opens it); the rerun passed. **Met for Increment 2, 2026-11-14:** the owner signed
 off on that output.
 
-**Increment 3 (G6, [savings-increment-3.md](savings-increment-3.md) §14):**
+**Increment 3 (G6, [savings-increment-3.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md) §14):**
 the same check adds pi (V27: the window holds a pi session; only sessions
 without a system message are "no tool inventory"; the top pi unused-tools row
 against a pi oracle), per-session dates and savings, per-tool tokens, and no

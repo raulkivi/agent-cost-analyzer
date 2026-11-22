@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 import { parseRules } from "./css-vars.js";
 import { HOST_CSS, THEME_CSS } from "./host-sets.js";
 
-// A14 (docs/plans/mcp-apps.md §7): every control the views draw shows a
+// A14 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §7): every control the views draw shows a
 // visible focus ring, in the host's ring colour where the host sends one
 // (--color-ring-primary, MCP Apps spec), and no view stylesheet takes it away.
 

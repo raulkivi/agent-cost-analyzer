@@ -1,6 +1,6 @@
 # Implementation Plan: Agent Cost Analyzer and AI Credits Analyzer
 
-**Last changed:** 2026-11-20 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 This plan sequences [architecture.md](architecture.md) into buildable phases.
 Phases 0-9.12 build the standalone app, **Agent Cost Analyzer** (every
@@ -1150,7 +1150,7 @@ alongside the full existing suite; `tsc --noEmit` is clean.
 
 ## Phase 9.10 — Tool-call audit, MCP interface, audit visualizations
 
-Full design: [plans/tool-call-audit.md](plans/tool-call-audit.md).
+Full design: [tool-call-audit.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/tool-call-audit.md).
 
 - Domain: `ToolCallRecord` gains optional `id`/`kind`/`shell`/`outcome`
   (status, exit code, failure category, classification evidence with a
@@ -1184,7 +1184,7 @@ provider).
 
 ## Phase 9.11 — Insights dashboard (associative, cross-provider, security signals)
 
-Full design: [plans/insights-dashboard.md](plans/insights-dashboard.md).
+Full design: [insights-dashboard.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/insights-dashboard.md).
 
 - Domain: `InsightsDataset`, a flat star schema (sessions, turns, tool
   calls, findings) with `null` for unknown token figures, plus
@@ -1222,7 +1222,7 @@ charted as 0.
 
 ## Phase 9.12 — MCP tools v2: cost, findings, turn drill-down, UX pass
 
-Full design: [plans/mcp-tools-v2.md](plans/mcp-tools-v2.md).
+Full design: [mcp-tools-v2.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-tools-v2.md).
 
 - Domain: `SessionCost`, `CostRollup` (per-measure totals with turn
   coverage, `null` for unknown), `TurnView`, `FindingsQueryResult`.
@@ -1289,12 +1289,12 @@ and deviations are in its status note in the plan's §6.
 | 10.16 | UI automation of the manual checks (`wdio-vscode-service`, `test/ui/`) | Merged (#117, #121, #127; later specs #139, #157, #172): 13 spec files, 38 tests; CI job informational, 76 of 78 `main` runs green 2026-11-04 to 2026-11-10; T15 closed by the owner's decision of 2026-11-11 (the job becomes required, step 10.17) ([plans/vscode-ui-automation.md](plans/vscode-ui-automation.md) §6.9) |
 | 10.17 | Automated pre-release UI gate: wdio for VS Code and Copilot, Playwright for web; no hand checklist gates a release (owner rule 2026-11-11) | Done 2026-11-11, tasks G0-G7 ([plans/release-ui-gate.md](plans/release-ui-gate.md)): CI and both release workflows run every UI suite; a ruleset on `main` requires 9 checks; extension releases need a passing real-Copilot run recorded on the tagged commit; replaces the manual checks and Phase 12's A24 owner checks |
 | 10.18 | Copilot Chat sessions from empty windows (no folder open): read the debug logs Copilot Chat writes under `globalStorage` | Done 2026-11-11 (found by 10.17 G3, owner decision D7) |
-| 10.19 | AI Credits of classic Copilot Chat subagents: read each run's debug log and fold it into the parent session's totals, per model ([plans/classic-subagent-credits-implementation.md](plans/classic-subagent-credits-implementation.md), design [plans/classic-subagent-credits.md](plans/classic-subagent-credits.md)) | Done 2026-11-13 (SA0 to SA18, exit criterion met on the owner's logs by `npm run test:real-data`); the release is open |
-| 10.20 | Classic subagent tool calls in the tool audit and security findings (follow-up from 10.19 D3) | Planned: [plans/subagent-tool-audit.md](plans/subagent-tool-audit.md), approved 2026-11-14; a 1.0 criterion ([1.0.0 release](#100-release)) |
-| 10.21 | Monthly AI Credits allowance gauge in the extension: status-bar item and Sessions row ([plans/monthly-allowance.md](plans/monthly-allowance.md)) | Done 2026-11-13 (MA0 to MA12, exit criterion met); owner decisions D1-D10 accepted 2026-11-12; mock-up approved 2026-11-13; MA13 (standalone app) is a 1.0 criterion (owner, 2026-11-14), plan [plans/monthly-allowance-standalone.md](plans/monthly-allowance-standalone.md) approved 2026-11-14 |
-| 10.22 | Extension demo recordings: README and User Guide brought up to date with extension 0.12.0 and app 0.14.0 (Phase 0), then GIF demos of the extension in VS Code with Copilot and of the standalone app, recorded by wdio and Playwright under Xvfb (Phase 1) ([plans/docs-refresh-and-demo-recordings.md](plans/docs-refresh-and-demo-recordings.md)) | Done 2026-11-14: Phase 0 (PR #255), Phase 1 code (PRs #256, #257) and docs with media; 13 owner-approved demo GIFs |
+| 10.19 | AI Credits of classic Copilot Chat subagents: read each run's debug log and fold it into the parent session's totals, per model ([classic-subagent-credits-implementation.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/classic-subagent-credits-implementation.md), design [classic-subagent-credits.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/classic-subagent-credits.md)) | Done 2026-11-13 (SA0 to SA18, exit criterion met on the owner's logs by `npm run test:real-data`); the release is open |
+| 10.20 | Classic subagent tool calls in the tool audit and security findings (follow-up from 10.19 D3) | Planned: [subagent-tool-audit.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/subagent-tool-audit.md), approved 2026-11-14; a 1.0 criterion ([1.0.0 release](#100-release)) |
+| 10.21 | Monthly AI Credits allowance gauge in the extension: status-bar item and Sessions row ([monthly-allowance.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance.md)) | Done 2026-11-13 (MA0 to MA12, exit criterion met); owner decisions D1-D10 accepted 2026-11-12; mock-up approved 2026-11-13; MA13 (standalone app) is a 1.0 criterion (owner, 2026-11-14), plan [monthly-allowance-standalone.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md) approved 2026-11-14 |
+| 10.22 | Extension demo recordings: README and User Guide brought up to date with extension 0.12.0 and app 0.14.0 (Phase 0), then GIF demos of the extension in VS Code with Copilot and of the standalone app, recorded by wdio and Playwright under Xvfb (Phase 1) ([docs-refresh-and-demo-recordings.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/docs-refresh-and-demo-recordings.md)) | Done 2026-11-14: Phase 0 (PR #255), Phase 1 code (PRs #256, #257) and docs with media; 13 owner-approved demo GIFs |
 | 10.23 | Claude Desktop demo recordings: MCP App views in Claude Desktop (M1-M6) and fake-host close-ups (F1-F3) (same plan, Phase 2) | Done 2026-11-14 (PR #262): M1-M7 and F1-F3 recorded, owner-approved and in the docs |
-| 10.24 | Demo recordings for the 1.0 features: new GIFs for the npm CLI (N1), the savings view (M8, F4), the tool-audit and Claude Code subagent changes, and the monthly allowance in the app, with retakes of stale scenes and a sweep on the 1.0 build, recorded by wdio, Playwright, `xdotool` and `xterm` under Xvfb ([plans/demo-recordings-1.0.md](plans/demo-recordings-1.0.md)). Docs and media, not a 1.0 criterion of its own: it extends steps 10.22 and 10.23 and has no C-number | Approved 2026-11-16: owner decisions D29-D43 all accepted. Wave 1 started 2026-11-17 (the owner installed `xterm`, D30): DR1-DR5 done (PRs #394, #396-#399; PR #400 fixed an Agent Host title bug the E5 take found). Waves 2-4 done 2026-11-17: DR9-DR12 (PRs #404-#406, #408; the W2 take found a replay summary bug, fixed in PR #407). Owner interview 2026-11-17 (D44-D51): GIFs up to 25 s; retakes of N1, W3, W5 and E3; the recorder stops before the end checks; DR6 records M8 and the M4 and M1 retakes once the owner's signed-in Claude Desktop demo profile is ready. Owner decisions 2026-11-17 (D52-D55): the nine drafts approved; the tool-audit chips fixed before 1.0 (PR #416); DR6 done (PR #415 and the live takes of M8, M4 and M1, which wait for the owner's review, DR7); the version bump after DR7 and C2. Owner interview 2026-11-17 (D56-D59): M1, M4 and M8 approved; before 1.0, a Claude Code session's cost in the chat views shows its priced cost and AI Credits n/a, and a savings row's coverage lists each reason once, then M1, M4 and M8 are retaken; C2 closed. **Done 2026-11-18**: DR13 swept every free scene on the 1.0.0 build, the owner approved the GIFs (D64), DR8 embedded them, DR14 closed the plan. Waves: 1 shipped features (DR1-DR8), 2 after MA13's MS8 and MS13 (C9), 3 after 10.20's ST12 and ST13 (C10), 4 after C15's CS13, 5 the 1.0 release build (DR13-DR14). Exit criterion: all DR tasks done and the owner approved every GIF; each recording re-records with one command plus `demo:gif`, within the media budget and embedded with alt text. Depends on: C9 for wave 1, C10 (10.20) and C15 for waves 3 and 4 |
+| 10.24 | Demo recordings for the 1.0 features: new GIFs for the npm CLI (N1), the savings view (M8, F4), the tool-audit and Claude Code subagent changes, and the monthly allowance in the app, with retakes of stale scenes and a sweep on the 1.0 build, recorded by wdio, Playwright, `xdotool` and `xterm` under Xvfb ([demo-recordings-1.0.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/demo-recordings-1.0.md)). Docs and media, not a 1.0 criterion of its own: it extends steps 10.22 and 10.23 and has no C-number | Approved 2026-11-16: owner decisions D29-D43 all accepted. Wave 1 started 2026-11-17 (the owner installed `xterm`, D30): DR1-DR5 done (PRs #394, #396-#399; PR #400 fixed an Agent Host title bug the E5 take found). Waves 2-4 done 2026-11-17: DR9-DR12 (PRs #404-#406, #408; the W2 take found a replay summary bug, fixed in PR #407). Owner interview 2026-11-17 (D44-D51): GIFs up to 25 s; retakes of N1, W3, W5 and E3; the recorder stops before the end checks; DR6 records M8 and the M4 and M1 retakes once the owner's signed-in Claude Desktop demo profile is ready. Owner decisions 2026-11-17 (D52-D55): the nine drafts approved; the tool-audit chips fixed before 1.0 (PR #416); DR6 done (PR #415 and the live takes of M8, M4 and M1, which wait for the owner's review, DR7); the version bump after DR7 and C2. Owner interview 2026-11-17 (D56-D59): M1, M4 and M8 approved; before 1.0, a Claude Code session's cost in the chat views shows its priced cost and AI Credits n/a, and a savings row's coverage lists each reason once, then M1, M4 and M8 are retaken; C2 closed. **Done 2026-11-18**: DR13 swept every free scene on the 1.0.0 build, the owner approved the GIFs (D64), DR8 embedded them, DR14 closed the plan. Waves: 1 shipped features (DR1-DR8), 2 after MA13's MS8 and MS13 (C9), 3 after 10.20's ST12 and ST13 (C10), 4 after C15's CS13, 5 the 1.0 release build (DR13-DR14). Exit criterion: all DR tasks done and the owner approved every GIF; each recording re-records with one command plus `demo:gif`, within the media budget and embedded with alt text. Depends on: C9 for wave 1, C10 (10.20) and C15 for waves 3 and 4 |
 
 **Fixes after 0.1.0** (unreleased, in the changelogs): the AI Credits in a
 session's list summary and detail now agree (#122); debug-log usage is
@@ -1393,7 +1393,7 @@ fixed); in-file `/tree` branching cannot be scripted in RPC mode, so
 
 ## Phase 12 — MCP Apps: branded, interactive views in the chat
 
-Full design: [plans/mcp-apps.md](plans/mcp-apps.md).
+Full design: [mcp-apps.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md).
 
 **Goal**: MCP Apps hosts (VS Code Copilot Chat 1.109+, Claude Desktop)
 render a branded, interactive view next to the cost and findings tool
@@ -1418,7 +1418,7 @@ unchanged.
   - the app-only `get_turn_series` tool;
   - `@modelcontextprotocol/ext-apps` pinned to 1.7.5, the last line that
     works with `@modelcontextprotocol/sdk` 1.x (2.0.4 on SDK 2 since
-    2026-11-12, [plans/mcp-sdk-2-migration.md](plans/mcp-sdk-2-migration.md)).
+    2026-11-12, [mcp-sdk-2-migration.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-sdk-2-migration.md)).
 - New `packages/mcp-apps` workspace: a single-file Vite build of three
   views (session cost, spend rollup, findings). They reuse `packages/web`'s
   UI primitives and charts and are driven by pure view models through an
@@ -1465,18 +1465,18 @@ analysis, price change, billing tools in both servers). All are met.
 (shipped 2026-11-10), Increment 2 in 0.6.0 and 0.11.0 (shipped 2026-11-11),
 Increment 3 in 0.8.0 and 0.12.0 (shipped 2026-11-12). Stable extension releases use even minors.
 
-**Owner decisions (2026-11-14)** closing [plans/mcp-apps.md](plans/mcp-apps.md) §6.1's two open items:
+**Owner decisions (2026-11-14)** closing [mcp-apps.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md) §6.1's two open items:
 - U5's Analyse button reads **Added to chat** after a click (not "Sent"), with the hint "Press send in the chat to run it."; U2's "Ask about this session" gets the same wording. This is a 1.0 task ([1.0.0 release](#100-release)).
 - Claude Desktop's permission prompts: risk R4 accepted, no gate row (the host's own behavior, seen in the step 10.23 recordings).
 
-**Status (2026-11-12)**: done. Increment 3 (A25–A33: views U12, U13, U14/U15, U4, U5 and fullscreen, the A32 review, and A33's checks as specs) released 2026-11-12 in extension 0.8.0 and app 0.12.0, after the real-Copilot gate passed 33 of 33 on `dacf3ed`; the follow-ups are in [plans/mcp-apps.md](plans/mcp-apps.md) §11. The MVP (U1–U3, A0–A16) met its
+**Status (2026-11-12)**: done. Increment 3 (A25–A33: views U12, U13, U14/U15, U4, U5 and fullscreen, the A32 review, and A33's checks as specs) released 2026-11-12 in extension 0.8.0 and app 0.12.0, after the real-Copilot gate passed 33 of 33 on `dacf3ed`; the follow-ups are in [mcp-apps.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md) §11. The MVP (U1–U3, A0–A16) met its
 exit criterion and shipped in extension 0.4.0 and app 0.10.0. Increment 2
 (A17–A24, views U9, U10, U11) released 2026-11-11 in extension 0.6.0 and
 app 0.11.0. A24 was replaced by the automated pre-release gate (step 10.17);
 the real-Copilot run on `964e9a8` passed 22 of 22 required tests. Extension
 0.5.0 was a pre-release (2026-11-10). Earlier
 Increment 2 detail: the A17b boards are approved (owner's answers in
-[plans/mcp-apps.md](plans/mcp-apps.md) §9.1); A23 (review and docs) is done. A1–A4 (turn series, brand
+[mcp-apps.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md) §9.1); A23 (review and docs) is done. A1–A4 (turn series, brand
 injection and identity, web package exports) and A8 (the `registerAppViews`
 server group, `get_turn_series`, `_meta.ui` on three tools, ext-apps 1.7.5, now 2.0.4)
 done; A0 host spike done by the owner (both hosts refuse `vscode://`
@@ -1488,7 +1488,7 @@ updated to cover the Phase 14 and 15 tools (Increments 2 and 3).
 
 ## Phase 13 — Vendor-aware Learn simulation (VS Code first)
 
-Full design: [plans/vendor-aware-learn-simulation.md](plans/vendor-aware-learn-simulation.md).
+Full design: [vendor-aware-learn-simulation.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/vendor-aware-learn-simulation.md).
 
 **Goal**: replay any Learn scenario on any model GitHub Copilot offers.
 That vendor's sourced cache rules (TTL, prefix layers, invalidation scope,
@@ -1536,7 +1536,7 @@ Full design: [plans/analyze-session-replay.md](plans/analyze-session-replay.md).
 **Goal**: answer "what would this real session have cost on another
 model?". It reuses Phase 13's simulator on the token shape (sizes, gaps,
 events) of a real Analyze session. Owner decision D18 in
-[plans/vendor-aware-learn-simulation.md](plans/vendor-aware-learn-simulation.md).
+[vendor-aware-learn-simulation.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/vendor-aware-learn-simulation.md).
 
 **Deliverables** (steps 14.0–14.8 in the plan): a per-request
 `RequestTrace` for Claude Code and Copilot (D1), a `RequestTraceScripter`
@@ -1678,7 +1678,7 @@ text; the app never changes settings or files (vision §6, owner decision D1).
 - Increment 2 (SR18–SR22, after Increment 1 is released): the
   `get_savings_report` MCP tool and its MCP App view (U18).
 - Increment 3 (1.0, owner decision 2026-11-14; tasks to be planned in
-  `docs/plans/savings-increment-3.md`): pi coverage (O1 per tool, O2–O4
+  [savings-increment-3.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md)): pi coverage (O1 per tool, O2–O4
   cache breaks from a pi request trace), per-tool tokens on unused-tools
   rows, each session's date and saving in a row's session list, and
   session titles looked up client-side in the app's report.
@@ -1730,7 +1730,7 @@ Increment 2 (SR18-SR22) is not started.
 
 ## Phase 17 — Dense ledger UI
 
-Full design: [plans/dense-ledger-ui.md](plans/dense-ledger-ui.md).
+Full design: [dense-ledger-ui.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/dense-ledger-ui.md).
 
 **Goal**: stop the web UI wasting space, then give the standalone app a
 pi.dev-style "terminal ledger" theme. The Dashboard is 2,444px tall at
@@ -1840,12 +1840,12 @@ app installs from npm, and the release path's security gaps are closed.
 | C12 | Only the owner creates or moves `ext-v*` and `app-v*` tags | [threat-model.md](threat-model.md) §5.8 | Done 2026-11-14: ruleset 27281699 (owner created it, V7; recorded V8) | A tag ruleset, read through the GitHub API, restricts creating, moving and deleting those tags to the owner |
 | C13 | Open VSX trusted publishing; `OVSX_PAT` deleted | threat-model.md §5.8 | Done 2026-11-15: the owner registered the trusted publisher (V9) and deleted `OVSX_PAT`; extension 0.14.0 published to Open VSX through OIDC ("Trusted publishing token issued" in the release run) and the `release` environment holds no secrets | A release publishes to Open VSX without `OVSX_PAT`; the secret no longer exists |
 | C14 | Figures priced from a user price version say so where shown | threat-model.md §5.10 | Done 2026-11-14: the web UI (V2, PR #286) and the chat views (V2b) label them | Component and Playwright tests assert the label in the web UI and in every chat view that shows a priced figure |
-| C15 | Claude Code subagent usage counted | [plans/claude-code-subagents.md](plans/claude-code-subagents.md) | Done 2026-11-17. CS0b-CS6 done 2026-11-15 (PRs #319-#321, #326, #334, #339); CS7-CS15 done 2026-11-16 (PRs #366, #373, #375, #378, #381, #382, #385, #387, #389); CS16 done 2026-11-17 (PR #393); owner decision D17. Done 2026-11-17: the owner signed off the real-data check (`npm run test:real-data:claude-code-subagents`, 9 of 9 pass). 2026-11-17: the check reads the same frozen copy of the logs as C3 and C4 (PR #401) and passes in the full run on main | A `REAL_DATA` check with an oracle computed from raw Claude Code transcripts passes on the owner's logs (plan §10); the owner signs off its output |
+| C15 | Claude Code subagent usage counted | [claude-code-subagents.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md) | Done 2026-11-17. CS0b-CS6 done 2026-11-15 (PRs #319-#321, #326, #334, #339); CS7-CS15 done 2026-11-16 (PRs #366, #373, #375, #378, #381, #382, #385, #387, #389); CS16 done 2026-11-17 (PR #393); owner decision D17. Done 2026-11-17: the owner signed off the real-data check (`npm run test:real-data:claude-code-subagents`, 9 of 9 pass). 2026-11-17: the check reads the same frozen copy of the logs as C3 and C4 (PR #401) and passes in the full run on main | A `REAL_DATA` check with an oracle computed from raw Claude Code transcripts passes on the owner's logs (plan §10); the owner signs off its output |
 | C16 | The right VS Code install is read (a variant counts only when its folder has `User`) | VB1 (owner 2026-11-14) | Done 2026-11-14 (V34, PR #302) | Unit tests over temp homes (Linux, macOS, Windows paths) |
 
 Not in 1.0.0:
 
-- mitmproxy tool calls ([plans/tool-call-audit.md](plans/tool-call-audit.md) F6).
+- mitmproxy tool calls ([tool-call-audit.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/tool-call-audit.md) F6).
 - threat-model.md §5.9 (dev tooling containment).
 - Code-owner review on `main` (§5.8; it would block every PR with one owner).
 
@@ -1856,11 +1856,11 @@ All are written and approved:
 
 | Item | Criterion | Plan |
 |---|---|---|
-| npm package and trusted publishing | C8 | [plans/npm-package.md](plans/npm-package.md), approved 2026-11-14 |
-| Monthly allowance in the standalone app (MA13) | C9 | [plans/monthly-allowance-standalone.md](plans/monthly-allowance-standalone.md), approved 2026-11-14 |
-| Classic subagent tool calls in the audit (step 10.20) | C10 | [plans/subagent-tool-audit.md](plans/subagent-tool-audit.md), approved 2026-11-14 |
-| Claude Code subagent usage | C15 | [plans/claude-code-subagents.md](plans/claude-code-subagents.md), approved 2026-11-14 |
-| Savings Increment 3 | C11 | [plans/savings-increment-3.md](plans/savings-increment-3.md), approved 2026-11-14 |
+| npm package and trusted publishing | C8 | [npm-package.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md), approved 2026-11-14 |
+| Monthly allowance in the standalone app (MA13) | C9 | [monthly-allowance-standalone.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md), approved 2026-11-14 |
+| Classic subagent tool calls in the audit (step 10.20) | C10 | [subagent-tool-audit.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/subagent-tool-audit.md), approved 2026-11-14 |
+| Claude Code subagent usage | C15 | [claude-code-subagents.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md), approved 2026-11-14 |
+| Savings Increment 3 | C11 | [savings-increment-3.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md), approved 2026-11-14 |
 | Both VS Code variants | C16 (VB1 only) | `docs/plans/vscode-both-variants.md` (#300): post-1.0, VB1 in 1.0 |
 
 Each plan splits its build rows below into tasks with their own
@@ -1890,15 +1890,15 @@ for Opus run on Sonnet, each reviewed against its plan before merging.
 | V12 | Phase 11 capture instructions and a redaction script for pi session files and the sidecar log (done, PR #288: `npm run fixtures:redact-pi -w packages/server`; the generator reuses its library) | C2 | medium | Sonnet | — |
 | V13 | Replaced by automated generation (owner 2026-11-14): `npm run fixtures:generate-pi` drives the real pi with the local model ([providers/pi-provider.md](providers/pi-provider.md#generating-pi-fixtures)) | C2 | — | — | V12 |
 | V14 | Phase 11: generated fixtures, field diff, fixes test-first, `context_edit` handling, the open pi decisions put to the owner, architecture.md §6.2.5 and providers/pi-provider.md updated (done; owner accepted 2026-11-17) | C2 | high | Opus | V13 |
-| V15 | Plan `docs/plans/npm-package.md`: which workspace publishes, bundle, `bin`, files list, publish job, threat-model rows, README install section | C8 | medium | Opus | — |
+| V15 | Plan [npm-package.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md): which workspace publishes, bundle, `bin`, files list, publish job, threat-model rows, README install section | C8 | medium | Opus | — |
 | V16 | Build the npm package: bundled server and web build, `bin`, a CI job that packs it, runs it from the tarball and loads the app | C8 | high | Opus | V15 approved |
 | V17 | npm trusted publishing (OIDC) from `release-app.yml` in the `release` environment, whose deployment rule today allows only `ext-v*` tags; the owner configures the trusted publisher on npmjs.com and adds `app-v*` to the environment | C8 | medium | Sonnet + owner step | V16 |
 | V18 | npm docs: root README install section, standalone-app.md, threat-model.md rows for the publish path, CHANGELOG | C8 | low | Sonnet | V16, V17 |
-| V19 | Plan `docs/plans/monthly-allowance-standalone.md` (where the allowance is set in the app, the Cost over time line, providers with partial AI Credits; monthly-allowance.md D8) | C9 | medium | Opus | — |
+| V19 | Plan [monthly-allowance-standalone.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md) (where the allowance is set in the app, the Cost over time line, providers with partial AI Credits; https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance.md D8) | C9 | medium | Opus | — |
 | V20 | Build MA13 per its plan | C9 | medium | Sonnet | V19 approved |
-| V21 | Plan `docs/plans/subagent-tool-audit.md` (classic subagent runs' tool calls in the audit, rollups and security findings; 10.19 D3) | C10 | medium | Opus | — |
+| V21 | Plan [subagent-tool-audit.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/subagent-tool-audit.md) (classic subagent runs' tool calls in the audit, rollups and security findings; 10.19 D3) | C10 | medium | Opus | — |
 | V22 | Build step 10.20 per its plan; threat-model.md §7's residual row closed | C10 | high | Opus | V21 approved |
-| V23 | Plan `docs/plans/savings-increment-3.md` | C11 | medium | Opus | — |
+| V23 | Plan [savings-increment-3.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md) | C11 | medium | Opus | — |
 | V23b | Savings Increment 3 mock-ups: amend the boards for the approved plan; owner approves them | C11 | medium | Sonnet + owner | V23 approved |
 | V24 | Increment 3 (c): each session's date and saving in a row's session list | C11 | medium | Sonnet | V23 approved |
 | V25 | Increment 3 (d): session titles in the app's report, looked up client-side; never in the MCP tool output or sent to a model | C11 | medium | Sonnet | V23 approved |
@@ -1906,7 +1906,7 @@ for Opus run on Sonnet, each reviewed against its plan before merging.
 | V27 | Increment 3 (a): O1 per tool for pi | C11 | medium | Sonnet | V14, V23 approved |
 | V28 | After 1.0 (owner 2026-11-14: pi runs on a local model, unpriced): a pi request trace (Phase 14 D1) and O2–O4 for pi | — | high | Opus | V14, V23 approved |
 | V29 | Increment 3 review and docs; the savings real-data check covers pi's unused tools | C11 | medium | Opus | V24-V27 |
-| V32 | Plan [plans/claude-code-subagents.md](plans/claude-code-subagents.md): Claude Code subagent transcripts in every total, with spike CS0 (done 2026-11-14), owner decisions D1-D16 and the real-data check (written 2026-11-14; owner review) | C15 | medium | Opus | — |
+| V32 | Plan [claude-code-subagents.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md): Claude Code subagent transcripts in every total, with spike CS0 (done 2026-11-14), owner decisions D1-D16 and the real-data check (written 2026-11-14; owner review) | C15 | medium | Opus | — |
 | V33 | Build C15 per its plan (CS0b-CS16), ending with the owner's sign-off of the real-data check | C15 | high | Opus, Sonnet per plan task | V32 approved; CS14 also V21 approved |
 | V34 | VB1: the right VS Code install is read (a variant counts only when its folder has `User`); unit tests over temp homes | C16 | low | Sonnet | — |
 | V35 | Third-party license notices in the VS Code extension's `.vsix` (owner 2026-11-15: fix in the next extension release; done 2026-11-15, PR #323) | Release | low | Sonnet | — |

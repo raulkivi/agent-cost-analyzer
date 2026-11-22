@@ -15,7 +15,7 @@ import { keyMatches } from "../cost-attribution/repository-key-privacy.js";
 import { byCostDescending, cacheHitRatio, costFigures, costMeasures, costOf, groupBy, rankingFor, type TurnFigures } from "./cost-aggregation.js";
 import { sessionActivity } from "./session-activity.js";
 
-// Phase 9.12 (docs/plans/mcp-tools-v2.md §4.1): the dashboard's flat
+// Phase 9.12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-tools-v2.md §4.1): the dashboard's flat
 // InsightsDataset (every provider) → CostRollup. Pure; reusing the same
 // dataset keeps MCP answers consistent with the web Dashboard.
 // Step 15.6: per-basis cost totals, breakdowns by repository, project,

@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// The npm-package smoke (docs/plans/npm-package.md §4.8): pack the
+// The npm-package smoke (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.8): pack the
 // `agent-cost-analyzer` package, check the tarball, install it and run it
 // through `npx` with scripts off and no registry, start the app and check it
 // over HTTP and in Chromium, run `agent-cost-analyzer mcp` through the MCP

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 // `npm run demo:record:desktop -w packages/vscode-extension -- M1 [--dry-run]`
 // Plays a Claude Desktop scene in Xvfb on the owner's signed-in demo profile over a fresh made-up-data home (the fixture with realistic Copilot model names, D21)
-// and writes <masters>/<id>-<slug>.mp4 plus .json (docs/plans/docs-refresh-and-demo-recordings.md §4.3).
+// and writes <masters>/<id>-<slug>.mp4 plus .json (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/docs-refresh-and-demo-recordings.md §4.3).
 // --dry-run launches Desktop, reports template scores and sends nothing.
 // Run it under `flock "$XDG_RUNTIME_DIR/aica-demo.lock"`.
 import { execFileSync } from "node:child_process";

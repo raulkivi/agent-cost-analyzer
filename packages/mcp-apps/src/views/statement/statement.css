@@ -1,7 +1,7 @@
 /* SPDX-FileCopyrightText: 2026 Raul Kivi
    SPDX-License-Identifier: MIT
 */
-/* U14 StatementView (docs/plans/mcp-apps.md §4.5, §9.2 Q13/Q14; board
+/* U14 StatementView (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.5, §9.2 Q13/Q14; board
    Increment3States.dc.html). Host tokens only, no colour literals (§5.4).
    Own prefix: stm-. */
 

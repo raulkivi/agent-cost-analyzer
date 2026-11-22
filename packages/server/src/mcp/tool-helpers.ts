@@ -17,7 +17,7 @@ import {
   MAX_COST_IDS,
 } from "../services/cost-analysis/cost-query-params.js";
 
-// Shared building blocks for the MCP tool groups (docs/plans/mcp-tools-v2.md
+// Shared building blocks for the MCP tool groups (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-tools-v2.md
 // §3/§5): result envelopes, actionable errors, and argument schemas reused
 // across tools so every tool describes the same argument the same way.
 

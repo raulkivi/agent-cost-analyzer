@@ -3,7 +3,7 @@
 // Free demo scene E3 on made-up data: `npm run demo:record`. Pick a session in the
 // Sessions view; read its turns, the Explanation tab, the subagent marker and runs, the
 // turn inspector, back to the session, the system prompt tab and the prompt in an editor
-// (docs/plans/docs-refresh-and-demo-recordings.md §4.1). All eight beats; pauses are tight to fit the 25 s GIF limit.
+// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/docs-refresh-and-demo-recordings.md §4.1). All eight beats; pauses are tight to fit the 25 s GIF limit.
 import { browser, expect } from "@wdio/globals";
 import { DEMO_FIXTURE_ENV, parseDemoFixture } from "../../../scripts/ui-automation/demo-fixture.mts";
 import { AnalyzerPanel } from "../support/analyzer-panel.js";

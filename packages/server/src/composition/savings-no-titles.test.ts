@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// V29 (savings-increment-3.md §5, §9, D19, D24): titles stay in the browser.
+// V29 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md §5, §9, D19, D24): titles stay in the browser.
 // mcp/security.test.ts checks the same boundary over the cost fixture, whose
 // savings report has no row, so no session reference could carry a title
 // there. This runs the standalone composition over SR13's Claude Code

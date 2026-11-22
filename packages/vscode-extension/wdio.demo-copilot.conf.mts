@@ -1,5 +1,5 @@
 // Records the opt-in demo scenes that need a REAL signed-in Copilot Chat
-// (docs/plans/docs-refresh-and-demo-recordings.md §5, task 1.3), into MP4 masters
+// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/docs-refresh-and-demo-recordings.md §5, task 1.3), into MP4 masters
 // in demo-masters/. Like the release suite, it does nothing (exit 0 with the
 // reason) unless COPILOT_E2E=1 and COPILOT_E2E_USER_DATA_DIR name the profile
 // you signed in with, and scenes that send a prompt spend AI Credits up to

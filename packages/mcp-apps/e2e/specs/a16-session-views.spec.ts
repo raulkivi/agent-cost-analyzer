@@ -3,7 +3,7 @@
 import { messagesOffTemplate, modelTurnsIn, toolCallsIn } from "../support/call-log.js";
 import { expect, inEachClaudeSet, test } from "../support/host-fixture.js";
 
-// A16 §2 (docs/plans/mcp-apps-a16-checklist.md): the MVP views U1 (session
+// A16 §2 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps-a16-checklist.md): the MVP views U1 (session
 // cost), U2 (spend rollup) and U3 (findings) in Claude Desktop, light and
 // dark. The checklist's rows are in its §4 table. The fixture's Copilot
 // session "Fix the bug" (billed in AI Credits, 2 turns, 2026-10-27) is U1's

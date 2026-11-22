@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// Demo scene E2 "Chat, then see its cost" (docs/plans/docs-refresh-and-demo-recordings.md §4.1, task 1.7):
+// Demo scene E2 "Chat, then see its cost" (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/docs-refresh-and-demo-recordings.md §4.1, task 1.7):
 // a real agent-mode chat, then its session in Sessions (by day) with its AI Credits, the session's
 // tooltip and the status bar's AI Credits today. REAL, PAID: one short chat on the suite's model.
 //

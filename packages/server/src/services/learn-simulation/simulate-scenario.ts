@@ -30,7 +30,7 @@ export interface SimulateOptions {
   assumedTtlMinutes?: number;
   // Apply what a harness does on its own, unless told otherwise. Claude Code
   // requests the 1-hour cache lifetime (its logs show it on 186 of 188
-  // sessions, docs/plans/learn-calibration-findings.md); the scenario docs
+  // sessions, https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/learn-calibration-findings.md); the scenario docs
   // turn this off to teach the vendor's own default.
   harnessCacheDefaults?: boolean;
   // The model the "cheaper" role uses, instead of the primary's curated

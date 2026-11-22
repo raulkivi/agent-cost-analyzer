@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { MeasureTotal } from "@agent-cost-analyzer/domain";
 
-// Display formatting shared by the view models (docs/plans/mcp-apps.md
+// Display formatting shared by the view models (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md
 // §4.3). Pure. An unknown value is null in the data and reads "Unknown"
 // here, never 0 (architecture.md constraint 6).
 

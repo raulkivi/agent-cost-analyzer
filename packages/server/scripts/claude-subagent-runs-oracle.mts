@@ -3,7 +3,7 @@
 // 1.0 criterion C15 as the real-data checks need it: which Claude Code
 // subagent runs a session's turns include, and each run's tokens. An independent
 // oracle that reads raw JSONL and shares no code with the product's readers
-// (docs/plans/claude-code-subagents.md §5.4, §6, D1 to D8 and D17). Only the
+// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md §5.4, §6, D1 to D8 and D17). Only the
 // two real-data oracles (replay, cost by project) import it.
 //
 // Rules, from the plan (not from the code):

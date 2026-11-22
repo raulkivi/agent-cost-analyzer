@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { subagentLabelSchema, subagentRunIdSchema } from "./subagent-run-ids.js";
 
-// Step 10.20 (docs/plans/subagent-tool-audit.md §5.1): which agent issued a
+// Step 10.20 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/subagent-tool-audit.md §5.1): which agent issued a
 // tool call. A record without `origin` is the main agent's, so Learn
 // fixtures, pi, mitmproxy and old clients stay valid.
 export const toolCallOriginSchema = z.discriminatedUnion("kind", [

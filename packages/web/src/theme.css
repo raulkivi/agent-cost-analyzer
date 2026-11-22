@@ -99,7 +99,7 @@
   --font-heading: "Barlow Condensed", system-ui, sans-serif;
   --font-heading-weight: 600;
   --font-body: "Barlow", system-ui, sans-serif;
-  /* The ledger's two extra font roles (dense-ledger-ui.md D3). Outside it,
+  /* The ledger's two extra font roles (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/dense-ledger-ui.md D3). Outside it,
      mono is the system monospace and prose the body font, as before. */
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --font-prose: var(--font-body);
@@ -122,7 +122,7 @@
   --shadow-lg: 0 12px 32px color-mix(in srgb, #2b2b2d 22%, transparent);
 }
 
-/* — Ledger theme (dense-ledger-ui.md L1, D1): the standalone app's light and
+/* — Ledger theme (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/dense-ledger-ui.md L1, D1): the standalone app's light and
      dark colour modes, set on <html> by the app itself. Only the standalone
      app sets data-color-mode, so the VS Code webview and the MCP Apps
      views (whose light/dark switch is another attribute) keep the
@@ -638,7 +638,7 @@ a { color: var(--color-accent-text); text-underline-offset: 3px; }
 .mono { font-family: var(--font-mono); font-size: 12px; }
 .failure-badge { display: inline-flex; align-items: center; gap: 2px; margin-left: 6px; font-size: 11px; color: #b02a2a; font-weight: 500; }
 
-/* — Insights dashboard (Phase 9.11, docs/plans/insights-dashboard.md):
+/* — Insights dashboard (Phase 9.11, https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/insights-dashboard.md):
      QlikView's associative colours — selected green, possible white,
      alternative light grey, excluded dark grey. State is also carried by
      aria-selected, a title and the legend, never by colour alone. — */
@@ -1180,7 +1180,7 @@ main[data-layout="narrow"] .nav { flex-wrap: wrap; gap: var(--space-2); }
   .savings-not-analysed { grid-template-columns: minmax(0, 1fr); }
 }
 
-/* — ledger component rules (dense-ledger-ui.md L3) —
+/* — ledger component rules (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/dense-ledger-ui.md L3) —
    html[data-color-mode] is set only by the standalone app, so none of this
    reaches the VS Code webview or the MCP Apps views. Mono is 15-20% wider than
    Barlow, hence the 12px base; serif is reserved for running prose. */

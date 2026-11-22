@@ -461,7 +461,7 @@ describe("MCP server, Agent Host usage records (step 10.15)", () => {
   });
 });
 
-// docs/plans/mcp-apps.md §4.7: a session whose latest turn started within
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.7: a session whose latest turn started within
 // 15 minutes is flagged active, in the JSON and in a plain sentence.
 describe("active sessions in the cost tools", () => {
   const now = new Date("2026-09-27T09:00:00.000Z");

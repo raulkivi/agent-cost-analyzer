@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 // The npm-package job is a matrix that is skipped on docs-only PRs, so its
 // per-leg check names never appear there. The ruleset requires one summary
-// check instead (npm-package.md task NP9); these tests keep it honest.
+// check instead (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md task NP9); these tests keep it honest.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import process from "node:process";

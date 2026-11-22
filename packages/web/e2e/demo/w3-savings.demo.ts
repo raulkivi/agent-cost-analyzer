@@ -5,7 +5,7 @@ import { expect, test } from "../support/app-fixture.js";
 import { assertPrivate, probed } from "./support/privacy-probe.js";
 import { DEMO_MAX_BEAT_MS, play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
 
-// W3, "Savings" (docs/plans/demo-recordings-1.0.md §3.3): Dashboard, Savings
+// W3, "Savings" (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/demo-recordings-1.0.md §3.3): Dashboard, Savings
 // tab, 90 then 30 days, the top row (the unused-tools row, D45) with its sessions
 // and its tool list, the pi row ranked last ("Not priced" and its reason), Open in
 // Analyze. Runs on the demo fixture home (DR1): made-up data, realistic

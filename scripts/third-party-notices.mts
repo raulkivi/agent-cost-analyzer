@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // The generated THIRD-PARTY-NOTICES.md of a shipped package (the npm package,
-// npm-package.md §4.9, and the VS Code extension's .vsix): each npm package
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.9, and the VS Code extension's .vsix): each npm package
 // its esbuild bundles (metafiles) and Vite builds (lists) bundle, with its
 // license files and the parts that bundle it, plus, when asked, the fonts
 // section of the repository's own notices. Shared by packages/cli and

@@ -27,7 +27,7 @@
 //     the Copilot CLI event log's user.message with the row's event id, its
 //     cache writes from that turn's usage records when they add up to the
 //     totals.
-//   - Claude Code subagent runs (C15, plan claude-code-subagents.md): a turn
+//   - Claude Code subagent runs (C15, plan https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md): a turn
 //     also holds the runs its Agent calls started, each a part on its own model
 //     (claude-subagent-runs-oracle.mts has the placement, fork-copy and unknown
 //     rules); the file's subagents/ folder sits beside the file read.

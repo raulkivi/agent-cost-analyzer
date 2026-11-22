@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { addTurnCostFigures, unknownCost, type SubagentTokens, type TurnCostFigures } from "@agent-cost-analyzer/domain";
 
-// Step CS11 (docs/plans/claude-code-subagents.md D13): the priced cost of a
+// Step CS11 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md D13): the priced cost of a
 // session's subagent runs, shared by the session summary and the replay
 // coverage. Unknown, with a reason, when any token sum is (a session-level
 // reason leaves no line to sum) or when no run line was priced; never 0.

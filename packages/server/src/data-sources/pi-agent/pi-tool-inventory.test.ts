@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// V27 (savings-increment-3.md §7.1, §7.4): pi's tool inventory over V14's real
+// V27 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md §7.1, §7.4): pi's tool inventory over V14's real
 // fixtures, a tool list that changes mid-session, and a forked file's shared
 // prefix (D27).
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";

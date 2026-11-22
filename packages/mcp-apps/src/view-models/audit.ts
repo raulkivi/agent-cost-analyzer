@@ -5,7 +5,7 @@ import { canceledTextOf, knownCallsOf, runCounts, SCOPE_NOTE, sublineOf, subagen
 import type { AgentScope, SubagentsSection } from "./audit-subagents.js";
 import { formatCount, formatDay, periodText, pluralize, UNKNOWN_TEXT } from "./format.js";
 
-// U4, tool-call audit (docs/plans/mcp-apps.md §4.5, board ToolCallAudit.dc.html).
+// U4, tool-call audit (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.5, board ToolCallAudit.dc.html).
 // Pure: formats a get_session_audit or get_audit_rollup result for display.
 //
 // The failure rate is over calls with a known outcome; calls with an unknown

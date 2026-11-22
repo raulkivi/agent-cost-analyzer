@@ -3,7 +3,7 @@
 import { APP_VERSION, expect, inEachClaudeSet, test } from "../support/host-fixture.js";
 import type { McpHost } from "../support/mcp-host.js";
 
-// A33 (docs/plans/mcp-apps.md §8.3): the Increment 3 rows that cut across
+// A33 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §8.3): the Increment 3 rows that cut across
 // views, in Claude Desktop light and dark, as A24 2.10 and 2.11 do for
 // Increment 2. Each view's own rows are in u12-replay, u13-price-changes,
 // u14-u15-billing, a30-audit-picker and a32-coverage-gaps.

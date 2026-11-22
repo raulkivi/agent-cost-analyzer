@@ -29,7 +29,7 @@ export interface CopilotMcpServerOptions {
 // process outlives many chats, so the per-workspace debug-logs folders are
 // re-listed on every lookup, and a workspace opened later is still found.
 //
-// serveStdio (docs/plans/mcp-sdk-2-migration.md D1) calls the factory once
+// serveStdio (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-sdk-2-migration.md D1) calls the factory once
 // per connection and once more per server/discover probe it may discard,
 // so the services and the views lookup are composed here, once; each call
 // of the factory only builds a server over them.

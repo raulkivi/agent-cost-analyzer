@@ -10,7 +10,7 @@ import { rankingLabel } from "./ranking.js";
 import type { RankedBy } from "./ranking.js";
 import { inputPartNotes, withUnknownNote } from "./input-parts.js";
 
-// U2, spend rollup (docs/plans/mcp-apps.md §4.3). Pure: formats a
+// U2, spend rollup (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.3). Pure: formats a
 // get_cost_rollup result for display. Session titles are logged text, shown
 // in the card only; "Ask about this session" sends the session id (§6).
 

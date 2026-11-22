@@ -3,7 +3,7 @@
 import type { InsightFinding, InsightSessionRow, InsightToolCallRow, InsightTurnRow, PricingMode } from "@agent-cost-analyzer/domain";
 import type { InsightRows, ProviderSessions } from "./insights-dataset-builder.js";
 
-// Phase 9.11 (docs/plans/insights-dashboard.md §4): every detector is an
+// Phase 9.11 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/insights-dashboard.md §4): every detector is an
 // independent strategy over the same input (open/closed — the service
 // takes a list of them).
 export interface DetectorInput {

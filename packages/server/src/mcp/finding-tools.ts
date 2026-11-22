@@ -9,7 +9,7 @@ import { limitSchema, toolCallOriginKindSchema } from "../services/tool-audit/au
 import type { McpToolDeps } from "./mcp-server.js";
 import { json, READ_ONLY, sessionsPerProviderArg, sinceArg, untilArg, type Guard } from "./tool-helpers.js";
 
-// Phase 9.12 (docs/plans/mcp-tools-v2.md §4): the Phase 9.11 detectors'
+// Phase 9.12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-tools-v2.md §4): the Phase 9.11 detectors'
 // findings over MCP (replaces the planned list_security_findings).
 
 export function registerFindingTools(server: McpServer, deps: McpToolDeps, guarded: Guard): void {

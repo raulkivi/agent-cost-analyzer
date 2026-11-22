@@ -5,7 +5,7 @@ import { costInCurrency } from "@agent-cost-analyzer/domain";
 import type { CostBasisChoice, CostCurrencyChoice, CostTotal, Currency } from "@agent-cost-analyzer/domain";
 import { MINUS, UNKNOWN_TEXT, coverageNote, formatCount } from "./format.js";
 
-// Money figures for the cost-analysis views (docs/plans/mcp-apps.md §4.5):
+// Money figures for the cost-analysis views (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.5):
 // every figure names its basis and its currency, and currencies stay apart
 // unless the result is in USD. Pure.
 //

@@ -7,7 +7,7 @@ import { costRollup, measures, sessionCost, total, turnSeries } from "./fixtures
 import { UNKNOWN_TEXT, coverageNote, measureView } from "./format.js";
 import { toSessionCostViewModel } from "./session-cost.js";
 
-// Invariants of architecture.md constraint 6 and docs/plans/mcp-apps.md
+// Invariants of architecture.md constraint 6 and https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md
 // §4.3: an unknown value is null and reads "Unknown", never 0; rounding is
 // stable; the partial-coverage note appears exactly when coverage is partial.
 

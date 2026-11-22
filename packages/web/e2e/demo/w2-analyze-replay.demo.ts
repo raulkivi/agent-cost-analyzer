@@ -5,7 +5,7 @@ import { expect, test } from "../support/app-fixture.js";
 import { assertPrivate, probed } from "./support/privacy-probe.js";
 import { DEMO_MAX_BEAT_MS, play, presetColorMode, recordScene, Pointer, totalBeatMs, type DemoScene } from "./support/demo-driver.js";
 
-// W2, "Analyze and replay" (docs/plans/demo-recordings-1.0.md §3.3, extended by DR12 for C15):
+// W2, "Analyze and replay" (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/demo-recordings-1.0.md §3.3, extended by DR12 for C15):
 // a Claude Code session whose first turn started a subagent run. Hover the Turn-cell marker
 // (tokens and priced cost from the run), read the Explanation's Subagent runs block, then replay
 // on another model and read the Simulated columns and the runs the replay left out. Runs on the

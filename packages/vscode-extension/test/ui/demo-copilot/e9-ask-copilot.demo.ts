@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// Demo scene E9 "Ask Copilot" (docs/plans/docs-refresh-and-demo-recordings.md §4.1, task 1.7): turn on
+// Demo scene E9 "Ask Copilot" (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/docs-refresh-and-demo-recordings.md §4.1, task 1.7): turn on
 // aiCreditsAnalyzer.mcp.enabled in the Settings UI, ask agent mode "What drove my spend this week?", the
 // cost rollup MCP App view appears in the chat; drill into a top session, open a turn, Back.
 // REAL, PAID: one short chat on the suite's model (the model's call to get_cost_rollup is a few thousand tokens).

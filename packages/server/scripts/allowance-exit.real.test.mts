@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // MS10: the monthly allowance's exit criterion as an automated check
-// (docs/plans/monthly-allowance-standalone.md §11, D11; 1.0 criterion C9), over
+// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md §11, D11; 1.0 criterion C9), over
 // this machine's own Copilot logs. Opt-in and local only:
 //
 //   npm run test:real-data:allowance

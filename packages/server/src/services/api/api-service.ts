@@ -122,7 +122,7 @@ const priceBookQuerySchema = z.object({
 // book: the extension has none yet and answers 404.
 export const COST_ANALYSIS_UNAVAILABLE_MESSAGE = "Cost analyses are not available in this product.";
 export const ESTIMATES_UNAVAILABLE_MESSAGE = "Estimates are not available in this product.";
-// MS4 (monthly-allowance-standalone.md §4.3): the allowance lives in the
+// MS4 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md §4.3): the allowance lives in the
 // standalone app's settings.json; the extension keeps its own in VS Code
 // settings and answers 404.
 export const MONTHLY_ALLOWANCE_UNAVAILABLE_MESSAGE = "The monthly allowance is not available in this product.";
@@ -403,7 +403,7 @@ export class ApiService {
     }
   }
 
-  // Tool-call audit (Phase 9.10, docs/plans/tool-call-audit.md) through the
+  // Tool-call audit (Phase 9.10, https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/tool-call-audit.md) through the
   // same AuditQueryService the MCP server uses. An optional ?provider=
   // audits a provider other than the UI's active one.
   async getSessionAudit(sessionId: string, query: ApiQuery = {}): Promise<SessionAudit> {
@@ -451,7 +451,7 @@ export class ApiService {
     }
   }
 
-  // Insights dashboard (Phase 9.11, docs/plans/insights-dashboard.md): one
+  // Insights dashboard (Phase 9.11, https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/insights-dashboard.md): one
   // flat, redacted dataset across every registered provider (not just the
   // active one) plus findings. `limit` is per provider.
   async getInsights(query: ApiQuery = {}): Promise<InsightsDataset> {

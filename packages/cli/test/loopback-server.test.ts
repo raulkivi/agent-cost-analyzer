@@ -71,7 +71,7 @@ describe("isThisApp", () => {
   });
 
   // Another program on the port could otherwise send the probe to any host,
-  // off the machine included (npm-package.md §2: no network call by the app).
+  // off the machine included (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §2: no network call by the app).
   it("follows no redirect: false, and the redirect target is never asked", async () => {
     let targetHits = 0;
     const target = await serveOnEphemeralPort((_req, res) => {

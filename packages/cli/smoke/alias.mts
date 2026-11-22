@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// The smoke's checks of the `agent-cost-analyser` alias (npm-package.md D3,
+// The smoke's checks of the `agent-cost-analyser` alias (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md D3,
 // §4.8): its tarball, then both tarballs installed with no registry and the
 // alias run as a user would (`--version`, `--help`, an MCP initialize).
 import { readFileSync } from "node:fs";

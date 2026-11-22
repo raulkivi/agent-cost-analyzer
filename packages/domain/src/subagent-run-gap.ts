@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { subagentLabelSchema, subagentRunIdSchema } from "./subagent-run-ids.js";
 
-// Step 10.20 (docs/plans/subagent-tool-audit.md §6, D12): a run whose tool
+// Step 10.20 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/subagent-tool-audit.md §6, D12): a run whose tool
 // calls are not, or not fully, known. The reader that placed the run states
 // why; the audit builder turns it into `AuditedRun.unreadReason`. A gap for a
 // run with no calls makes its totals null (never 0); a gap for a run with

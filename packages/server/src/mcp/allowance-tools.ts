@@ -6,7 +6,7 @@ import type { MonthlyAllowanceQueries } from "../services/monthly-allowance/mont
 import { monthlyAllowanceText } from "./allowance-tool-output.js";
 import { READ_ONLY, type Guard } from "./tool-helpers.js";
 
-// MS9 (monthly-allowance-standalone.md §6, D7): the monthly allowance for the
+// MS9 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md §6, D7): the monthly allowance for the
 // model, standalone only. Read-only and without arguments: the allowance is
 // the user's own number, set in the app, and the answer is the one
 // GET /api/monthly-allowance gives (the same service).

@@ -12,7 +12,7 @@ import { PAYLOAD_TOKEN_COLORS } from "./lib/turn-payload-pretty.js";
 // at least 4.5:1). jsdom computes no colours, so axe's color-contrast rule
 // can't run in the component tests; this checks the stylesheets instead,
 // for the standalone app (theme.css, its Industry :root and the ledger's
-// light and dark colour modes, dense-ledger-ui.md L1), for a webview whose
+// light and dark color modes, https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/dense-ledger-ui.md L1), for a webview whose
 // theme defines none of the --vscode-* variables (theme-vscode.css's
 // fallbacks), and for VS Code's own default themes (Dark Modern, Light
 // Modern, High Contrast): step 10.11 found text that only failed with a
@@ -54,7 +54,7 @@ type Theme =
   | "vscode-high-contrast";
 
 // The ledger's colour modes: theme.css rules under html[data-color-mode],
-// which only the standalone app sets (dense-ledger-ui.md D1).
+// which only the standalone app sets (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/dense-ledger-ui.md D1).
 const COLOR_MODES: Partial<Record<Theme, "light" | "dark">> = { "standalone-light": "light", "standalone-dark": "dark" };
 
 function colorModeScope(theme: Theme): string | undefined {

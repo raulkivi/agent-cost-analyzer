@@ -9,7 +9,7 @@ import { expect, openDashboard, test } from "../support/app-fixture.js";
 import { FIXTURE_NOW } from "../support/fixture-clock.js";
 import { connectStdioMcp, structured } from "../support/mcp-stdio.js";
 
-// MS8 (monthly-allowance-standalone.md §11, 1.0 criterion C9): the monthly
+// MS8 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md §11, 1.0 criterion C9): the monthly
 // allowance in the real app, in the light and dark projects. The fixture home
 // has Copilot sessions inside the period of FIXTURE_NOW (2026-11-06, UTC;
 // fixture-home.mts), whose start days the reset day picks between:

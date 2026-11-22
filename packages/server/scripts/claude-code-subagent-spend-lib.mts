@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// Plan claude-code-subagents.md §10 (CS16, 1.0 criterion C15): the oracle of the
+// Plan https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md §10 (CS16, 1.0 criterion C15): the oracle of the
 // real-data check. It takes one Claude Code session's raw lines and the lines of
 // each transcript in its `subagents/` folder, and recomputes from the plan's
 // rules (§5.4, §6, §13, D1-D17), not from the code, what the product must say:

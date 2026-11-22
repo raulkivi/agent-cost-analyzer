@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { tokenCountSchema } from "./token-count.js";
 
-// Step CS4 (docs/plans/claude-code-subagents.md §5.1, D13): what the three
+// Step CS4 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md §5.1, D13): what the three
 // subagent summaries add beside their AI Credits figure, so a provider
 // without AI Credits (Claude Code) shows tokens and a priced cost instead of
 // "unknown". The cost itself is `turnCostFiguresSchema` at each use.

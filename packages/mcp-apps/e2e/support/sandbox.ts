@@ -34,7 +34,7 @@ export function withWebviewVariables(html: string, variables: Record<string, str
 
 // The Content-Security-Policy the host puts on the view (MCP Apps spec,
 // McpUiResourceCsp): inline script and style, and only the domains the
-// resource declares. Ours declares none (mcp-apps.md §4.3).
+// resource declares. Ours declares none (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.3).
 export function viewCsp(csp: McpUiResourceCsp | undefined): string {
   const resources = (csp?.resourceDomains ?? []).map((domain) => ` ${domain}`).join("");
   const domains = (list: string[] | undefined, none = "'none'") => (list && list.length > 0 ? list.join(" ") : none);

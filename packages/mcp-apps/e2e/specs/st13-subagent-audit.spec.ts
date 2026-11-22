@@ -5,7 +5,7 @@ import { subagentAudit } from "../../src/view-models/audit-fixtures.js";
 import { modelTurnsIn, toolCallsIn } from "../support/call-log.js";
 import { expect, inEachClaudeSet, test, VSCODE_SETS } from "../support/host-fixture.js";
 
-// ST13 (docs/plans/subagent-tool-audit.md §5.7, boards U4AuditView and
+// ST13 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/subagent-tool-audit.md §5.7, boards U4AuditView and
 // FindingRow): U4 splits a session audit's calls by agent and lists the
 // subagent runs; U3 names the run on a finding. The fixture home has no
 // subagent run, so the fake host answers with the shapes the tools return

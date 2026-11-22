@@ -23,7 +23,7 @@ const PREFIX = "agent-cost-analyzer MCP server:";
 
 // The command-line options (stdio-args.ts) plus what an entry point decides.
 export interface StandaloneMcpServerOptions extends LogProviderCompositionOptions, Partial<StdioArgs> {
-  // A packaged build's files (npm-package.md §4.2), its views file
+  // A packaged build's files (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.2), its views file
   // included; omitted, this package's own data and views only from
   // appViewsHtml (scripts/mcp-server.sh). An appViewsHtml wins over the
   // layout's views (§4.3).
@@ -38,7 +38,7 @@ export interface StandaloneMcpServerOptions extends LogProviderCompositionOption
 export interface StandaloneMcpServerFactory {
   // The version serverInfo reports, for the entry point's ready line.
   version: string;
-  // docs/plans/mcp-sdk-2-migration.md D1: serveStdio calls the factory once
+  // https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-sdk-2-migration.md D1: serveStdio calls the factory once
   // per connection and once per server/discover probe, so the services are
   // composed once, here, and each call only builds a server over them.
   createServer: () => McpServer;
@@ -49,7 +49,7 @@ const toStderr = (line: string): void => console.error(line);
 // The standalone MCP server's composition root over every log provider:
 // the same services as the HTTP app, reading its data, views and version
 // from the layout when one is given. mcp/stdio.ts (dev) and the npm
-// package's `mcp` subcommand (npm-package.md §4.6) serve it over stdio.
+// package's `mcp` subcommand (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.6) serve it over stdio.
 export function createStandaloneMcpServerFactory(options: StandaloneMcpServerOptions = {}): StandaloneMcpServerFactory {
   const { layout, projectBillingDetails = false, appViewsHtml = layout?.appViewsHtml, now = clockFromEnv(), log = toStderr, ...compositionOptions } = options;
   const version = readAppVersion(layout?.packageJsonPath);
@@ -89,7 +89,7 @@ export function createStandaloneMcpServerFactory(options: StandaloneMcpServerOpt
   return { version, createServer: () => createMcpServer(deps) };
 }
 
-// docs/plans/mcp-sdk-2-migration.md D1: serveStdio answers 2025-era clients
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-sdk-2-migration.md D1: serveStdio answers 2025-era clients
 // (initialize) and 2026-07-28 ones (server/discover, the per-request _meta
 // envelope) from one process.
 export function serveStandaloneMcpStdio(options: StandaloneMcpServerOptions = {}): void {

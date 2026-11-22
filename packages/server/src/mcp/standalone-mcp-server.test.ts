@@ -16,7 +16,7 @@ const SERVER_PACKAGE_VERSION = (
   JSON.parse(readFileSync(fileURLToPath(new URL("../../package.json", import.meta.url)), "utf-8")) as { version: string }
 ).version;
 
-// npm-package.md §4.2 "Paths" and §4.6, task NP3: the standalone MCP
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.2 "Paths" and §4.6, task NP3: the standalone MCP
 // composition root reads its version, views and data from a package layout
 // when given one. The temp layout's files differ from this package's own,
 // so each answer shows which file was read.

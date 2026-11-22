@@ -5,7 +5,7 @@ import { axeViolations } from "../support/axe.js";
 import { expect, test } from "../support/app-fixture.js";
 import { CLAUDE_SUBAGENT_KNOWN_TITLE, CLAUDE_SUBAGENT_UNKNOWN_TITLE } from "../support/fixture-home.mts";
 
-// Step CS13 (docs/plans/claude-code-subagents.md §5.6, CS2 boards): Claude
+// Step CS13 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md §5.6, CS2 boards): Claude
 // Code sessions whose `Agent` calls started subagent runs. The fixture home's
 // sessions (support/fixture-home.mts, `claudeSubagentSessions`):
 //   "known-run"    one run, linked by its Agent call: tokens and a priced cost

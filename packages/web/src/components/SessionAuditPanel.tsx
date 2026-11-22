@@ -80,7 +80,7 @@ function statusOf(audited: AuditedToolCall): ToolCallStatus {
   return audited.call.outcome?.status ?? "unknown";
 }
 
-// The session-level tool-call audit (docs/plans/tool-call-audit.md §11):
+// The session-level tool-call audit (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/tool-call-audit.md §11):
 // headline tiles, per-turn outcome columns, failure-category and program
 // breakdowns that double as filters, a filterable call table with evidence,
 // and retried commands.
