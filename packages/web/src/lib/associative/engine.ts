@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { AssociativeModel, Evaluation, FieldDef, FieldValue, Selections, TableDef, ValueState } from "./data-model.js";
 
-// Associative selection engine (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/insights-dashboard.md §5):
+// Associative selection engine (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/insights-dashboard.md §5):
 //   1. local:  a table's rows matching its own fields' selections;
 //   2. upward: a row also needs ≥1 surviving child in every constrained
 //      child table (one with selections in it or below it);

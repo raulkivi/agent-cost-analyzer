@@ -1,7 +1,7 @@
 name: Vendor prices
 
 # Weekly: diff the vendor profiles' prices against GitHub's published Copilot
-# price table (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/vendor-aware-learn-simulation.md §6, D9) and keep one
+# price table (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/vendor-aware-learn-simulation.md §6, D9) and keep one
 # issue up to date. It only reports; a price change is a reviewed, sourced data
 # edit (edit the JSON, cite the source, run the golden tests), never a commit
 # from this workflow. Cache-rule changes are reviewed by hand.

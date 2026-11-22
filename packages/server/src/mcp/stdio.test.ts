@@ -129,7 +129,7 @@ describe("stdio MCP entry point", () => {
   }, 60_000);
 });
 
-// Phase 12 A13 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §7): the real entry point with the
+// Phase 12 A13 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §7): the real entry point with the
 // built views file serves the resource and tags the three tools; with the
 // file missing it starts normally without them.
 describe("stdio MCP entry point, app views", () => {
@@ -186,7 +186,7 @@ describe("stdio MCP entry point, app views", () => {
   }, 60_000);
 });
 
-// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-sdk-2-migration.md D1: the entry point serves 2025-era
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-sdk-2-migration.md D1: the entry point serves 2025-era
 // clients (an `initialize` at 2025-06-18 or 2025-11-25) and 2026-07-28
 // clients (`server/discover`, then requests carrying the `_meta`
 // envelope) from one process; D4: the views resource answers a 2026-07-28

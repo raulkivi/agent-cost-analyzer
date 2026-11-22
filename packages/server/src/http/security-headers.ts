@@ -7,7 +7,7 @@ import type { RequestHandler } from "express";
 const INLINE_SCRIPT = /<script(?![^>]*\ssrc\s*=)[^>]*>([\s\S]*?)<\/script>/gi;
 
 /**
- * CSP source expressions for the inline scripts of a page (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md
+ * CSP source expressions for the inline scripts of a page (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md
  * §4.4). The built web app has one: the colour-mode boot script in
  * index.html. A hash allows exactly that text and keeps script-src free of
  * 'unsafe-inline'.

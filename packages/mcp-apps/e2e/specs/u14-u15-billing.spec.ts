@@ -4,7 +4,7 @@ import { messagesOffTemplate, modelTurnsIn, toolCallsIn } from "../support/call-
 import { APP_VERSION, expect, inEachClaudeSet, test } from "../support/host-fixture.js";
 
 // U14 (statement) and U15 (estimate) in Claude Desktop, light and dark, on
-// the standalone fixture home (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.5, §9.2 Q13-Q16,
+// the standalone fixture home (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.5, §9.2 Q13-Q16,
 // board Increment3States.dc.html cells 3-7, 14 and 15). Standalone only: the
 // extension names no billing view. The fixture has no issued statement, and
 // its history has 4 priced active days, under the 5 an estimate needs, so the

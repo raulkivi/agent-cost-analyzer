@@ -8,7 +8,7 @@ import type { MeasureView } from "./format.js";
 import { basisText, moneyViews } from "./money.js";
 import type { MoneyView } from "./money.js";
 
-// U9, cost over time for a repository or project (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md
+// U9, cost over time for a repository or project (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md
 // §2, §4.5). Pure: formats a get_repository_cost or get_project_cost
 // result. Every money figure names its basis and currency; an unknown
 // bucket is a gap; observed price changes are "inferred" and kept apart
@@ -254,7 +254,7 @@ const CURRENCY_ORDER: readonly Currency[] = ["AI_CREDITS", "USD"];
 
 export function toCostSeriesViewModel(cost: CostSeries | ProjectCost): CostSeriesViewModel {
   const points = cost.points.map((point) => pointView(point, cost));
-  // AI Credits first, then USD (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §9.1 answer 5), not the order the buckets happen to show them.
+  // AI Credits first, then USD (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §9.1 answer 5), not the order the buckets happen to show them.
   const present = new Set(points.flatMap((point) => point.cost.flatMap((money) => (money.currency === null ? [] : [money.currency]))));
   const currencies = CURRENCY_ORDER.filter((currency) => present.has(currency));
   const viewModel: CostSeriesViewModel = {

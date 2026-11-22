@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// V27 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md §7.1, §15): the unused-tools detector over a
+// V27 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md §7.1, §15): the unused-tools detector over a
 // two-session pi window of V14's real captures (pi-linear and pi-compaction,
 // qwen3.8-flash-next on a local server). The model has no vendor, so no price
 // channel: the row carries tokens and requests, the money is Not priced with

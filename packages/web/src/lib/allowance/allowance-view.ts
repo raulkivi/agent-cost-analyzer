@@ -8,7 +8,7 @@ import {
   type MonthlyAllowanceResult,
 } from "@agent-cost-analyzer/domain";
 
-// MS6 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md §4.7): the view model of the header
+// MS6 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md §4.7): the view model of the header
 // gauge and its dialogs, built from the server's answer. The wording is the
 // domain's `describeMonthlyAllowance` (shared with the extension's status bar);
 // this adds only what the app lays out: the narrow form, the meter, the

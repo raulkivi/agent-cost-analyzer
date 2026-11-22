@@ -5,7 +5,7 @@
 // outcomes, then the session with subagent runs (Agent filter: Subagents, the runs table
 // with an unread run and its reason), the All sessions audit with the main/subagent
 // split, and the Copy Advice Bundle dialog (previewed, then closed without copying).
-// Beat list: https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/demo-recordings-1.0.md §3.3 and D39.
+// Beat list: https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/demo-recordings-1.0.md §3.3 and D39.
 import { browser, expect } from "@wdio/globals";
 import { parseDemoFixture } from "../../../scripts/ui-automation/demo-fixture.mts";
 import { AnalyzerPanel } from "../support/analyzer-panel.js";

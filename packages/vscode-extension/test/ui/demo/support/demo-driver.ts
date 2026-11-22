@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// The wdio demo driver (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/docs-refresh-and-demo-recordings.md §5, task 1.4):
+// The wdio demo driver (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/docs-refresh-and-demo-recordings.md §5, task 1.4):
 // scenes call runDemoScene, which records them, plays their steps at demo pace with a
 // drawn pointer, checks privacy and the end state, and never leaves a bad recording.
 // TDD exception: wdio glue, covered by the smoke scenes; the pure parts it calls

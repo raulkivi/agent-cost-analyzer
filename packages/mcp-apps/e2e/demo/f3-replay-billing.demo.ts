@@ -9,7 +9,7 @@ import { recordScene } from "./support/record.js";
 
 const PROVIDER = "claude-code";
 
-// F3 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/docs-refresh-and-demo-recordings.md §4.2): the replay views, then the statement.
+// F3 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/docs-refresh-and-demo-recordings.md §4.2): the replay views, then the statement.
 test("F3: compare models, replay; statement", async ({ page, host }) => {
   // The fixture's 2026-10-05 session, found by its start (as u12-replay.spec.ts does).
   const { sessions } = (await host.lookup("list_sessions", { provider: PROVIDER })) as { sessions: { id: string; startedAt?: string }[] };

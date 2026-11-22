@@ -145,7 +145,7 @@ jobs:
           path: packages/mcp-apps/e2e/out/
           if-no-files-found: ignore
 
-  # The npm package (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.8, task NP7): pack it, check
+  # The npm package (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.8, task NP7): pack it, check
   # the tarball, install and run it from the tarball with scripts off and no
   # registry, check it over HTTP, in Chromium and over MCP stdio, and check
   # that it wrote only its own settings folder (scripts/npm-package-smoke.mts).
@@ -210,7 +210,7 @@ jobs:
           path: packages/cli/smoke/out/
           if-no-files-found: ignore
 
-  # One check for the ruleset to require (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md NP9): the matrix legs'
+  # One check for the ruleset to require (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md NP9): the matrix legs'
   # names never appear on docs-only PRs, where the matrix is skipped.
   npm-package-result:
     name: npm-package-result

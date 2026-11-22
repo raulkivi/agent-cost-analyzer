@@ -1,7 +1,7 @@
 /* SPDX-FileCopyrightText: 2026 Raul Kivi
    SPDX-License-Identifier: MIT
 */
-/* U12 ReplayView (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.5, board Replay.dc.html, owner
+/* U12 ReplayView (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.5, board Replay.dc.html, owner
    answers §9.2 Q1-Q5). Host tokens for structure; the brand shows only in the
    data marks. No colour literals (§5.4). Measured and simulated are told apart
    without colour: solid against hatched or dashed, filled dots against open

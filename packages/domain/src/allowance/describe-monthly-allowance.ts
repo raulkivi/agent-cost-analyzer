@@ -3,7 +3,7 @@
 import type { AllowanceLevel, MonthlyAllowanceFigures, MonthlyAllowanceResult } from "./monthly-allowance.js";
 import { identityTranslate, type Translate } from "./translate.js";
 
-// The shared wording of the monthly allowance (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md
+// The shared wording of the monthly allowance (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md
 // §4.1, §4.7): the extension's status bar and the app's header and dialogs say
 // the same thing because both take it from here. Pure text, no codicons and no
 // product phrases ("Open Sessions."). Whole messages per state, so a translator

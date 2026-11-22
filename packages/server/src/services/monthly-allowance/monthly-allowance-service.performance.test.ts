@@ -5,7 +5,7 @@ import { monthlyAllowanceAnswerSchema, type AllowanceSettings, type CopilotHarne
 import type { AllowanceSettingsStore } from "./allowance-settings-store.js";
 import { MonthlyAllowanceService, type CopilotSessionSource } from "./monthly-allowance-service.js";
 
-// MS5 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md §10, 1.0 criterion C9): the service
+// MS5 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md §10, 1.0 criterion C9): the service
 // over 5,000 session summaries stays inside the extension's 50 ms budget
 // (MA8), so it needs no memo: one listSessions per request, no cache.
 const BUDGET_MS = 50;

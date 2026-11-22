@@ -1,7 +1,7 @@
 /* SPDX-FileCopyrightText: 2026 Raul Kivi
    SPDX-License-Identifier: MIT
 */
-/* U15 EstimateView (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.5, §9.2 Q15/Q16; board
+/* U15 EstimateView (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.5, §9.2 Q15/Q16; board
    Increment3States.dc.html). Host tokens only (§5.4). Own prefix: est-.
    The range mark is not told apart by colour alone: hatching, a solid border
    and a direct label on each end (D11). */

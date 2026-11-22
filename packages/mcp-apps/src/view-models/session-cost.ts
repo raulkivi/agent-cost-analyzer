@@ -9,7 +9,7 @@ import { ACTIVE_NOTE, activeView } from "./active-session.js";
 import type { ActiveView } from "./active-session.js";
 import { inputPartNotes, withUnknownNote } from "./input-parts.js";
 
-// U1, session cost (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.3, §5.5). Pure: formats a
+// U1, session cost (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.3, §5.5). Pure: formats a
 // get_session_cost result, and optionally the app-only get_turn_series
 // result, for display. No React, no host calls.
 //

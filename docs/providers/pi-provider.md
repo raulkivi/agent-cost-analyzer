@@ -64,7 +64,7 @@ size the tool last had (a tool removed mid-session is no longer unknown) and
 report's unused-tools money uses (D34). A forked file's later branch counts
 the requests it shares with an earlier branch in `sharedPrefixRequests`
 and leaves them out of `loadedRequests`, so the report counts them once
-(D27; [savings-increment-3.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md) §7.1).
+(D27; [savings-increment-3.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md) §7.1).
 
 Older session files without system messages fall back to the sidecar:
 `Session.systemPrompt` is populated, conditionally, since Phase 9.8: the

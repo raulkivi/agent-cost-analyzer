@@ -3,7 +3,7 @@
 import { MAX_EVIDENCE_EXCERPT_LENGTH, type FailureCategory, type ToolKind } from "@agent-cost-analyzer/domain";
 import { excerptOf } from "./output-redactor.js";
 
-// Rule-based failure classification (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/tool-call-audit.md §6).
+// Rule-based failure classification (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/tool-call-audit.md §6).
 // Only ever called for a call the source itself marked as failed — this
 // decides *why*, never *whether*. Ordered strategies, first match wins;
 // nothing matches → "unclassified" (constraint 6: never guessed). Each
@@ -102,7 +102,7 @@ export const defaultFailureRules: FailureRule[] = [
   ),
   exitCodeRule(2, "invalid-arguments"),
   // Step 10.20 D13: wording the classic VS Code Copilot Chat tools author
-  // themselves (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/subagent-tool-audit.md section 14.3). Each is an
+  // themselves (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/subagent-tool-audit.md section 14.3). Each is an
   // observed text; anything else from those tools stays unclassified.
   { ...textRule("file-not-found", /cannot open file\b.*Unable to read|Detail: Unable to read/i, ["file-read"]), id: "text.classic-file-unreadable" },
   { ...textRule("invalid-arguments", /Regex parse error/i, ["search"]), id: "text.classic-regex-parse-error" },

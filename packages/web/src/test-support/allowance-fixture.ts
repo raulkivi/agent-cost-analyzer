@@ -3,7 +3,7 @@
 import { monthlyAllowanceAnswerSchema, type MonthlyAllowanceAnswer } from "@agent-cost-analyzer/domain";
 
 // Invented answers of GET /api/monthly-allowance, one per state of
-// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md §4.6. Each is checked with the domain schema,
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md §4.6. Each is checked with the domain schema,
 // so a fixture that could not come from the server fails here.
 
 const PERIOD = { startKey: "2026-11-01", endKeyExclusive: "2026-12-01", timeZone: "Europe/Tallinn", daysLeft: 12, dayOfPeriod: 19 };

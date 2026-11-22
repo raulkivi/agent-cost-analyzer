@@ -17,7 +17,7 @@ import { computeClaudeCodeFileHash } from "./session-id.js";
 import { copySubagentFixtureCase, makeSymlinkedSubagentTranscript } from "./subagent-fixture-builders.js";
 import { MAX_CLAUDE_CODE_SUBAGENT_FILES_PER_SESSION } from "./subagent-transcript-path.js";
 
-// CS14 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md D9, section 6): the tool calls of
+// CS14 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/claude-code-subagents.md D9, section 6): the tool calls of
 // the subagent runs a Claude Code session started reach the audit and the
 // security findings, on the detail read only.
 const fixturesDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../fixtures/claude-code/subagents");

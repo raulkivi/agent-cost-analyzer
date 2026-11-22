@@ -8,7 +8,7 @@ import type { DisplayMode } from "../../host/app-host-port.js";
 import { axeViolations } from "../../test-support/axe.js";
 import { FullscreenButton } from "./FullscreenButton.js";
 
-// A14 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §7): the control is a native button, named by
+// A14 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §7): the control is a native button, named by
 // its visible label, reachable by Tab, and it keeps focus when the label
 // changes. Visibility is decided by the caller (the host must list fullscreen).
 

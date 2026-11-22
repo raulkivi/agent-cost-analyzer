@@ -6,7 +6,7 @@ import { composeCostFixture, connectCostFixture } from "../test-support/cost-ana
 import { InMemoryViewSource } from "./apps/view-source.js";
 import { createMcpServer, MAX_TOOL_INPUT_ELEMENTS, type McpServerDeps } from "./mcp-server.js";
 
-// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-sdk-2-migration.md M2: the protocol behavior the move to
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-sdk-2-migration.md M2: the protocol behavior the move to
 // MCP SDK 2 changes or adds, beyond the tool list (tool-list-contract.test.ts)
 // and the stdio entry (stdio.test.ts).
 

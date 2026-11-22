@@ -13,7 +13,7 @@ import {
 
 // Shared, pure aggregation over flat turn rows (the dashboard's
 // InsightTurnRow shape) for the session and cross-session cost builders
-// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-tools-v2.md §4.1). Unknown figures are null and are never
+// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-tools-v2.md §4.1). Unknown figures are null and are never
 // summed as 0; every total reports how many turns it covers.
 
 export type TurnFigures = Pick<

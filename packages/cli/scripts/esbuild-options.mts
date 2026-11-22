@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// The npm package's esbuild options (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.2), shared by the
+// The npm package's esbuild options (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.2), shared by the
 // build (build.mts) and its tests, so the tests check what ships.
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,7 +9,7 @@ import type { BuildOptions } from "esbuild";
 export const cliPackageDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 // On top of every output file. express and other CommonJS dependencies call
-// require() at run time, which an ES module lacks (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §7). The
+// require() at run time, which an ES module lacks (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §7). The
 // SPDX lines are there because esbuild keeps only `@license`/`/*!` comments,
 // not the sources' own SPDX headers.
 const BANNER = [

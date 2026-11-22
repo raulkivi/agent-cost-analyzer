@@ -3,7 +3,7 @@
 // What the view asked the fake host for, in order (step 10.17 G5). Specs
 // assert on it: a drill-down is a tool call, never a message to the model
 // (A24 2.4, 2.5), and a message is only the fixed template naming a
-// session id (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.3, the no-forwarding rule).
+// session id (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.3, the no-forwarding rule).
 
 export type HostCall =
   | { method: "tools/call"; name: string; arguments: Record<string, unknown> }

@@ -21,7 +21,7 @@ function subjectOf(call: ToolCallRecord): SecuritySubject {
 }
 
 // Applies an injected rule table to every tool call (docs/plans/
-// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/insights-dashboard.md §4.1): one finding per (call, matching rule).
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/insights-dashboard.md §4.1): one finding per (call, matching rule).
 export class SecurityScanner implements FindingDetector {
   constructor(private readonly rules: readonly SecurityRule[]) {}
 

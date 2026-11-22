@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 // An MCP stdio client transport over a process the smoke already started
 // (the installed bin, as a client starts it), which keeps every stdout line
-// so the smoke can check that stdout carried JSON-RPC alone (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md
+// so the smoke can check that stdout carried JSON-RPC alone (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md
 // §4.6). The SDK's StdioClientTransport spawns the process itself and parses
 // stdout without exposing it.
 import type { ChildProcessWithoutNullStreams } from "node:child_process";

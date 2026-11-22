@@ -140,7 +140,7 @@ describe("a server without cost analyses (the extension's, until step 15.13)", (
   });
 });
 
-// Owner question 1 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §9.1): the extension has no
+// Owner question 1 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §9.1): the extension has no
 // projects, so the unknown-project error also says why; the standalone
 // text stays as it was.
 describe("get_project_cost with no projects", () => {

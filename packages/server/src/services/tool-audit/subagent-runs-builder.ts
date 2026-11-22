@@ -92,7 +92,7 @@ function rowOf(entry: RunDraft): AuditedRun {
 }
 
 // Pure: one row per subagent run the session's turns know of, read or not
-// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/subagent-tool-audit.md §5.5, §6, D5, D12).
+// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/subagent-tool-audit.md §5.5, §6, D5, D12).
 export function buildSubagentRuns(session: Session): AuditedRun[] {
   return session.turns.flatMap((turn) => draftsOf(turn).map(rowOf));
 }

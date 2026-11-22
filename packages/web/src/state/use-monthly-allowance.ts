@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { AllowanceSettingsWrite, MonthlyAllowanceAnswer } from "@agent-cost-analyzer/domain";
 import { AllowanceUnavailable, getMonthlyAllowance, setMonthlyAllowance } from "../api-client/monthly-allowance.js";
 
-// MS7 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md §4.8): loads once when the gauge
+// MS7 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md §4.8): loads once when the gauge
 // mounts (entering Analyze mode), again on `reload` (Recount) and after a
 // save. No timer, no polling. A reload keeps the last answer on screen, so the
 // gauge never flickers to "loading" on Recount.

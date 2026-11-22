@@ -3,7 +3,7 @@
 import { toolCallsIn } from "../support/call-log.js";
 import { APP_VERSION, expect, inEachClaudeSet, test } from "../support/host-fixture.js";
 
-// A24 §2.1 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps-a24-checklist.md): U9 for a repository in
+// A24 §2.1 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps-a24-checklist.md): U9 for a repository in
 // Claude Desktop, light and dark. The fixture home's portal-web has Claude
 // Code turns (priced; one in September before the price book's first price,
 // so unknown) and a Copilot session (billed), and no pi turns, so Reported

@@ -14,8 +14,8 @@ export const COPILOT_E2E_SUITE = "copilot-e2e";
 // renamed or deleted test shows up as missing instead of dropping out.
 export const COPILOT_CHAT_CHECKS = ["1.4", "2.3", "2.4"] as const;
 
-// G4 (step 10.17): the MCP App view rows of https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps-a24-checklist.md §1 and
-// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps-a16-checklist.md §1 that copilot-views.e2e.ts checks in a real
+// G4 (step 10.17): the MCP App view rows of https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps-a24-checklist.md §1 and
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps-a16-checklist.md §1 that copilot-views.e2e.ts checks in a real
 // Copilot Chat. A16's themes and narrow rows run inside A24 1.7 and 1.8.
 export const COPILOT_VIEW_ROWS = [
   "A24 1.1",
@@ -37,7 +37,7 @@ export const COPILOT_VIEW_ROWS = [
 // picker) and 1.14 (cost by repository on a real git folder).
 export const COPILOT_EXTENSION_ROWS = ["2.1", "1.14"] as const;
 
-// A33 (Phase 12 Increment 3, https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §8.3):
+// A33 (Phase 12 Increment 3, https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §8.3):
 // copilot-increment3-views.e2e.ts checks the views of the Increment 3 tools
 // the extension serves (U12, U13, U4, U5; no billing view) in a real Copilot
 // Chat. "A33 U5.analyse" presses one Analyse, which starts a model turn.

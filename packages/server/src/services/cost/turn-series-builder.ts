@@ -4,7 +4,7 @@ import type { Session, TurnSeries } from "@agent-cost-analyzer/domain";
 import { buildInsightRows } from "../insights/insights-dataset-builder.js";
 import { inputTokensOf } from "./cost-aggregation.js";
 
-// Phase 12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.2): Session → TurnSeries, the bounded
+// Phase 12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.2): Session → TurnSeries, the bounded
 // per-turn figures behind the app-only `get_turn_series` tool. Pure. Figures
 // come from the same insight rows as buildSessionCost, so both agree.
 

@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// Browser opener (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.5). One opener per OS, run without a
+// Browser opener (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.5). One opener per OS, run without a
 // shell. The URL is built only from 127.0.0.1 and a validated port.
 import { spawn } from "node:child_process";
 

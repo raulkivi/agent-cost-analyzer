@@ -166,7 +166,7 @@ function listBoxGroups(crossProvider: boolean) {
     : LIST_BOX_GROUPS.map((group) => ({ ...group, fields: group.fields.filter((fieldId) => fieldId !== FIELD.provider) }));
 }
 
-// Phase 9.11 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/insights-dashboard.md): a QlikView-style
+// Phase 9.11 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/insights-dashboard.md): a QlikView-style
 // associative dashboard across every log provider (or the only one, in a
 // single-provider product) — list boxes, current
 // selections with Back, KPIs, clickable charts, and security/anomaly/

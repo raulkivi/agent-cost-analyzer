@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
 
-// A14 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §6, §7): the no-forwarding rule as a static
+// A14 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §6, §7): the no-forwarding rule as a static
 // check over every source file in src/, so a new call site can't dodge it
 // by not being exercised in a component test. Each view's own security test
 // is the dynamic half: it clicks every control and inspects what reached

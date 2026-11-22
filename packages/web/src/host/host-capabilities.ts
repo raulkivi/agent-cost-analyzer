@@ -16,7 +16,7 @@ export interface HostCapabilities {
   openTextDocument?(text: string, language: DocumentLanguage): Promise<void>;
   // True where the app owns its colours (standalone). The VS Code webview
   // and MCP views keep their host theme, so the colour-mode switch and
-  // attribute are off there (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/dense-ledger-ui.md D1).
+  // attribute are off there (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/dense-ledger-ui.md D1).
   colorMode?: boolean;
   // True where the app can show the "Connect an agent" panel (standalone
   // only): it explains the terminal command that registers the MCP server,

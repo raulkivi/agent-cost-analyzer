@@ -6,7 +6,7 @@ import { monthlyAllowanceAnswerSchema, type AllowanceSettings, type Session } fr
 import { connectCostFixture, sessionOf, turnOf, usage } from "../test-support/cost-analysis-fixture.js";
 import { EXTENSION_TOOL_GROUPS } from "./mcp-server.js";
 
-// MS9 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md §6, D7): get_monthly_allowance, the
+// MS9 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md §6, D7): get_monthly_allowance, the
 // standalone server's read-only answer to "how much of my allowance is left?".
 // The fixture's clock is 2026-11-06T12:00Z, so the period is November (UTC).
 

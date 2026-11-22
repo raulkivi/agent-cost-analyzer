@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // The npm-package smoke's checks of what the installed package does
-// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.8 steps 4-6): pure, so the smoke's orchestration only
+// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.8 steps 4-6): pure, so the smoke's orchestration only
 // gathers the facts.
 
 export interface StartLine {

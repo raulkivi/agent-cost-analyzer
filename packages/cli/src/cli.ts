@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// The entry that becomes dist/cli.js (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.3): the shim imports
+// The entry that becomes dist/cli.js (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.3): the shim imports
 // it, so importing it runs the CLI. In the bundle it sits in <root>/dist/,
 // so the package root is one level up.
 import path from "node:path";

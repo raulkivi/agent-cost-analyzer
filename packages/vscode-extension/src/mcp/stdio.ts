@@ -38,7 +38,7 @@ async function main(): Promise<void> {
   // Phase 12 A13: the MCP App views, copied there by scripts/build.mts; a
   // missing file means the server starts without them.
   const appViewsHtml = path.join(__dirname, "mcp-apps", "views.html");
-  // https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-sdk-2-migration.md D1: serveStdio answers 2025-era
+  // https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-sdk-2-migration.md D1: serveStdio answers 2025-era
   // clients (initialize) and 2026-07-28 ones (server/discover, the
   // per-request _meta envelope).
   serveStdio(createCopilotMcpServerFactory({ userDataDir: args.userDataDir, version, vendorProfilesDir, appViewsHtml }), {

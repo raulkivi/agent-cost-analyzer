@@ -20,7 +20,7 @@ export interface WebAppServerOptions {
 const isClientRoute = (urlPath: string): boolean => !/\.[^/]*$/.test(urlPath.split("/").pop() ?? "");
 
 /**
- * The npm package's one origin (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.4): security headers and
+ * The npm package's one origin (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.4): security headers and
  * the Host guard first, then the API, then the web app read-only: no
  * directory listing, no dotfiles, traversal refused by `send`, and the app
  * shell for `/` and client routes.

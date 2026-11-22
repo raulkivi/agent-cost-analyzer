@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// The made-up data the free demo scenes run on (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/docs-refresh-and-demo-recordings.md
+// The made-up data the free demo scenes run on (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/docs-refresh-and-demo-recordings.md
 // §4.1 and task 1.6a; wdio.demo.conf.mts): sessions in two git repositories over
 // five weeks, one with subagent runs and a system prompt (E3, E4), unused tools,
 // idle gaps and model switches for Savings (E5), a Copilot CLI session full of

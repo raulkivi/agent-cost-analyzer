@@ -4,7 +4,7 @@ import { apiMethodResultSchemas, type AllowanceSettingsWrite, type MonthlyAllowa
 import { ApiRequestError } from "./api-request-error.js";
 import { getApiTransport } from "./current-transport.js";
 
-// MS6 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md §4.3, §4.6): the monthly allowance
+// MS6 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md §4.3, §4.6): the monthly allowance
 // answer (GET /api/monthly-allowance) and its write (PUT
 // /api/config/monthly-allowance), through the ApiTransport. The extension has
 // no allowance store and answers both methods with 404. Answers are parsed

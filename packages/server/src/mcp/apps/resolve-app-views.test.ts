@@ -9,7 +9,7 @@ import { RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
 import { connectCostFixture } from "../../test-support/cost-analysis-fixture.js";
 import { resolveAppViews } from "./resolve-app-views.js";
 
-// Phase 12 A13 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.2, §7): both entry points turn the
+// Phase 12 A13 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.2, §7): both entry points turn the
 // built views.html path into the appViews option, or into nothing when the
 // file is absent, so a checkout that never built mcp-apps still starts.
 

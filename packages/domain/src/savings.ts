@@ -57,7 +57,7 @@ export const savingsAmountSchema = z.discriminatedUnion("known", [knownSavingsAm
   }
 });
 
-// V24 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md §4, D22): the session's start and its
+// V24 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md §4, D22): the session's start and its
 // own saving over the window. Both are optional and additive: no start time
 // reads "date unknown", and an unknown saving carries its reason, never 0.
 export const savingsSessionRefSchema = z.object({
@@ -77,7 +77,7 @@ export const savingsEvidenceSchema = z.object({
   occurrences: count.nullable(),
 });
 
-// V26 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md §6, D26): one unused tool's definition
+// V26 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md §6, D26): one unused tool's definition
 // tokens per request (averaged over the sessions that loaded it) and how many
 // sessions that was. Known tokens are a local-tokenizer estimate (D12); an
 // unknown count carries its reason, never 0.

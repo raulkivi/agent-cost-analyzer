@@ -214,7 +214,7 @@ describe("CheaperModelDetector: Not analysed (never 0)", () => {
   });
 });
 
-// V24 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md §4, D22): one session per row, so its saving is the row's.
+// V24 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md §4, D22): one session per row, so its saving is the row's.
 describe("CheaperModelDetector: the session's date and saving", () => {
   it("puts the start and a saving equal to the row's Simulated amount on the one session", async () => {
     const comparer = new FakeComparer((request) => ({ status: "ok", value: replayOf(request, { measured: 1, simulated: 0.1 }) }));

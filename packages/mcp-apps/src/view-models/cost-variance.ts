@@ -16,7 +16,7 @@ import type { DocumentedPriceChange } from "./analysis-common.js";
 import { formatDay, formatSignedPercent, formatTokens, pluralize } from "./format.js";
 import { basisText, formatMoney, formatSignedMoney, formatUnitPrice } from "./money.js";
 
-// U11, why did the cost change (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §2, §4.5). Pure:
+// U11, why did the cost change (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §2, §4.5). Pure:
 // formats an explain_cost_change result. Usage, price and mix effects add
 // up to the change, per currency; a period A with nothing priced is "no
 // earlier figure", never a change from 0; turns that cannot be explained

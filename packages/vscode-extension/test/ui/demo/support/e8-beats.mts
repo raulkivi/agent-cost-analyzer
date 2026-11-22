@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// Pause after each E8 step, in order (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/demo-recordings-1.0.md §3.3, D39).
+// Pause after each E8 step, in order (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/demo-recordings-1.0.md §3.3, D39).
 // Pure data so the beat list and its budget are unit-tested; the scene supplies the actions.
 export const E8_BEATS = [
   { label: "show the Sessions view", beatMs: 300 },

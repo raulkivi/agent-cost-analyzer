@@ -46,7 +46,7 @@ The standalone app has one theme (Industry, light), so it is drawn light only. T
 
 ## Savings Increment 3 amendments (V23b)
 
-Amended 2026-11-15 for task V23b in [savings-increment-3.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md) §10, **approved by the owner 2026-11-15** (answers below); V24-V26's UI code may start (D32). The Increment 1-2 boards stay approved; only the parts below changed. Names, titles, dates and amounts are invented. The U18 amendments are in [`../mcp-apps/Savings.dc.html`](../mcp-apps/README.md).
+Amended 2026-11-15 for task V23b in [savings-increment-3.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md) §10, **approved by the owner 2026-11-15** (answers below); V24-V26's UI code may start (D32). The Increment 1-2 boards stay approved; only the parts below changed. Names, titles, dates and amounts are invented. The U18 amendments are in [`../mcp-apps/Savings.dc.html`](../mcp-apps/README.md).
 
 | Board | Amended |
 | --- | --- |

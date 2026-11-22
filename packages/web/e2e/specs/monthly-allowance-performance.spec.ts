@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { expect, test } from "../support/app-fixture.js";
 
-// MS5 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md §10, 1.0 criterion C9): GET
+// MS5 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md §10, 1.0 criterion C9): GET
 // /api/monthly-allowance on the fixture home, with the allowance set, reads
 // the real Copilot logs and answers within a sane bound. The 50 ms budget is
 // for the computation alone (the service's performance test); this bound

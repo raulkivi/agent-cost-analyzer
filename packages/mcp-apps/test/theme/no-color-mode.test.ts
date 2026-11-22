@@ -6,7 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-// Phase 17 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/dense-ledger-ui.md D1, L4): the ledger's light/dark switch is the
+// Phase 17 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/dense-ledger-ui.md D1, L4): the ledger's light/dark switch is the
 // standalone app's. The MCP views follow the host's own theme (html[data-theme]
 // and the host's variables), so nothing here may set or read html[data-color-mode],
 // or the ledger rules in the shared theme.css could reach them.

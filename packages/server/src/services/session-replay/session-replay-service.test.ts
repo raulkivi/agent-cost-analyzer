@@ -1126,7 +1126,7 @@ describe("SessionReplayService, helper agents' requests outside the replay", () 
   });
 });
 
-// Step CS11 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md D10, D13): Claude Code's runs
+// Step CS11 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/claude-code-subagents.md D10, D13): Claude Code's runs
 // sit outside the replay as Copilot's do; with no AI Credits, the coverage
 // names their tokens and priced cost instead.
 describe("SessionReplayService.replay: Claude Code subagent runs (step CS11)", () => {

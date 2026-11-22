@@ -7,7 +7,7 @@ import { systemPromptComponentSchema } from "./system-prompt-component.js";
 import { triggeredEventSchema } from "./turn.js";
 import { costBasisTotalsSchema, costReconciliationRowSchema, costTotalSchema, turnCostFiguresSchema } from "./cost-figure.js";
 
-// Phase 9.12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-tools-v2.md §4.1): token and AI Credits
+// Phase 9.12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-tools-v2.md §4.1): token and AI Credits
 // figures aggregated per session and across sessions. Unknown is null,
 // never 0 (constraint 6); every total carries its turn coverage.
 
@@ -38,7 +38,7 @@ const ratioSchema = z.number().min(0).max(1).nullable();
 
 // A session whose latest turn started this recently is flagged active: its
 // log may still lack the running turn's final usage, cache writes and text
-// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.7). 15 minutes covers a long agentic turn plus
+// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.7). 15 minutes covers a long agentic turn plus
 // the user's think time between turns, without flagging yesterday's chats.
 export const ACTIVE_SESSION_WINDOW_MINUTES = 15;
 
@@ -146,7 +146,7 @@ export const sessionCostSchema = z.object({
 
 export type SessionCost = z.infer<typeof sessionCostSchema>;
 
-// Phase 12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.2): the bounded per-turn figures a
+// Phase 12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.2): the bounded per-turn figures a
 // per-turn chart needs for one session. SessionCost carries only topTurns;
 // this is the app-only `get_turn_series` result. Unknown is null, never 0.
 export const turnSeriesTurnSchema = z.object({

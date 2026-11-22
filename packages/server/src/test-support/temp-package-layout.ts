@@ -30,7 +30,7 @@ function copyInto(dir: string, from: string, files: readonly string[]): void {
   for (const file of files) copyFileSync(path.join(FIXTURES_DIR, from, file), path.join(dir, file));
 }
 
-// The npm tarball's layout (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.2) in a temp folder, with a
+// The npm tarball's layout (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.2) in a temp folder, with a
 // minimal set of the real JSON data.
 export function writeTempPackageLayout(): TempPackageLayout {
   const root = mkdtempSync(path.join(tmpdir(), "package-layout-"));

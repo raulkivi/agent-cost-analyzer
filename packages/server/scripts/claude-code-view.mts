@@ -7,7 +7,7 @@
 // oracle must read the same bytes. A session written in the last LIVE_MS is a
 // live session, left out and counted. The session's subagents/ folder is a real
 // folder too: the product refuses a symlinked folder or transcript on purpose
-// (plan https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md §5.3), and without the folder every Agent call
+// (plan https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/claude-code-subagents.md §5.3), and without the folder every Agent call
 // reads as a missing run and its turn as unknown (1.0 criterion C15). The
 // owner's files are only read.
 import { copyFileSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, statSync, utimesSync } from "node:fs";

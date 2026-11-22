@@ -1,7 +1,7 @@
 /* SPDX-FileCopyrightText: 2026 Raul Kivi
    SPDX-License-Identifier: MIT
 */
-/* MCP App host mapping (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §5.2), built like the web
+/* MCP App host mapping (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §5.2), built like the web
    package's theme-vscode.css: theme.css's Industry tokens are re-pointed at
    the MCP Apps spec's standard host variables, with the Industry palette
    (brand.css's --brand-fb-* tokens) as each fallback.

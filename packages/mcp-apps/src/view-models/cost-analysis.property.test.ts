@@ -8,7 +8,7 @@ import { toCostSeriesViewModel } from "./cost-series.js";
 import { toCostVarianceViewModel } from "./cost-variance.js";
 import { UNKNOWN_TEXT } from "./format.js";
 
-// Invariants of architecture.md constraint 6 and https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md
+// Invariants of architecture.md constraint 6 and https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md
 // §4.5 for the Increment 2 view models: unknown stays unknown, a change
 // has no "from 0", the effects add up, every money figure names its basis.
 

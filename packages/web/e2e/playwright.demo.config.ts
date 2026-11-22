@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { defineConfig } from "@playwright/test";
 
-// Task 1.9 of https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/docs-refresh-and-demo-recordings.md: the standalone
+// Task 1.9 of https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/docs-refresh-and-demo-recordings.md: the standalone
 // app's demo recordings (W1 to W3). Its own testDir keeps it out of
 // `test:e2e` and CI. Each scene records an MP4 at the demo frame (1600x1000,
 // 1:1) through ffmpeg x11grab that `npm run demo:gif -w packages/vscode-extension` turns into a GIF.

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { parseArgs } from "node:util";
 // One source of truth for the mcp flags; esbuild follows the relative import
-// into the bundle (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.3).
+// into the bundle (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.3).
 import { parseStdioArgs } from "../../server/src/mcp/stdio-args.js";
 import { isSetupSubcommand, parseSetupArgs, type SetupCommand } from "./mcp-setup/setup-args.js";
 

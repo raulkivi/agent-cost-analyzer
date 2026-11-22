@@ -3,7 +3,7 @@
 
 // What a host sees of an MCP server before calling anything: its identity,
 // capabilities, instructions, tools, resources and prompts. The tool-list
-// contract tests snapshot it (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-sdk-2-migration.md M2), so a
+// contract tests snapshot it (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-sdk-2-migration.md M2), so a
 // change of SDK can't silently change what a host reads.
 //
 // Structural client type: the same helper reads an SDK 1 and an SDK 2

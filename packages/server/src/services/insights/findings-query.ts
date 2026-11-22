@@ -9,7 +9,7 @@ import type {
   ToolCallOrigin,
 } from "@agent-cost-analyzer/domain";
 
-// Phase 9.12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-tools-v2.md §4): filters and orders the
+// Phase 9.12 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-tools-v2.md §4): filters and orders the
 // dashboard's findings for the MCP list_findings tool. Pure.
 
 export const DEFAULT_MAX_FINDINGS = 50;

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 
-// D4 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.4): one fixed default, so the browser origin (and
+// D4 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.4): one fixed default, so the browser origin (and
 // with it the theme choice and other browser storage) stays the same between
 // runs.
 export const DEFAULT_PORT = 5199;

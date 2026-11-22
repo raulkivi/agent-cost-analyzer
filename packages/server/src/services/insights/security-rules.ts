@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import type { FindingSeverity, ToolCallStatus, ToolKind } from "@agent-cost-analyzer/domain";
 
-// Phase 9.11 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/insights-dashboard.md §4.1): rule-based security
+// Phase 9.11 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/insights-dashboard.md §4.1): rule-based security
 // *signals* over normalized tool calls. Each rule is an independent
 // strategy in an ordered table (open/closed: a new signal is a new row).
 // Rules match on the already bounded + redacted command text and the

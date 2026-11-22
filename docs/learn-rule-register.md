@@ -5,7 +5,7 @@
 Status: **draft for owner review** (2026-11-04); owner decisions recorded 2026-11-04. Exit criterion of step 13.0:
 every vendor × rule cell has a source id or is marked unknown, and the owner
 signs off the rules, the cheaper-sibling list and the model-id mapping.
-Plan: [vendor-aware-learn-simulation.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/vendor-aware-learn-simulation.md) §5, §7.
+Plan: [vendor-aware-learn-simulation.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/vendor-aware-learn-simulation.md) §5, §7.
 Background: [learn-scenarios-fact-check.md](learn-scenarios-fact-check.md).
 
 Method: one research pass per vendor against the vendor's live docs and

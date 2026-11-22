@@ -1,4 +1,4 @@
-// Records the free demo scenes (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/docs-refresh-and-demo-recordings.md §5,
+// Records the free demo scenes (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/docs-refresh-and-demo-recordings.md §5,
 // tasks 1.3 and 1.6a): VS Code on made-up data, no Copilot sign-in, into MP4 masters in
 // demo-masters/ (AICA_DEMO_MASTERS overrides). `npm run build` first, then
 //   npm run demo:record

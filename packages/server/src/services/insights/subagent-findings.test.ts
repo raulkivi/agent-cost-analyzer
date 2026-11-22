@@ -12,7 +12,7 @@ import { buildInsightRows, type ProviderSessions } from "./insights-dataset-buil
 import { DEFAULT_SECURITY_RULES } from "./security-rules.js";
 import { SecurityScanner } from "./security-scanner.js";
 
-// Step 10.20 ST10 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/subagent-tool-audit.md section 5.6, D14):
+// Step 10.20 ST10 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/subagent-tool-audit.md section 5.6, D14):
 // findings name the subagent run that made the call, and a canceled call
 // (a user stop) is no failure and no security finding.
 

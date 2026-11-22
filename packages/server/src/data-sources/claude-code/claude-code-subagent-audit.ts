@@ -9,8 +9,8 @@ import { planClaudeCodeAudit, type AuditRunRef } from "./subagent-audit-plan.js"
 import { UNREADABLE_TRANSCRIPT_AUDIT_REASON } from "./subagent-audit-reasons.js";
 import type { ClaudeCodeRunInput, ClaudeCodeSubagentAttribution } from "./subagent-attribution.js";
 
-// CS14 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md D9, section 5.1 of
-// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/subagent-tool-audit.md): one Claude Code session's subagent tool calls, in
+// CS14 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/claude-code-subagents.md D9, section 5.1 of
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/subagent-tool-audit.md): one Claude Code session's subagent tool calls, in
 // the same shape step 10.20 gives classic sessions. Only the detail read calls
 // it; the list path and the run-summary cache never see a tool call.
 

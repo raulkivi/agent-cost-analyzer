@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// V27 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md §7.1): the standalone app's savings report over
+// V27 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md §7.1): the standalone app's savings report over
 // V14's real pi captures. The model is a local one the price book doesn't
 // know, so pi's rows show tokens and requests and the amount is Not priced;
 // pi sessions with system messages are no longer "no tool inventory".

@@ -305,7 +305,7 @@ describe("SavingsService simulated detectors", () => {
   });
 });
 
-// Step CS11 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/claude-code-subagents.md D10): the savings read the
+// Step CS11 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/claude-code-subagents.md D10): the savings read the
 // main agent only, so each row says how many subagent runs its sessions held.
 describe("SavingsService: subagent runs not analyzed (step CS11)", () => {
   const ct = (value: number) => ({ known: true as const, value });

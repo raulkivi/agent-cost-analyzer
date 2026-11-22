@@ -61,7 +61,7 @@ describe("savingsActionText", () => {
     expect(savingsActionText("unused-tools", { ...SAMPLE["unused-tools"], tools: 999 })).toContain("(999 tools");
   });
 
-  // R14 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md): every count in a template agrees with its noun.
+  // R14 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md): every count in a template agrees with its noun.
   it("uses the singular for a count of 1 in every template", () => {
     expect(savingsActionText("unused-tools", { group: "github", tools: 1, tokens: 1, sessions: 1, days: 1 })).toBe(
       "Turn off the tools of github in the tool picker (1 tool, about 1 token on each request); none of them ran in 1 session over 1 day.",

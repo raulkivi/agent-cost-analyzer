@@ -5,7 +5,7 @@ import { UNREAD_RUNS_MODEL } from "../pricing/turn-cost-lines.js";
 import { indexRows, type DetectorInput, type FindingDetector } from "./finding-detector.js";
 
 // First appearance of a program, tool or model after a baseline window
-// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/insights-dashboard.md §4.3): "the agent started doing
+// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/insights-dashboard.md §4.3): "the agent started doing
 // something it never did before".
 
 const MIN_BASELINE = 3;

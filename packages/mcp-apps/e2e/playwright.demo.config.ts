@@ -4,7 +4,7 @@ import { defineConfig } from "@playwright/test";
 import { FRAME } from "../../vscode-extension/scripts/demo/ffmpeg-args.mts";
 import { DEMO_SCALE } from "./demo/support/demo-layout.js";
 
-// Task 2.2 of https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/docs-refresh-and-demo-recordings.md: close-up
+// Task 2.2 of https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/docs-refresh-and-demo-recordings.md: close-up
 // recordings of the MCP App views (F1 to F3) in the fake MCP Apps host. Its
 // own testDir keeps them out of `test:e2e` and CI. Each scene records an MP4
 // at the demo frame (1600x1000, the page at DEMO_SCALE) through ffmpeg x11grab in headed

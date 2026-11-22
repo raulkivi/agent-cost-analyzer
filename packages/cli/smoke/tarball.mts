@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
-// The npm-package smoke's checks of the tarball itself (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.8
+// The npm-package smoke's checks of the tarball itself (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.8
 // step 2), read from the bytes users download: the file list and size
 // budget (NP6's pack-check.mts), the manifest and the bin shim.
 import { gunzipSync } from "node:zlib";

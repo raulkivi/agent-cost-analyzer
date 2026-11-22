@@ -93,7 +93,7 @@ describe("UnusedToolsDetector: MCP servers", () => {
   });
 });
 
-// V26 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md §6, D26): per-tool tokens, averaged
+// V26 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md §6, D26): per-tool tokens, averaged
 // over the row's sessions where the tool was loaded; at most 20, largest first.
 describe("UnusedToolsDetector: per-tool tokens", () => {
   const est = (value: number) => ({ known: true as const, value, estimated: true as const });
@@ -261,7 +261,7 @@ describe("UnusedToolsDetector: Not analysed (never 0)", () => {
   });
 });
 
-// V24 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md §4, D22): each session's date and its own saving.
+// V24 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md §4, D22): each session's date and its own saving.
 describe("UnusedToolsDetector: each session's date and saving", () => {
   it("puts the start and the session's own range on its reference, and the known ones add up to the row", () => {
     const [row] = detector.detect(savingsInput([sessionInput(s1), sessionInput(s2)])).opportunities;
@@ -318,7 +318,7 @@ describe("UnusedToolsDetector: golden report", () => {
   });
 });
 
-// V27 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md §7.1): a session whose model has no known price
+// V27 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md §7.1): a session whose model has no known price
 // channel (pi on a local model) still has its tool tokens and requests; only
 // the money is unknown, with the channel's reason, never 0 and never dropped.
 describe("UnusedToolsDetector: unpriced sessions", () => {

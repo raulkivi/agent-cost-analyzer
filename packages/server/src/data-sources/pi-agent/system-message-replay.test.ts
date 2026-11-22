@@ -113,7 +113,7 @@ describe("replaySystemMessages", () => {
 
 const assistant = (id: string): PiRawEntry => ({ type: "message", id, message: { role: "assistant", content: [], usage: { input: 1, output: 1 } } });
 
-// V27 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md §7.1): the tool list can change mid-branch, so
+// V27 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md §7.1): the tool list can change mid-branch, so
 // each tool carries the requests it was declared for, and a removed tool keeps
 // the definition it last had.
 describe("replaySystemMessages: tool history", () => {

@@ -1,8 +1,8 @@
 name: Release Agent Cost Analyzer
 
 # Publishes the standalone app on an `app-v<major>.<minor>.<patch>` tag
-# (vscode-extension.md §7.2, https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.10): the `agent-cost-analyzer`
-# npm package, then its look-alike alias `agent-cost-analyser` (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md # codespell:ignore analyser
+# (vscode-extension.md §7.2, https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.10): the `agent-cost-analyzer`
+# npm package, then its look-alike alias `agent-cost-analyser` (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md # codespell:ignore analyser
 # D3; published only while its own version is absent from npm), then a GitHub
 # Release with the main tarball and the Claude Desktop bundle (`.mcpb`, built
 # from that tarball's files) attached. The

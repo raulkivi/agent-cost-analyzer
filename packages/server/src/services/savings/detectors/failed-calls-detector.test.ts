@@ -172,7 +172,7 @@ describe("FailedCallsDetector: Not analysed (never 0)", () => {
   });
 });
 
-// V24 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/savings-increment-3.md §4, D22): each session's date and its own saving.
+// V24 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/savings-increment-3.md §4, D22): each session's date and its own saving.
 describe("FailedCallsDetector: each session's date and saving", () => {
   it("puts the start and the session's own upper bound on its reference, and the known ones add up to the row", () => {
     const { opportunities } = detector.detect(savingsInput([input(s1, [priced(0.1), priced(0.2), priced(0.05)]), input(s2, [priced(0.08), priced(0.12)])]));

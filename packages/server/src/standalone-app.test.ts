@@ -15,7 +15,7 @@ const SERVER_PACKAGE_VERSION = (
   JSON.parse(readFileSync(fileURLToPath(new URL("../package.json", import.meta.url)), "utf-8")) as { version: string }
 ).version;
 
-// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.2 "Paths", task NP3: the standalone composition root reads
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.2 "Paths", task NP3: the standalone composition root reads
 // every runtime file from a package layout when given one. The temp layout's
 // data differ from this package's fixtures/, so each answer below shows which
 // folder was read: none of them can come from an import.meta.url default.

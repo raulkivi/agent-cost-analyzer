@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { contrastRatio, resolveCssColor } from "./lib/contrast.js";
 
-// The ledger theme (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/dense-ledger-ui.md L1, D1): its palette, dark mode and
+// The ledger theme (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/dense-ledger-ui.md L1, D1): its palette, dark mode and
 // fonts live in theme.css under html[data-color-mode], which only the
 // standalone app sets. The VS Code webview and the MCP Apps views import the
 // same file and must keep the Industry :root, so no ledger rule may reach

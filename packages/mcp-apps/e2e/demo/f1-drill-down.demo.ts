@@ -7,7 +7,7 @@ import { DEMO_MAX_BEAT_MS, F1, F1_ARGS, FULLSCREEN, type DemoContext } from "./s
 import { applyDemoLayout, installPointer } from "./support/demo-setup.js";
 import { recordScene } from "./support/record.js";
 
-// F1 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/docs-refresh-and-demo-recordings.md §4.2): the drill-down chain and focus return.
+// F1 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/docs-refresh-and-demo-recordings.md §4.2): the drill-down chain and focus return.
 test("F1: comparison, cost over time, session cost, turn; Back at each level", async ({ page, host }) => {
   await applyDemoLayout(page);
   const view = await host.show("compare_costs", F1_ARGS, FULLSCREEN);

@@ -42,7 +42,7 @@ function queryFor(preset: RangePreset, now: Date): RollupQuery {
   return { since: since.toISOString().slice(0, 10) };
 }
 
-// Cross-session audit (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/tool-call-audit.md §11): how often the
+// Cross-session audit (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/tool-call-audit.md §11): how often the
 // agent's tool calls fail over time, which commands fail repeatedly, and
 // which sessions were worst — each session links to its own audit.
 export function AuditRollupPanel({ onOpenSession, loadRollup = fetchAuditRollup, now }: AuditRollupPanelProps) {

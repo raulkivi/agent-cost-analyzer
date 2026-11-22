@@ -17,7 +17,7 @@ import type { AssociativeModel, FieldDef } from "../associative/data-model.js";
 import { CATEGORY_LABELS, STATUS_META } from "../audit-format.js";
 import { TRIGGER_LABELS } from "../trigger-labels.js";
 
-// The insights dashboard's associative model (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/insights-dashboard.md
+// The insights dashboard's associative model (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/insights-dashboard.md
 // §3/§5): sessions ← turns ← toolCalls, sessions ← findings.
 
 export const TABLE = { sessions: "sessions", turns: "turns", toolCalls: "toolCalls", findings: "findings" } as const;

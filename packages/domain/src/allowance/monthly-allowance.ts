@@ -7,7 +7,7 @@ import { dayKeyOf, dayStartInstant } from "./day-key.js";
 import { billedCredits, knownSum } from "./session-credits.js";
 
 // The monthly AI Credits allowance figures (step 10.21, plan
-// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance.md §3.2 to §3.4; MA13, https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance.md §3.2 to §3.4; MA13, https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md
 // §4.1). Figures only: each product words them. No projection or run rate
 // (D3): used, remaining ("up to") and days left only.
 

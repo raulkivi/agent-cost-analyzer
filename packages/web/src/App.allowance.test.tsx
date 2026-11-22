@@ -11,7 +11,7 @@ import { resetViewStateStorage, setViewStateStorage } from "./state/current-view
 import { memoryViewStateStorage } from "./state/view-state-storage.js";
 import { nearAnswer } from "./test-support/allowance-fixture.js";
 
-// MS7 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/monthly-allowance-standalone.md §4.7, D3, D4): the gauge sits in the
+// MS7 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/monthly-allowance-standalone.md §4.7, D3, D4): the gauge sits in the
 // header after the provider select, in Analyze mode only, and only where the
 // product turns ProductFeatures.monthlyAllowance on. The extension never
 // shows it.

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 import { readFile } from "node:fs/promises";
 
-// Where the MCP App views' HTML comes from (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.2).
+// Where the MCP App views' HTML comes from (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.2).
 // The server depends on this port, not on file paths (DIP).
 export interface ViewSource {
   read(): Promise<string>;

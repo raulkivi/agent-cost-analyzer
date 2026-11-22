@@ -5,7 +5,7 @@ import { pricingText } from "./analysis-common.js";
 import { UNKNOWN_TEXT, formatCount, periodText, pluralize } from "./format.js";
 import { formatMoney } from "./money.js";
 
-// U15, the cost of planned work (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §2, §4.5). Pure:
+// U15, the cost of planned work (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §2, §4.5). Pure:
 // formats an estimate_cost result. Always a p50–p90 range in USD labelled
 // "estimate", never one number; a refusal shows its reason and every figure
 // it can't give reads "Unknown", never 0. On another model the figures are

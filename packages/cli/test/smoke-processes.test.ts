@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // How the npm-package smoke starts and stops what it runs, per OS
-// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md §4.8 steps 3-7), and the environment it gives them.
+// (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md §4.8 steps 3-7), and the environment it gives them.
 import { describe, expect, it } from "vitest";
 import { DEAD_REGISTRY, installedBin, invocation, isolatedEnv, stopAction } from "../smoke/processes.mts";
 

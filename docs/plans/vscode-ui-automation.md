@@ -619,7 +619,7 @@ The after-chat check of the logged model id (item 4 below) stays. 1.14's chat is
 
 ## 8. Demo recordings
 
-The demo scenes record the README GIFs and some docs stills. They are recorders, not checks: they never gate a release, and they are not in CI, `test:ui:vscode` or `npm test`. Plan: [docs-refresh-and-demo-recordings.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/docs-refresh-and-demo-recordings.md).
+The demo scenes record the README GIFs and some docs stills. They are recorders, not checks: they never gate a release, and they are not in CI, `test:ui:vscode` or `npm test`. Plan: [docs-refresh-and-demo-recordings.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/docs-refresh-and-demo-recordings.md).
 
 Commands:
 

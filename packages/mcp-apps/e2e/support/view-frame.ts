@@ -532,7 +532,7 @@ export class SessionCostView {
     return this.content.getByRole("button", { name: /Copy title/ });
   }
 
-  // Sends "Analyse session <id>" to the chat (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.3). codespell:ignore analyse
+  // Sends "Analyse session <id>" to the chat (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.3). codespell:ignore analyse
   async askAboutSession(): Promise<void> {
     await this.content.getByRole("button", { name: "Ask about this session", exact: true }).click();
   }

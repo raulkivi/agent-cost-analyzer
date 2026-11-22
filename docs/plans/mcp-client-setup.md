@@ -24,7 +24,7 @@ Task IDs are `MC0`-`MC21` (§10).
 ## 1. Why
 
 The npm package already serves the MCP server (`npx agent-cost-analyzer
-mcp`, [npm-package.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md)). Registering it with an MCP client
+mcp`, [npm-package.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md)). Registering it with an MCP client
 is still manual:
 
 - The User Guide gives one `claude mcp add …` line
@@ -56,7 +56,7 @@ Non-goals:
 
 - **No `postinstall` or other npm install script** (§4, option F). The
   package keeps "no dependencies and no install scripts"
-  ([npm-package.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/npm-package.md) §2).
+  ([npm-package.md](https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/npm-package.md) §2).
 - **The local server and web app write no client config.** No HTTP route
   writes files. The web panel only shows commands and client install links
   (§5.6, threat model).

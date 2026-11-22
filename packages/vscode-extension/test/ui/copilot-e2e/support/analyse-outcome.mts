@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Raul Kivi
 // SPDX-License-Identifier: MIT
 // What U5's Analyse did in a real Copilot Chat (A33; owner, 2026-11-11,
-// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §9.2 Q7: try, then fall back). VS Code advertises no
+// https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §9.2 Q7: try, then fall back). VS Code advertises no
 // `message` capability, so the view tries. Three outcomes are told apart:
 //   - sent: the chat gains exactly one request, with the fixed text
 //     "Analyse session <id>";

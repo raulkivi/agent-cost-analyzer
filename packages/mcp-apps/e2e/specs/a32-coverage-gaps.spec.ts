@@ -5,7 +5,7 @@ import { auditRollup, sessionAudit } from "../../src/view-models/audit-fixtures.
 import { modelTurnsIn } from "../support/call-log.js";
 import { APP_VERSION, expect, inEachClaudeSet, test } from "../support/host-fixture.js";
 
-// A32 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §6.1): the Increment 3 states the fixture home
+// A32 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §6.1): the Increment 3 states the fixture home
 // can't produce, which A27-A31 covered in component tests only, now in the
 // built view in Claude Desktop, light and dark. The fake host answers the
 // model's tool call with a canned result (showResult): an issued statement

@@ -3,7 +3,7 @@
 import { messagesOffTemplate, modelTurnsIn, toolCallsIn } from "../support/call-log.js";
 import { APP_VERSION, expect, inEachClaudeSet, test } from "../support/host-fixture.js";
 
-// Increment 3 task A28 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/mcp-apps.md §4.5, board
+// Increment 3 task A28 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/mcp-apps.md §4.5, board
 // Increment3States.dc.html cells 1, 2 and 13): U13 called directly, and
 // opened from U11 in place, in Claude Desktop light and dark. The fixture
 // price book has Claude Sonnet 5.5's documented 2026-10-07 cache-read cut

@@ -6,7 +6,7 @@ import type { DemoScene } from "../../../web/e2e/demo/support/demo-driver.js";
 import type { McpHost } from "../support/mcp-host.js";
 import type { ViewFrame } from "../support/view-frame.js";
 
-// F1 to F4 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/docs-refresh-and-demo-recordings.md §4.2): close-ups of
+// F1 to F4 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/docs-refresh-and-demo-recordings.md §4.2): close-ups of
 // the MCP App views, shown alone in the fake host. Steps read the view through
 // `context.view`, which a step that opens another view replaces. The fixture
 // home's made-up data; a fixed clock. The specs assert each scene's end state.
@@ -124,7 +124,7 @@ export const F3 = (context: DemoContext): DemoScene => ({
   ],
 });
 
-// F4 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c0fdf645056822a79c9b6542153bf/docs/plans/demo-recordings-1.0.md §3.2): the savings view on its own, over the demo home (DR1). The
+// F4 (https://github.com/raulkivi/agent-cost-analyzer/blob/5d430c726b7c/docs/plans/demo-recordings-1.0.md §3.2): the savings view on its own, over the demo home (DR1). The
 // simulated rows are on so a session offers Open replay (U12).
 export const F4_ARGS = { includeSimulated: true };
 const UNUSED_TOOLS_ROW = /Tools loaded but never used\s*acmedocs/;
