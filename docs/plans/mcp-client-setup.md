@@ -1,6 +1,6 @@
 # MCP client setup for the standalone app (Phase 18)
 
-**Last changed:** 2026-11-20 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
+**Last changed:** 2026-11-22 · **Source:** https://github.com/raulkivi/agent-cost-analyzer
 
 Status: **Approved 2026-11-18** (owner interview, D1-D12 in §8). MC0-MC9
 and MC19 done 2026-11-18 (MC8 signed off by the owner). MC20 (VS Code
@@ -15,7 +15,8 @@ spec) and MC17 (Increment 3 docs) done 2026-11-19. Released
 installed 1.2.0 through `mcp install`, the Claude Code plugin, the `.mcpb`
 bundle and the MCP Registry. Next: MC22.
 MC22 added 2026-11-20: MC18 found that VS Code's MCP search reads GitHub's
-MCP Registry, which does not list the server.
+MCP Registry, which does not list the server. The owner emailed the
+inclusion request to `partnerships@github.com` on 2026-11-22.
 Testing is Linux only (D13).
 
 Phase 18 in [implementation-plan.md](../implementation-plan.md#phase-18--mcp-client-setup-for-the-standalone-app).
@@ -163,7 +164,7 @@ MC22 steps:
    repository and license, one line on what it does (reads local AI
    coding-agent logs, read-only, no network), and the two verification
    queries (official registry and `api.mcp.github.com`).
-2. Record the date sent and any reply here.
+2. Sent by the owner on 2026-11-22. Reply: none yet.
 3. Check weekly: `https://api.mcp.github.com/v0.1/servers?search=agent-cost-analyzer`
    returns the server. Then VS Code's `@mcp agent-cost-analyzer` finds it
    with default settings, and its Install button registers a working
@@ -548,7 +549,7 @@ TDD in every code task (architecture.md §11.4). No local model in this repo.
 | MC18 | Owner: the first release with registry, bundle and plugin; check that each one installs. **Done 2026-11-20** (owner, on 1.2.0: `mcp install`, plugin, `.mcpb` bundle and Registry each install) | 3 | low | Owner | MC17 |
 | MC19 | `"mcpName": "io.github.raulkivi/agent-cost-analyzer"` in `packages/cli/package.json`, with a manifest test, so Increment 1's release carries it (§3.2). **Done 2026-11-18** (PR #430) | 1 | low | Haiku | — |
 | MC20 | VS Code Insiders as its own client `vscode-insiders` (D14): detect `code-insiders` or its `Code - Insiders/User` folder, write `Code - Insiders/User/mcp.json` under `servers`, skip when `~/.vscode-insiders/extensions` holds the AI Credits Analyzer extension; MC7 smoke and MC8 check extended. **Done 2026-11-18** (PR #443) | 1 | low | Sonnet | MC9 |
-| MC22 | GitHub MCP Registry listing: VS Code's MCP search (`@mcp`) reads `https://api.mcp.github.com` (the `mcpGallery.serviceUrl` in VS Code's `product.json`), GitHub's own list, not the official registry, so it does not find the server (MC18, 2026-11-20). New servers are onboarded by hand: per §3.3, the owner emails `partnerships@github.com`, then the listing is checked (§3.3 steps 1-5); no ETA. Until listed, the User Guide gives the `chat.mcp.gallery.serviceUrl` workaround (added 2026-11-20). Done when `@mcp agent-cost-analyzer` finds the server in VS Code with default settings | 3 | low | Owner + Haiku (checks) | MC14 |
+| MC22 | GitHub MCP Registry listing: VS Code's MCP search (`@mcp`) reads `https://api.mcp.github.com` (the `mcpGallery.serviceUrl` in VS Code's `product.json`), GitHub's own list, not the official registry, so it does not find the server (MC18, 2026-11-20). New servers are onboarded by hand: per §3.3, the owner emailed `partnerships@github.com` on 2026-11-22, then the listing is checked (§3.3 steps 1-5); no ETA. Until listed, the User Guide gives the `chat.mcp.gallery.serviceUrl` workaround (added 2026-11-20). Done when `@mcp agent-cost-analyzer` finds the server in VS Code with default settings | 3 | low | Owner + Haiku (checks) | MC14 |
 | MC21 | Review findings R5 and R6 (D15): a registration's status carries the existing entry, the plan prints old and new in full, a remove-then-add whose add fails says the server is now unregistered and prints the old entry to restore; a symlinked project-scope config is refused. **Done 2026-11-18** (PR #444) | 1 | medium | Opus | MC9 |
 
 Order: MC0 → MC1/MC2/MC19 (in parallel) → MC3 → MC4/MC5/MC6 → MC7 → MC8 →
