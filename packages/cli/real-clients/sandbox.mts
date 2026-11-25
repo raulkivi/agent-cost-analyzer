@@ -85,7 +85,7 @@ export function createSandbox(tools: Partial<Record<RealTool, string>>): Sandbox
   const npxLog = path.join(logs, "npx.log");
   writeFileSync(npxLog, "");
   const npx = { logFile: npxLog, bin: BIN, version: cliVersion() };
-  writeStub(path.join(root, "npx-stub"), "npx", stubScript(process.execPath, STUB_MODULE, `npxStubMain(${JSON.stringify(npx)})`));
+  writeStub(path.join(root, "npx-stub"), "npx", stubScript(process.execPath, STUB_MODULE, { name: "npxStubMain", args: [npx] }));
 
   const env = stripClientVariables(
     setupSmokeEnv(process.env, { home, npmCache: path.join(root, "npm-cache"), pathFirst: [path.join(root, "npx-stub"), shims] }),

@@ -85,10 +85,10 @@ function nothingDone(context: Context, label: string, run: () => Promise<string[
 
 function writeStubs(context: Context): void {
   for (const tool of STUB_TOOLS) {
-    writeStub(context.dirs.stubs, tool, stubScript(process.execPath, STUB_MODULE, `clientStubMain(${JSON.stringify(tool)}, ${JSON.stringify(stubLog(context, tool))})`));
+    writeStub(context.dirs.stubs, tool, stubScript(process.execPath, STUB_MODULE, { name: "clientStubMain", args: [tool, stubLog(context, tool)] }));
   }
   const npx = { logFile: stubLog(context, "npx"), bin: context.bin, version: context.version };
-  writeStub(context.dirs.npxStub, "npx", stubScript(process.execPath, STUB_MODULE, `npxStubMain(${JSON.stringify(npx)})`));
+  writeStub(context.dirs.npxStub, "npx", stubScript(process.execPath, STUB_MODULE, { name: "npxStubMain", args: [npx] }));
 }
 
 function seededChecks(context: Context, installed: boolean): string[] {
