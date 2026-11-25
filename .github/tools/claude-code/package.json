@@ -1,0 +1,8 @@
+{
+  "name": "ci-claude-code",
+  "private": true,
+  "description": "The Claude Code CLI that CI runs `claude plugin validate` with, pinned by package-lock.json.",
+  "dependencies": {
+    "@anthropic-ai/claude-code": "2.1.327"
+  }
+}

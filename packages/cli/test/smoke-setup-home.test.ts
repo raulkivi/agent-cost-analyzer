@@ -50,9 +50,26 @@ describe("writableInHome", () => {
 
 describe("stubScript", () => {
   it("is a script for this Node that imports the stub module and calls it", () => {
-    expect(stubScript("/opt/node/bin/node", "file:///r/client-stubs.mts", 'clientStubMain("claude", "/l/claude.jsonl")')).toBe(
+    expect(stubScript("/opt/node/bin/node", "file:///r/client-stubs.mts", { name: "clientStubMain", args: ["claude", "/l/claude.jsonl"] })).toBe(
       '#!/opt/node/bin/node\n// A stand-in for the smoke (packages/cli/smoke/client-stubs.mts).\nimport("file:///r/client-stubs.mts").then((stubs) => stubs.clientStubMain("claude", "/l/claude.jsonl"));\n',
     );
+  });
+
+  it("passes object arguments as literals", () => {
+    expect(stubScript("/n", "file:///s.mts", { name: "npxStubMain", args: [{ logFile: "/l/npx.log", bin: "/b", version: "1.0.0" }] })).toContain(
+      'stubs.npxStubMain({"logFile":"/l/npx.log","bin":"/b","version":"1.0.0"}));\n',
+    );
+  });
+
+  it("escapes characters that could end the literal or the line in the module URL and arguments", () => {
+    const script = stubScript("/n", "file:///a</script>\u2028.mts", { name: "clientStubMain", args: ["x\u2029", "/l/<b>"] });
+    expect(script).toContain('import("file:///a\\u003C/script\\u003E\\u2028.mts")');
+    expect(script).toContain('stubs.clientStubMain("x\\u2029", "/l/\\u003Cb\\u003E")');
+    expect(script.split("\n")).toHaveLength(4);
+  });
+
+  it("rejects a Node path that would break the shebang line", () => {
+    expect(() => stubScript("/n\nprocess.exit()", "file:///s.mts", { name: "clientStubMain", args: [] })).toThrow(/Node path/);
   });
 });
 

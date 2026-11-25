@@ -16,6 +16,13 @@ updates:
     ignore:
       - dependency-name: '*'
         update-types: ['version-update:semver-major']
+  # The Claude Code CLI that CI validates the plugin with.
+  - package-ecosystem: npm
+    directory: /.github/tools/claude-code
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
   - package-ecosystem: github-actions
     directory: /
     schedule:

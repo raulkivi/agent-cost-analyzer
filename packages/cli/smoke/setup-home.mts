@@ -85,10 +85,31 @@ export function seedSetupHome(home: string): void {
   for (const config of SEEDED_CONFIGS) writeFileSync(path.join(home, config.file), config.text);
 }
 
+/** The client-stubs.mts function a stub hands over to, and its arguments. */
+export interface StubCall {
+  name: "clientStubMain" | "npxStubMain";
+  args: readonly unknown[];
+}
+
+const UNSAFE_IN_SCRIPT: Readonly<Record<string, string>> = {
+  "<": "\\u003C",
+  ">": "\\u003E",
+  "\u2028": "\\u2028",
+  "\u2029": "\\u2029",
+};
+
+// JSON.stringify alone leaves "</script>" and the JS line separators U+2028
+// and U+2029 in place; escaping them keeps every value one string literal.
+function scriptLiteral(value: unknown): string {
+  return JSON.stringify(value).replace(/[<>\u2028\u2029]/g, (char) => UNSAFE_IN_SCRIPT[char] ?? char);
+}
+
 /** A stub executable: this Node runs it, and it hands over to a function of client-stubs.mts. */
-export function stubScript(node: string, moduleUrl: string, call: string): string {
+export function stubScript(node: string, moduleUrl: string, call: StubCall): string {
+  if (/[\r\n]/.test(node)) throw new Error(`Node path contains a line break: ${JSON.stringify(node)}`);
+  const args = call.args.map(scriptLiteral).join(", ");
   // A dynamic import, so the extensionless file works as CommonJS or ESM.
-  return `#!${node}\n// A stand-in for the smoke (packages/cli/smoke/client-stubs.mts).\nimport(${JSON.stringify(moduleUrl)}).then((stubs) => stubs.${call});\n`;
+  return `#!${node}\n// A stand-in for the smoke (packages/cli/smoke/client-stubs.mts).\nimport(${scriptLiteral(moduleUrl)}).then((stubs) => stubs.${call.name}(${args}));\n`;
 }
 
 export function writeStub(dir: string, name: string, script: string): string {
